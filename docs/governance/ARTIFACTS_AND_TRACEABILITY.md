@@ -1,22 +1,8 @@
 # 受控产物与追溯模型
 
-## 1. 产物不是平级清单
+## 1. 规范关系入口
 
-```text
-需求
-→ 场景与触发
-→ 业务链路
-→ 能力和功能
-→ 架构与工程链路
-→ I/O 契约
-→ 规格控制
-→ 任务
-→ 工作流
-→ 技能和工具
-→ 运行
-→ 证据
-→ 声明
-```
+固定主关系、对象类型、公共字段和有类型关系只由 [受控对象模型](CONTROLLED_OBJECT_MODEL.md) 定义。本文件解释产物职责和追溯检查，不维护第二套枚举或对象 Schema。
 
 ## 2. 各类产物职责
 
@@ -26,8 +12,9 @@
 | 业务事实和需求 | 当前批准相信什么、为什么做 |
 | 场景和触发 | 谁在什么条件下以什么方式启动 |
 | 业务链路 | 业务状态如何一步步变化 |
-| 能力树 | 系统需要哪些稳定能力 |
+| 业务能力 | 业务为了达成目标需要哪些稳定能力，不表达技术实现 |
 | 功能树 | 用户可以看到和操作什么 |
+| 技术能力 | 架构决策后形成哪些通用工程能力 |
 | 工程链路 | AI、代码、人工和外部系统怎么协作 |
 | I/O 契约 | 节点之间如何可靠交接 |
 | 规格控制包 | 如何控制范围、计划、任务、验收和追踪 |
@@ -36,43 +23,16 @@
 | 技能 | 哪个稳定局部能力可被多个工作流复用 |
 | 工具 | 哪个确定性执行器产生真实动作 |
 | 证据 | 凭什么声称达到某一成熟度 |
+| 验收裁决 | 谁基于事前判据和 Evidence 接受、拒绝或有条件接受 |
+| 完成声明 | 在指定范围和证据等级内允许表达什么 |
 
 ## 3. 一个权威定义，多个有类型依赖
 
-每个受控对象只有一个权威定义位置，但允许多个上游依赖。禁止把“一个权威位置”错误实现成“只能有一个父节点”。
+每个受控对象只有一个权威定义位置，但允许多个上游依赖。禁止把“一个权威位置”错误实现成“只能有一个父节点”。关系枚举只在 [受控对象模型](CONTROLLED_OBJECT_MODEL.md) 维护。
 
-关系类型：
+## 4. 受控对象字段入口
 
-```text
-derives_from     来源于
-governed_by      受约束于
-implements       实现
-consumes         消费
-produces         产生
-verified_by      被验证
-invalidates      使失效
-supersedes       替代
-```
-
-## 4. 受控对象最小字段
-
-```yaml
-id: stable-id
-type: artifact-type
-canonical_path: path/to/authority
-version: 1
-status: draft
-owner_role: architecture
-primary_authority: upstream-id
-derives_from: []
-governed_by: []
-implements: []
-consumes: []
-produces: []
-verified_by: []
-proof_level: control_package
-content_hash: calculated-at-validation
-```
+公共字段和逐类型约束由 [受控对象模型](CONTROLLED_OBJECT_MODEL.md) 唯一定义，包含 owner、executor、approver、verifier、输入输出、门禁、失败路由、失效和替代语义。
 
 ## 5. 规格控制包的位置
 
@@ -100,3 +60,4 @@ content_hash: calculated-at-validation
 8. 任务是否来自规格和验收，而不是凭空新增。
 9. 上游变化是否使相关下游证据失效。
 10. 完成声明是否超过关键路径最低证据等级。
+11. L3 的 Spec、Task、项目 Workflow、Run、Evidence、Verdict 和 Claim 是否绑定当前有效 `route_decision_ref` 与 `control_set_hash`；L1/L2 对象是否避免伪造项目路由引用。

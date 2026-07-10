@@ -1,0 +1,179 @@
+schema_version: 1
+audit_id: PROFILE-TAXONOMY-FILE-AUDIT-20260710
+audited_at: "2026-07-10"
+scope: 全仓框架等级与项目治理语义
+
+audit_scope:
+  included: 版本库中的全部 Markdown/YAML 框架、研究、决策、计划和审查资产
+  excluded_local_state:
+    - path: .omx/
+      reason: 本地运行状态与日志，不是框架规范
+  coverage: 40/40
+
+files:
+  - path: .shopme/project-map.md
+    role: ShopMe 编辑器与文档落点 sidecar
+    result: corrected
+    action: 明确只治理 ShopMe 编辑/文件放置，不承载 AI Project OS 产品治理或项目路由权威
+  - path: .shopme/rules.md
+    role: ShopMe AI 编辑规则 sidecar
+    result: checked_no_drift
+    action: 继续指向 project-map；产品语义以 project-os.yaml authority 为准
+  - path: project-os.yaml
+    role: 机器权威与当前状态
+    result: corrected
+    action: 拆分 framework edition、governance catalog 和 maturity，删除全局 selected_profile/enabled
+  - path: README.zh-CN.md
+    role: 阅读入口
+    result: corrected
+    action: 区分目标等级、治理配置和真实成熟度
+  - path: AGENTS.md
+    role: 操作契约
+    result: checked_no_drift
+    action: none
+  - path: docs/architecture/AI_PROJECT_OS_CORE.md
+    role: 核心原语与架构平面
+    result: corrected
+    action: 标准版改为 standard 框架等级并移除实时状态副本
+  - path: docs/architecture/FRAMEWORK_EDITION_MODEL.md
+    role: 四级框架版本权威
+    result: created
+    action: 定义 minimal、standard、platform、enterprise
+  - path: docs/architecture/REPOSITORY_AND_LAYER_CONTRACT.md
+    role: L1/L2/L3 所有权与兼容
+    result: corrected
+    action: 删除单值 profile 锁定并绑定路由裁决/control set
+  - path: docs/architecture/AI_NATIVE_EXECUTION_MODEL.md
+    role: AI 执行规范
+    result: corrected
+    action: 明确规范目标不等于已实现或验证
+  - path: docs/workflows/PROJECT_LIFECYCLE.md
+    role: R0/S0-S7 成熟度坐标
+    result: corrected
+    action: 明确六个对象坐标，阶段不提升实现、proof 或 overlay 激活
+  - path: docs/workflows/ARCHITECT_WORKFLOWS.md
+    role: 架构师职责
+    result: corrected
+    action: 明确职责不等于阶段、框架等级或 multi_agent 激活
+  - path: docs/workflows/PROJECT_TYPE_AND_GOVERNANCE_ROUTING.md
+    role: 项目治理路由权威
+    result: corrected
+    action: 定义基础配置、逐 overlay 状态、显式未知路由输入和双版本激活
+  - path: docs/governance/ARTIFACTS_AND_TRACEABILITY.md
+    role: 产物职责与检查入口
+    result: corrected
+    action: 限定只有 L3 执行/验收对象强制绑定项目路由
+  - path: docs/governance/CONTROLLED_OBJECT_MODEL.md
+    role: 对象、字段与关系权威
+    result: corrected
+    action: 正交 lifecycle/work/approval/implementation/stale/proof，并登记路由、控制集、授权、审批、秘密租约、检查点和副作用对象
+  - path: docs/governance/STATE_TRANSITIONS_AND_INVALIDATION.md
+    role: 状态与失效权威
+    result: corrected
+    action: 以 route/control set 变化传播，历史 Run 不改写
+  - path: docs/governance/AUTHORIZATION_SIDE_EFFECTS_AND_ISOLATION.md
+    role: 权限、副作用与隔离权威
+    result: corrected
+    action: 外部写与 production overlay 分离并绑定 control set
+  - path: docs/governance/RUN_EVIDENCE_ACCEPTANCE.md
+    role: Run/Evidence/Verdict/Claim 权威
+    result: corrected
+    action: 增加基类组合、路由/control set 绑定和 overlay activation verdict
+  - path: docs/governance/GATES_PROOF_SCORING.md
+    role: proof 与评分算法权威
+    result: corrected
+    action: 当前评分移出规范，implementation_complete 映射到明确实现状态
+  - path: docs/research/RESEARCH_WORKFLOW.md
+    role: 研究方法权威
+    result: corrected
+    action: 阻断具体决策/门禁而非整个阶段
+  - path: research/registry.yaml
+    role: 研究候选登记
+    result: corrected
+    action: production Profile 改为具体生产准入/分发决策并增加条件阻断策略
+  - path: research/README.md
+    role: 研究区说明
+    result: checked_no_drift
+    action: none
+  - path: policies/project-governance-routing.yaml
+    role: 机器路由策略
+    result: created
+    action: 定义完整路由输入 Schema、未知值处理、overlay 触发和跨契约激活字段映射
+  - path: policies/route-decision-contract.yaml
+    role: 路由裁决机器契约
+    result: created
+    action: 强制完整路由输入、显式 unknown、人工覆盖和逐 overlay 激活证据约束
+  - path: policies/control-set-contract.yaml
+    role: 控制集合契约
+    result: created
+    action: 为 lite/standard 基础配置及 overlay 模块分别定义必需控制类别、实现证据和 hash
+  - path: policies/overlay-activation-verdict-contract.yaml
+    role: 叠加能力激活裁决机器契约
+    result: created
+    action: 定义隔离验证、证据、授权、裁决签名和双版本激活不变量
+  - path: policies/authorization-snapshot-contract.yaml
+    role: 授权快照机器契约
+    result: created
+    action: 固定 Grant/Ticket/Lease 聚合、职责分离、有效期、撤销、验证和签名不变量
+  - path: policies/acceptance-verdict-claim-contract.yaml
+    role: 业务验收裁决与完成声明机器契约
+    result: created
+    action: 阻断空证据接受并锁定 subject、overlay 快照、control set、权限快照和 claim ceiling
+  - path: decisions/ADR-0001-standard-profile-thin-kernel.md
+    role: 历史决策
+    result: preserved_with_supersession_note
+    action: 保留原正文并追加 ADR-0002 替代范围
+  - path: decisions/ADR-0002-separate-framework-edition-and-project-governance.md
+    role: 当前分类决策
+    result: created
+    action: 固定两套分类轴和四类状态
+  - path: templates/research-package/README.md
+    role: 研究包模板说明
+    result: checked_no_drift
+    action: none
+  - path: docs/superpowers/specs/2026-07-10-ai-project-os-standard-profile-design.md
+    role: 历史设计记录
+    result: preserved_with_supersession_note
+    action: 保留原正文并标记当前非权威
+  - path: docs/superpowers/specs/2026-07-10-framework-edition-and-project-governance-design.md
+    role: 当前设计说明
+    result: created
+    action: 记录五组分类维度、六个对象状态坐标和验收条件
+  - path: docs/superpowers/plans/2026-07-10-framework-edition-and-project-governance-plan.md
+    role: 本轮执行计划
+    result: corrected
+    action: 纳入路由、控制集和激活裁决机器契约
+  - path: reviews/p0-design-review-architecture-workflow-adversarial.yaml
+    role: 历史架构与反方审查证据
+    result: checked_historical_evidence
+    action: 保留原结论，通过新 resolution 处理已过时分类
+  - path: reviews/p0-design-review-information-security.yaml
+    role: 历史信息架构与安全审查证据
+    result: checked_historical_evidence
+    action: 保留原结论，不作为当前规范
+  - path: reviews/p0-design-review-ai-research.yaml
+    role: 历史 AI 原生与研究审查证据
+    result: checked_historical_evidence
+    action: 保留原结论，不作为当前规范
+  - path: reviews/p0-design-revision-score.yaml
+    role: 历史设计评分证据
+    result: checked_historical_evidence
+    action: 保留 84 分历史快照，不作为当前得分
+  - path: reviews/profile-taxonomy-alignment-resolution.yaml
+    role: 当前问题处置记录
+    result: corrected
+    action: 同步可执行 Schema 与运行证明的剩余风险边界
+  - path: reviews/profile-taxonomy-alignment-score.yaml
+    role: 当前评分边界
+    result: corrected
+    action: 保持 not_evaluated，区分 84 分硬上限与实际得分
+  - path: reviews/profile-taxonomy-file-audit.yaml
+    role: 本轮逐文件审计清单
+    result: generated
+    action: 覆盖全部 Markdown/YAML 治理资产并记录处置
+
+review_evidence_policy:
+  historical_review_files_checked: true
+  historical_review_text_is_not_current_authority: true
+  current_numeric_score: not_evaluated
+  implementation_status: not_started

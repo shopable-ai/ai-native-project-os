@@ -1,0 +1,119 @@
+# 项目治理路由裁决机器契约
+# 逐 overlay 状态和激活约束的唯一机器权威。
+
+schema_version: 1
+contract_id: route-decision-contract
+contract_version: 1
+governance_scope: l3
+
+required_fields:
+  - extends
+  - route_decision_id
+  - version
+  - project_type
+  - route_inputs
+  - route_input_contract_ref
+  - route_input_contract_hash
+  - routing_policy_ref
+  - routing_policy_hash
+  - routing_reason
+  - manual_override
+  - base_governance_profile
+  - overlays
+  - control_set_ref
+  - control_set_version
+  - control_set_hash
+  - approved_by
+  - effective_at
+  - unknowns
+
+overlay_required_fields:
+  - required
+  - selected
+  - enabled
+  - implementation_status
+  - verification_status
+  - authorization_snapshot_ref
+  - overlay_activation_verdict_ref
+
+manual_override_required_fields:
+  - original_route
+  - override_values
+  - reason
+  - approved_by
+  - expires_at
+
+enums:
+  base_governance_profile: [lite, standard]
+  overlay: [multi_agent, production]
+  required_state: [true, false, unknown]
+  implementation_status: [not_started, partial, implemented]
+  verification_status: [unverified, verified, rejected]
+
+invariants:
+  - required_true_requires_selected_true
+  - enabled_true_requires_selected_true
+  - enabled_true_requires_implementation_status_implemented
+  - enabled_true_requires_verification_status_verified
+  - enabled_true_requires_non_null_authorization_snapshot_ref
+  - enabled_true_requires_accepted_overlay_activation_verdict_ref
+  - required_unknown_requires_matching_unknown_record
+  - required_unknown_blocks_activation_and_claim
+  - enabled_transition_requires_new_route_version
+  - route_inputs_include_every_field_from_pinned_input_contract
+  - unknown_route_input_is_explicit_and_never_treated_as_false
+  - route_decision_must_not_reference_itself
+  - control_set_hash_must_match_control_set_manifest
+  - non_null_manual_override_has_all_required_fields
+  - manual_override_approval_is_human_or_authorized_policy
+  - expired_manual_override_requires_route_recalculation
+  - unknown_or_missing_field_fails_closed
+
+manifest_example:
+  extends: controlled_object_base/v1
+  route_decision_id: route-id
+  version: 1
+  project_type: brownfield
+  route_inputs:
+    complexity: medium
+    uncertainty: medium
+    data_sensitivity: low
+    external_side_effect: none
+    reversibility: full
+    regulatory_impact: low
+    availability_requirement: medium
+    agent_collaboration_complexity: high
+    execution_topology: multi_agent
+    production_tier: test
+  route_input_contract_ref: project-governance-routing@1#route_input_required_fields
+  route_input_contract_hash: sha256
+  routing_policy_ref: project-governance-routing@1
+  routing_policy_hash: sha256
+  routing_reason: description
+  manual_override: null
+  base_governance_profile: standard
+  overlays:
+    multi_agent:
+      required: true
+      selected: true
+      enabled: false
+      implementation_status: not_started
+      verification_status: unverified
+      authorization_snapshot_ref: null
+      overlay_activation_verdict_ref: null
+    production:
+      required: false
+      selected: false
+      enabled: false
+      implementation_status: not_started
+      verification_status: unverified
+      authorization_snapshot_ref: null
+      overlay_activation_verdict_ref: null
+  control_set_ref: control-set-id
+  control_set_version: 1
+  control_set_hash: sha256
+  unknowns: []
+  approved_by: human-id
+  effective_at: timestamp
+  expires_at: timestamp-or-null
+  supersedes: null

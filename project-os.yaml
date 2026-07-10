@@ -5,18 +5,42 @@
 # - 每个非直观字段必须带中文说明，描述性内容直接使用中文。
 # - 英文编码不是面向用户的文案；未来命令行和界面默认显示中文。
 
-schema_version: 1                 # 配置结构版本
+schema_version: 3                 # 配置结构版本；第 3 版分离框架等级与项目治理配置
 system_id: ai-project-os          # 系统稳定标识，不随显示名称变化
 display_name: AI 项目推进操作系统   # 中文显示名称
-version: 0.1.0-design             # 当前为 0.1.0 设计基线，不是运行版本
-status: design_baseline           # 当前状态：设计基线
+version: 0.1.0-design             # design 系列标识，不表示设计基线已经批准
 primary_language: zh-CN           # 人工阅读和输出的默认语言：简体中文
 
-selected_profile: standard        # 当前启用：标准版
+# L1 框架建设范围。四级只表达产品能力边界，不表达项目治理或运行证明。
+framework:
+  target_edition: standard        # 当前目标是标准框架版本，不表示已经实现
+  edition_catalog:
+    minimal:
+      scope_status: defined       # 最小薄内核范围已定义
+    standard:
+      scope_status: defined       # 当前目标范围已定义，正在复核
+    platform:
+      scope_status: bounded       # 只定义边界，本阶段不建设
+    enterprise:
+      scope_status: bounded       # 最大企业版本，只定义边界，本阶段不建设
+
+# 项目治理能力目录。实际选择属于 L3 项目，L1 不替项目启用。
+project_governance_catalog:
+  selection_scope: l3_project
+  default_base_profile_when_unknown: standard
+  base_profiles: [lite, standard]
+  overlay_catalog: [multi_agent, production]
+  activation_requires: implementation_authorization_and_verdict
+
+# 当前仓库成熟度。选择、实现和验证是不同事实。
+maturity:
+  design_status: review_required
+  implementation_status: not_started
+  verification_status: unverified
 
 # 架构风格和薄内核原语
 architecture:
-  style: thin_kernel_with_profiles_and_adapters  # 薄内核 + 分级配置 + 外部适配器
+  style: thin_kernel_with_editions_governance_and_adapters  # 薄内核 + 框架等级 + 项目治理 + 外部适配器
   kernel_primitives:
     - objective_and_scope          # 项目目标与范围
     - controlled_artifacts        # 受控产物及权威位置
@@ -25,40 +49,59 @@ architecture:
     - gates_and_claims            # 阶段门禁与完成声明
     - runs_and_evidence           # 运行记录与验证证据
 
+# 同一主题只能有一个可编辑权威定义；摘要必须链接回权威文件。
+authority_policy:
+  single_editable_truth_per_topic: true
+  summaries_must_link_to_authority: true
+  raw_sources_may_drive_execution: false  # 原始来源必须先升格为批准事实或需求
+
 # 各类问题的唯一权威文件
 authority:
   architecture: docs/architecture/AI_PROJECT_OS_CORE.md                 # 核心架构
+  framework_editions: docs/architecture/FRAMEWORK_EDITION_MODEL.md       # 四级框架版本范围
+  repository_and_layers: docs/architecture/REPOSITORY_AND_LAYER_CONTRACT.md # L1/L2/L3 仓库与兼容契约
+  ai_native_execution: docs/architecture/AI_NATIVE_EXECUTION_MODEL.md    # AI 原生执行节点语义
   lifecycle: docs/workflows/PROJECT_LIFECYCLE.md                         # R0、S0—S7 生命周期
+  project_type_and_governance: docs/workflows/PROJECT_TYPE_AND_GOVERNANCE_ROUTING.md # 类型与治理配置路由
+  project_governance_policy: policies/project-governance-routing.yaml   # 机器可判定路由条件
+  route_decision_contract: policies/route-decision-contract.yaml        # 路由裁决与逐 overlay 状态契约
+  control_set_contract: policies/control-set-contract.yaml              # 控制集合机器契约
+  overlay_activation_verdict_contract: policies/overlay-activation-verdict-contract.yaml # 叠加能力激活裁决契约
+  authorization_snapshot_contract: policies/authorization-snapshot-contract.yaml # 授权快照有效性契约
+  acceptance_verdict_claim_contract: policies/acceptance-verdict-claim-contract.yaml # 业务验收裁决与声明契约
   architect_workflows: docs/workflows/ARCHITECT_WORKFLOWS.md             # 架构师工作流
   artifact_model: docs/governance/ARTIFACTS_AND_TRACEABILITY.md          # 产物与追溯关系
+  controlled_object_model: docs/governance/CONTROLLED_OBJECT_MODEL.md    # 受控对象字段、类型与关系
+  state_and_invalidation: docs/governance/STATE_TRANSITIONS_AND_INVALIDATION.md # 状态迁移和失效传播
+  authorization_and_isolation: docs/governance/AUTHORIZATION_SIDE_EFFECTS_AND_ISOLATION.md # 权限、副作用、隔离
+  run_evidence_acceptance: docs/governance/RUN_EVIDENCE_ACCEPTANCE.md    # Run、Evidence、裁决和声明
   gates_and_scoring: docs/governance/GATES_PROOF_SCORING.md              # 门禁、证据和评分
   research_method: docs/research/RESEARCH_WORKFLOW.md                     # 研究方法
   research_registry: research/registry.yaml                               # 当前研究任务登记表
 
-# 四级框架。当前只启用标准版，其余配置按证据升级。
-profiles:
-  lite:
-    enabled: false                # 是否启用轻量版
-    purpose: 低风险、短周期项目
-  standard:
-    enabled: true                 # 当前启用的标准版
-    purpose: 由架构、契约、门禁和证据治理的 AI 原生项目交付
-  multi_agent:
-    enabled: false                # 多智能体版尚未启用
-    activation_requires: research_and_runtime_proof  # 启用前必须完成研究和运行证明
-  production:
-    enabled: false                # 生产版尚未启用
-    activation_requires: security_recovery_and_real_runtime_proof  # 启用前必须有安全、恢复和真实运行证明
+# 审查记录是证据，不承载可编辑规范。
+review_evidence:
+  p0_design_revision:
+    - reviews/p0-design-review-architecture-workflow-adversarial.yaml
+    - reviews/p0-design-review-information-security.yaml
+    - reviews/p0-design-review-ai-research.yaml
+  profile_taxonomy_alignment:
+    - reviews/profile-taxonomy-alignment-resolution.yaml
+    - reviews/profile-taxonomy-file-audit.yaml
 
-# 当前实现状态和第三方依赖策略
-implementation:
-  status: not_started             # 尚未开始运行代码实现
+scoring_evidence:
+  historical_p0_design_revision: reviews/p0-design-revision-score.yaml
+  current: reviews/profile-taxonomy-alignment-score.yaml
+
+# 第三方依赖策略
+dependencies:
   external_dependencies: []       # 尚未锁定任何第三方运行依赖
   dependency_policy: research_then_pilot_then_pin  # 先研究，再试点，最后锁定版本
 
 # 当前完成声明上限
 claim_limits:
-  current_maximum: design_baseline  # 当前最多只能声明“设计基线已建立”
+  current_claims: []               # 当前没有运行或生产完成声明
+  ceiling: design_only             # 只能描述设计状态，不能外推实现或运行能力
   forbidden:
     - runtime_ready                         # 禁止声明：运行时已就绪
     - production_ready                      # 禁止声明：生产已就绪

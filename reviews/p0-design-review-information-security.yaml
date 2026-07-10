@@ -1,0 +1,352 @@
+schema_version: 1
+review_session_id: p0-design-review-information-security-20260710
+reviewed_at: '2026-07-10'
+roles:
+  - 信息架构与知识治理专家
+  - 安全、权限与可靠性专家
+records:
+  - review_id: INFO-001
+    reviewer_role: 信息架构与知识治理专家
+    attacked_assumption: "为单次设计审查提供的临时人工笔记应登记为 L1 框架来源资产。"
+    affected_artifact:
+      - project-os.yaml
+      - docs/architecture/REPOSITORY_AND_LAYER_CONTRACT.md
+    severity: P0
+    evidence:
+      - "L1 必须可以独立理解、验证和维护，不应依赖临时会话材料或其他项目的本机路径。"
+      - "临时笔记只能用于发现候选问题；被接受的概念必须经独立架构判断后重新表述。"
+    proposed_change: "禁止将临时人工笔记、聊天摘录、外部项目绝对路径或哈希登记为 L1 资产。仅将经独立验证后的通用结论写入其唯一权威文件，不保留临时材料的路径或措辞依赖。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: "实现阶段若不记录执行节点实际加载的上下文，临时材料仍可能绕过正式批准链。"
+
+  - review_id: INFO-002
+    reviewer_role: 信息架构与知识治理专家
+    attacked_assumption: "来源、事实、需求、假设、未知和研究可以只靠文档语境区分。"
+    affected_artifact:
+      - docs/governance/ARTIFACTS_AND_TRACEABILITY.md
+      - docs/research/RESEARCH_WORKFLOW.md
+      - docs/workflows/PROJECT_LIFECYCLE.md
+    severity: P0
+    evidence:
+      - "PROJECT_LIFECYCLE.md 的 S1 输出仅并列“事实/假设/未知”，未定义升格条件、批准状态和相互迁移。"
+      - "RESEARCH_WORKFLOW.md 第 5 节写“确认的业务事实 → business/”，但未要求事实所有者批准，可能把研究结论直接升格为业务事实。"
+      - "ARTIFACTS_AND_TRACEABILITY.md 仅笼统定义“业务事实和需求”，没有区分 source assertion、candidate fact、approved fact、assumption、unknown、research question 和 verdict。"
+    proposed_change: "在受控对象权威中定义认知对象语义和合法迁移：原始陈述只能生成候选事实、假设、未知或研究问题；只有明确 approver 和批准记录才能形成 approved_fact/approved_requirement；研究 Verdict 只能提出升格请求，不能自行成为业务事实。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: "事实批准者与需求范围负责人若未在 L2/L3 实例中绑定，机器规则仍无法阻止越权升格。"
+
+  - review_id: INFO-003
+    reviewer_role: 信息架构与知识治理专家
+    attacked_assumption: "一个通用最小字段样例足以控制所有重要对象类型。"
+    affected_artifact:
+      - docs/governance/ARTIFACTS_AND_TRACEABILITY.md
+    severity: P0
+    evidence:
+      - "第 4 节最小字段只有 id、type、canonical_path、version、status、owner_role、若干关系、proof_level 和 content_hash。"
+      - "缺少 executor、approver、verifier、required_inputs、outputs、gate、failure_routes、stale_status 和 supersedes 的统一语义。"
+      - "没有覆盖 Source、Approved Fact、Assumption、Unknown、Research、ADR、Run、Evidence、Acceptance Verdict、Completion Claim、Retrospective 等对象的逐类型矩阵。"
+    proposed_change: "建立唯一受控对象类型矩阵，统一 stable_id、object_type、canonical_path、version、status、owner、executor、approver、verifier、required_inputs、outputs、typed_relations、gate、failure_routes、content_hash、proof_level、stale_status、supersedes；再按对象类型声明必填、可选、禁止字段和权威层级。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: "若矩阵仅存在于 Markdown 而没有后续 Schema 和交叉引用检查器，实现阶段仍可能发生字段漂移。"
+
+  - review_id: INFO-004
+    reviewer_role: 信息架构与知识治理专家
+    attacked_assumption: "当前“一个权威定义”原则已经保证同一结论只有一个可编辑真相。"
+    affected_artifact:
+      - project-os.yaml
+      - docs/governance/GATES_PROOF_SCORING.md
+      - docs/workflows/PROJECT_LIFECYCLE.md
+      - docs/architecture/REPOSITORY_AND_LAYER_CONTRACT.md
+      - docs/workflows/PROJECT_TYPE_AND_PROFILE_ROUTING.md
+    severity: P0
+    evidence:
+      - "ARTIFACTS_AND_TRACEABILITY.md 第 3 节声明每个受控对象只有一个权威定义位置。"
+      - "PROJECT_LIFECYCLE.md 第 3 节维护六级中文证据枚举，而 GATES_PROOF_SCORING.md 第 1 节维护八级英文证据枚举。"
+      - "新增层级契约和 Profile 路由文件尚未登记到 project-os.yaml authority，无法确定其是否为正式唯一权威。"
+    proposed_change: "在 project-os.yaml 登记所有新增主题权威，并把 proof_level 枚举置于一个机器权威位置；其他文档只引用该枚举或生成中文视图，不再维护第二套列表。为每个主题明确 normative authority 与 explanatory reference。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: "在生成中文视图和引用检查尚未实现前，人工复制枚举仍可能重新制造分叉。"
+
+  - review_id: INFO-005
+    reviewer_role: 信息架构与知识治理专家
+    attacked_assumption: "“能力树”可以同时表达业务能力和技术能力而不造成追溯歧义。"
+    affected_artifact:
+      - docs/architecture/AI_PROJECT_OS_CORE.md
+      - docs/governance/ARTIFACTS_AND_TRACEABILITY.md
+      - docs/workflows/PROJECT_LIFECYCLE.md
+    severity: P0
+    evidence:
+      - "AI_PROJECT_OS_CORE.md 主链把“能力树和功能树”放在架构决策之前，但未声明这里是业务能力。"
+      - "ARTIFACTS_AND_TRACEABILITY.md 只定义单一“能力树：系统需要哪些稳定能力”。"
+      - "PROJECT_LIFECYCLE.md 的 S4 又把“能力”列为已接受架构的输出，容易把业务能力和技术能力混在同一对象类型。"
+    proposed_change: "拆分 business_capability 与 technical_capability：业务链路推导业务能力和用户功能；架构决策再推导技术能力、组件与工程链路。分别定义关系 derives_from、realized_by 或 implements，禁止同一 object_type 混用。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: "既有 L2 资产若使用泛化 capability 标识，需要兼容映射和迁移规则。"
+
+  - review_id: INFO-006
+    reviewer_role: 信息架构与知识治理专家
+    attacked_assumption: "现有主追溯链已经完整表达从来源到完成与演进的裁决过程。"
+    affected_artifact:
+      - docs/architecture/AI_PROJECT_OS_CORE.md
+      - docs/governance/ARTIFACTS_AND_TRACEABILITY.md
+    severity: P0
+    evidence:
+      - "AI_PROJECT_OS_CORE.md 第 4 节由 Evidence 直接进入 Completion Claim，缺少 Acceptance Verdict。"
+      - "ARTIFACTS_AND_TRACEABILITY.md 第 1 节同样由证据直接进入声明。"
+      - "两处主链均未完整纳入批准事实/需求、架构决策、验收裁决以及复盘与资产演进。"
+    proposed_change: "统一唯一主关系为：来源→批准事实/需求→场景/触发→业务链路→业务能力/功能→架构决策/技术能力/工程链路→I/O与验收判据→Spec→Task→Workflow→Skill/Tool→Run→Evidence→Acceptance Verdict→Completion Claim→Retrospective/Asset Evolution；明确 Spec 是控制外壳而非普通运行节点。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: "若关系类型仍只有 derives_from/implements 等粗粒度关系，裁决依据、批准依据和升格依据可能无法精确查询。"
+
+  - review_id: INFO-007
+    reviewer_role: 信息架构与知识治理专家
+    attacked_assumption: "在检查器清单中询问原始来源是否绕过批准事实，已经足以阻止来源直接驱动实现。"
+    affected_artifact:
+      - docs/governance/ARTIFACTS_AND_TRACEABILITY.md
+      - docs/architecture/AI_PROJECT_OS_CORE.md
+      - docs/research/RESEARCH_WORKFLOW.md
+    severity: P0
+    evidence:
+      - "ARTIFACTS_AND_TRACEABILITY.md 第 6 节第 3 项只提出检查问题，没有定义禁止关系、失败语义或批准路径。"
+      - "AI_PROJECT_OS_CORE.md 虽给出来源到批准事实的顺序，但没有明确 Source 可建立和禁止建立的 typed relations。"
+      - "RESEARCH_WORKFLOW.md 规定研究报告不得直接成为业务事实，却未覆盖原始来源直接生成 Spec、Task、Workflow、Skill、Tool 或实现的旁路。"
+    proposed_change: "定义 fail-closed 关系约束：Source 只能 derives_to candidate_fact/assumption/unknown/research_input；不得直接 implements、governs 或产生 Spec/Task/Workflow/Skill/Tool。任何实现对象必须可追溯到 approved_requirement 和 acceptance criterion；下游失败只能创建 upstream_review_request。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: "自由文本提示词和未登记临时文件仍可能成为隐蔽输入，需要执行节点记录全部上下文来源与哈希。"
+
+  - review_id: INFO-008
+    reviewer_role: 信息架构与知识治理专家
+    attacked_assumption: "临时人工摘录中的观点经分类后可以直接升格为框架规范。"
+    affected_artifact:
+      - docs/governance/CONTROLLED_OBJECT_MODEL.md
+      - docs/research/RESEARCH_WORKFLOW.md
+    severity: P1
+    evidence:
+      - "手工摘录可能同时包含正确观点、错误顺序、业务个例、候选工具和无证据判断。"
+      - "“用于查漏补缺”不等于该材料具有正式来源、研究或决策资格。"
+    proposed_change: "只保留经需求、架构、权威研究或实验独立验证的通用结论；在正式权威文件中重新定义，不保存摘录文件、路径、段落裁决或 extracted_to 映射。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: "后续 Agent 仍可能把聊天摘要误当权威；所有实施输入仍必须回到已批准需求、正式研究和架构决策。"
+
+  - review_id: INFO-009
+    reviewer_role: 信息架构与知识治理专家
+    attacked_assumption: "研究登记项处于 planned 状态时仍可以拥有主观质量分，并可统一阻断标准版阶段。"
+    affected_artifact:
+      - research/registry.yaml
+      - docs/research/RESEARCH_WORKFLOW.md
+      - docs/governance/GATES_PROOF_SCORING.md
+    severity: P0
+    evidence:
+      - "research/registry.yaml 顶层 status=planned，但十个项目均具有 current_research_quality=70—92。"
+      - "RSH-OSS-001 至 RSH-OSS-006 把候选适配器研究直接设置为 S1—S6 的 P0 阻断项。"
+      - "GATES_PROOF_SCORING.md 要求评分可由维度、权重、处罚和封顶重算，登记表却没有评分输入、证据引用或计算方法。"
+    proposed_change: "将无评分输入的 current_research_quality 改为 evaluation_status=not_evaluated；把 blocks_stage 改为条件式 blocks_decision，仅当具体关键决策显式 depends_on 该研究且风险阈值满足时阻断。候选工具保持 adapter_candidate，不成为标准版既定依赖。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: "如果没有 decision_id、blocking_reason、activated_at 和解除条件，条件式阻断仍可能被人工任意解释。"
+
+  - review_id: INFO-010
+    reviewer_role: 信息架构与知识治理专家
+    attacked_assumption: "定义 L3→L2→L1 的依赖方向，就已经完整定义了知识和资产升格治理。"
+    affected_artifact:
+      - docs/architecture/REPOSITORY_AND_LAYER_CONTRACT.md
+      - docs/research/RESEARCH_WORKFLOW.md
+      - docs/governance/ARTIFACTS_AND_TRACEABILITY.md
+    severity: P1
+    evidence:
+      - "REPOSITORY_AND_LAYER_CONTRACT.md 已要求 L3→L2 和 L2→L1 升格具备消费者、稳定契约、反例、边界、责任及异构验证。"
+      - "RESEARCH_WORKFLOW.md 第 5 节仍使用不带层级、批准者和资格判定的目录式升格表达。"
+      - "ARTIFACTS_AND_TRACEABILITY.md 未把 promotion、demotion、deprecation、retirement 建模为带裁决和证据的受控关系或状态。"
+    proposed_change: "以层级契约作为资产升格唯一权威；研究工作流只引用它。为 promotion_verdict 定义来源层、目标层、消费者、异构验证、反例集、适用边界、兼容范围、维护者和重审条件，并为模板、Workflow、Skill、Tool 建立 candidate、active、deprecated、retired 及 invalidated 状态。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: "设计基线只能定义资格；在没有异构项目运行证据前，任何 L1 通用性声明仍必须保持未证明。"
+
+  - review_id: SECU-001
+    reviewer_role: 安全、权限与可靠性专家
+    attacked_assumption: "当前责任分离表已经足以阻止 Agent 自提、自批、自证。"
+    affected_artifact:
+      - docs/governance/AUTHORIZATION_SIDE_EFFECTS_AND_ISOLATION.md
+      - docs/governance/CONTROLLED_OBJECT_MODEL.md
+      - docs/governance/RUN_EVIDENCE_ACCEPTANCE.md
+    severity: P0
+    evidence:
+      - "AUTHORIZATION_SIDE_EFFECTS_AND_ISOLATION.md 第 14 行只要求高风险时 executor 与 approver/verifier 分离，没有明确 approver 与 verifier 是否必须互相独立。"
+      - "CONTROLLED_OBJECT_MODEL.md 第 43 行仅禁止同一 AI 同时承担四项责任，仍可能允许同一 AI 兼任其中三项。"
+      - "Acceptance Verdict 的 decided_by 支持 independent-gate，但未要求记录其与 executor、approver 的身份冲突检查结果。"
+    proposed_change: "建立逐对象、逐动作的责任分离矩阵。真实外部写、敏感数据、例外、生产声明和高风险 Verdict 必须满足 executor、approver、verifier 三方身份互斥；owner 必须是可追责人类。机器门禁必须校验 actor_id、human_identity 和 delegation_chain，冲突时 fail-closed。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: "设计无法证明多个账号背后不是同一主体；后续仍需身份提供方和审计运行证明。"
+
+  - review_id: SECU-002
+    reviewer_role: 安全、权限与可靠性专家
+    attacked_assumption: "capability_id 加若干权限数组足以表达最小权限授权。"
+    affected_artifact:
+      - docs/governance/AUTHORIZATION_SIDE_EFFECTS_AND_ISOLATION.md
+      - docs/architecture/AI_NATIVE_EXECUTION_MODEL.md
+    severity: P0
+    evidence:
+      - "能力授权样例只有 file_roots、network_destinations、secret_refs、data_classes 和 external_actions，未区分具体操作、资源选择器、环境、次数和 deny 规则。"
+      - "agent_action 虽要求能力白名单，但节点声明没有 capability_ref、授权作用域或授权版本。"
+      - "授权缺少 issued_for_run、policy_version、namespace、max_uses、conditions 和 audit_ref，难以约束授权转用。"
+    proposed_change: "把授权建模为版本化 capability grant：包含 project_id、namespace、environment、subject、resource_selector、allowed_operations、explicit_denies、purpose、issued_for_run、policy_version、max_uses、有效期、撤销状态和审计引用；默认拒绝且 deny 优先，未知字段或未知操作 fail-closed。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: "没有权限执行器和拒绝路径测试前，声明式 grant 仍不能证明实际 Tool 遵守授权。"
+
+  - review_id: SECU-003
+    reviewer_role: 安全、权限与可靠性专家
+    attacked_assumption: "限制 file_roots 就能阻止跨项目文件访问。"
+    affected_artifact:
+      - docs/governance/AUTHORIZATION_SIDE_EFFECTS_AND_ISOLATION.md
+    severity: P0
+    evidence:
+      - "第 24、36、42 行只规定允许根目录，未区分 read、create、modify、delete、execute。"
+      - "没有规定路径规范化、realpath 校验、符号链接逃逸、硬链接、挂载点、相对路径和临时文件继承规则。"
+      - "删除属于人工门禁动作，但文件权限模型没有把 delete 单独建模。"
+    proposed_change: "文件授权必须绑定规范化绝对路径和操作集合，并在每次访问时做 realpath containment；拒绝符号链接、挂载或路径变化造成的根目录逃逸。read/write/create/delete/execute 分开授权，临时目录继承同一 namespace，删除和跨根移动单独审批。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: "不同平台的链接、ACL 和文件系统语义不同，仍需跨平台安全测试。"
+
+  - review_id: SECU-004
+    reviewer_role: 安全、权限与可靠性专家
+    attacked_assumption: "按 network_destinations 限制网络目标即可形成可靠的网络边界。"
+    affected_artifact:
+      - docs/governance/AUTHORIZATION_SIDE_EFFECTS_AND_ISOLATION.md
+      - docs/architecture/AI_NATIVE_EXECUTION_MODEL.md
+    severity: P0
+    evidence:
+      - "第 25、36 行没有定义 destination 的 host、port、protocol、method/action 和 TLS 身份结构。"
+      - "未覆盖 DNS 重绑定、重定向、代理转发、私网地址、metadata endpoint 或解析后 IP 漂移。"
+      - "read_external 被描述为禁止写入，但 HTTP 方法本身不能保证远端操作无副作用。"
+    proposed_change: "定义结构化网络授权和 egress 校验：固定 scheme、host、port、动作、TLS 身份、重定向策略和解析后地址范围；默认拒绝私网及元数据端点，除非精确授权。外部读取必须依契约声明无副作用，未知语义按写操作治理。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: "第三方接口可能违反其无副作用契约，仍需外部回执和真实状态审计。"
+
+  - review_id: SECU-005
+    reviewer_role: 安全、权限与可靠性专家
+    attacked_assumption: "秘密采用 secret_refs 且禁止写入 prompt、日志、Evidence 或缓存，就足以防止泄漏。"
+    affected_artifact:
+      - docs/governance/AUTHORIZATION_SIDE_EFFECTS_AND_ISOLATION.md
+      - docs/governance/RUN_EVIDENCE_ACCEPTANCE.md
+    severity: P0
+    evidence:
+      - "第 26、36、46 行规定引用和项目归属，但没有定义短时租约、轮换、撤销传播、使用次数或派生凭据。"
+      - "Run 和 Evidence 会保存 Tool 输出、失败信息和原始观察，未要求保存前进行秘密检测与结构化脱敏。"
+      - "异常栈、HTTP 回执、命令输出和模型上下文仍可能间接包含秘密。"
+    proposed_change: "秘密授权必须采用项目绑定的短时 lease，记录 owner、用途、使用主体、环境、有效期、轮换和撤销传播。所有 prompt、Tool I/O、异常、日志、trace、Evidence 和缓存写入前执行结构化脱敏与秘密扫描；检测到疑似泄漏时隔离产物、撤销凭据并阻断 Claim。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: "检测器存在漏报可能，生产证明仍需要真实泄漏测试和密钥轮换演练。"
+
+  - review_id: SECU-006
+    reviewer_role: 安全、权限与可靠性专家
+    attacked_assumption: "为各项目声明不可碰撞 namespace，就已经实现文件、缓存、RAG、日志和秘密隔离。"
+    affected_artifact:
+      - docs/governance/AUTHORIZATION_SIDE_EFFECTS_AND_ISOLATION.md
+      - docs/architecture/REPOSITORY_AND_LAYER_CONTRACT.md
+    severity: P0
+    evidence:
+      - "第 40—49 行列出隔离对象和默认拒绝原则，但未定义 namespace 的生成、注册、碰撞检测及禁止默认值。"
+      - "缓存 key、RAG collection、日志与 trace 没有要求把 project_id、环境和版本作为不可省略的复合键。"
+      - "跨项目共享只要求共享资产 ID、去敏和审批，未规定复制、引用、撤销和消费者删除传播语义。"
+    proposed_change: "建立 namespace 契约：由稳定 project_id、environment 和资源类型生成，创建时注册并检测碰撞；空值、default、global 和未登记 namespace 均 fail-closed。缓存、RAG、日志、trace、secret 和幂等键必须携带完整 namespace。跨项目共享通过版本化共享资产和显式授权，不允许直接挂接源项目私有存储。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: "共享向量库、日志后端或缓存服务的底层访问控制尚未实现，当前不能证明租户隔离。"
+
+  - review_id: SECU-007
+    reviewer_role: 安全、权限与可靠性专家
+    attacked_assumption: "审批票据绑定输入摘要、目标摘要和策略版本即可防止审批后替换目标或内容。"
+    affected_artifact:
+      - docs/governance/AUTHORIZATION_SIDE_EFFECTS_AND_ISOLATION.md
+      - docs/governance/RUN_EVIDENCE_ACCEPTANCE.md
+    severity: P0
+    evidence:
+      - "第 64 行使用“摘要”，但未定义必须为规范化内容哈希还是人类可编辑描述。"
+      - "审批票据没有明确绑定外部账号、精确目标集合、动作类型、内容/金额、环境、授权主体和最大执行次数。"
+      - "没有审批票据单次消费或并发消费规则，存在同一批准被多个 Run 重用的风险。"
+    proposed_change: "审批必须绑定规范化不可变预览及其哈希：Run、project namespace、actor、外部账号、动作、精确目标、内容或金额、Tool/策略版本、环境、有效期和 max_uses。不可逆动作默认单次消费，通过原子状态 pending→consumed；任何字段变化、重复消费或并发冲突均使审批失效。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: "若外部系统在提交瞬间修改价格、收件人或资源版本，仍需条件写入或提交前再次校验。"
+
+  - review_id: SECU-008
+    reviewer_role: 安全、权限与可靠性专家
+    attacked_assumption: "提供幂等键并要求未知结果先查询，就能防止崩溃恢复时重复发送、扣费、删除或发布。"
+    affected_artifact:
+      - docs/governance/AUTHORIZATION_SIDE_EFFECTS_AND_ISOLATION.md
+      - docs/governance/STATE_TRANSITIONS_AND_INVALIDATION.md
+    severity: P0
+    evidence:
+      - "第 64、68 行要求幂等键，但未定义键的作用域、唯一性、持久化期限或与外部请求 ID 的映射。"
+      - "STATE_TRANSITIONS_AND_INVALIDATION.md 第 34—36 行没有定义副作用提交前后的持久检查点顺序。"
+      - "若进程在外部动作成功后、回执落盘前崩溃，单靠新 Run 和幂等键仍可能重复执行。"
+    proposed_change: "定义 operation_id 与 attempt_id 分离的副作用状态机：prepared→approved→dispatched→acknowledged→reconciled/unknown/compensated。调用前持久化 operation、幂等键和审批消费，调用后保存外部 request_id/receipt。恢复只能按同一 operation_id 对账；未证明外部幂等时禁止自动重放。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: "无法提供幂等或状态查询的外部系统只能达到人工对账级保证，不能声称 exactly-once。"
+
+  - review_id: SECU-009
+    reviewer_role: 安全、权限与可靠性专家
+    attacked_assumption: "超时或回执缺失时 fail-closed，已经完整定义了可靠恢复。"
+    affected_artifact:
+      - docs/governance/AUTHORIZATION_SIDE_EFFECTS_AND_ISOLATION.md
+      - docs/governance/STATE_TRANSITIONS_AND_INVALIDATION.md
+      - docs/governance/RUN_EVIDENCE_ACCEPTANCE.md
+    severity: P0
+    evidence:
+      - "权限文档第 66 行要求先查询外部状态，但没有规定查询不可用、结果模糊或多个结果冲突时如何处理。"
+      - "状态文档只要求未知写入不得盲重试，没有定义 unknown 状态的责任人、期限、升级和声明上限。"
+      - "Run 的 semantic_result 支持 unknown，但 Acceptance Verdict 未明确禁止 unknown 副作用进入 accepted。"
+    proposed_change: "为未知副作用建立 reconciliation case：记录 owner、外部标识、查询证据、影响范围、截止时间和人工处置。状态不明确时 Run=unknown、Verdict 不得 accepted、相关资源和后续依赖动作保持 blocked；超过期限升级事故处理，只有独立对账 Evidence 才能解除。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: "外部系统永久缺乏审计接口时，部分未知状态可能只能由业务责任人接受残余风险。"
+
+  - review_id: SECU-010
+    reviewer_role: 安全、权限与可靠性专家
+    attacked_assumption: "保存外部回执就足以证明发送、付款、删除、发布或撤销的实际结果。"
+    affected_artifact:
+      - docs/governance/AUTHORIZATION_SIDE_EFFECTS_AND_ISOLATION.md
+      - docs/governance/RUN_EVIDENCE_ACCEPTANCE.md
+    severity: P1
+    evidence:
+      - "第 66 行要求保存外部回执和观测状态，但未定义回执来源真实性、完整性和与请求的关联校验。"
+      - "Evidence 协议允许 collector 为 actor-or-tool，可能由执行副作用的同一 Tool 自报成功。"
+      - "撤销或补偿只要求独立 Evidence，没有要求验证最终外部状态和残余影响。"
+    proposed_change: "外部副作用 Evidence 必须包含 provider、external_request_id、目标、动作、结果、时间、完整响应哈希和采集路径；高风险结果由独立 verifier 通过外部状态读取或第二可信通道确认。补偿 Verdict 必须分别报告原动作、补偿动作、最终状态和不可恢复残余影响。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: "第三方提供的回执本身仍可能错误或延迟，生产级声明需要定期对账和事故演练。"

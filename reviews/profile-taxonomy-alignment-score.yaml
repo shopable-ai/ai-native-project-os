@@ -1,0 +1,26 @@
+schema_version: 1
+score_record_id: SCORE-PROFILE-TAXONOMY-20260710
+scope: framework-edition-project-governance-alignment
+evaluation_status: not_evaluated
+supersedes_current_use_of: SCORE-P0-DESIGN-20260710
+
+reason_not_evaluated:
+  - 当前修改尚未形成带不可变内容清单的发布快照
+  - 尚无可执行 Schema 校验器、路由器、状态检查器或端到端 Run/Evidence
+  - 旧 84 分记录不能因规范变化自动沿用
+
+verified_facts:
+  implementation_score: 0
+  local_runtime_proof_score: 0
+  production_proof_score: 0
+  current_hard_gate_ceiling: 84
+  ceiling_reason: 没有端到端运行证据或恢复机制运行证明
+
+required_before_numeric_score:
+  - immutable_input_manifest_with_hashes
+  - executable_verification_commands_and_outputs
+  - dimension_evidence_reassessment
+  - penalties_and_hard_gate_recalculation
+  - independent_review_of_current_snapshot
+
+note: 84 是当前可声明的最高封顶，不是本轮已经获得的实际分数。

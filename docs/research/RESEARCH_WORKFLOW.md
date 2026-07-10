@@ -19,7 +19,9 @@
 priority = impact × uncertainty × irreversibility
 ```
 
-三个维度按 1—5 评分。任一维度为 5，或总分不低于 48，并且研究位于当前关键路径时，阻断相关架构决策。
+三个维度按 1—5 评分。任一维度为 5，或总分不低于 48，并且研究位于当前关键路径时，只能阻断明确的 `blocks_decision`，不得阻断整个 R0/S0—S7 阶段。
+
+阻断还必须同时满足：决策显式依赖该研究、没有已批准的安全后备路径、阻断理由和解除条件明确、阻断已由该决策 owner 批准。否则 `blocking_active: false`。候选适配器研究不得阻断与工具无关的薄内核协议、设计修订或最小实现计划。
 
 ## 3. 研究流程
 
@@ -41,7 +43,7 @@ priority = impact × uncertainty × irreversibility
 
 | 文件或目录 | 职责 |
 |---|---|
-| `brief.md` | 问题、范围、阻断阶段、成功条件 |
+| `brief.md` | 问题、范围、可能阻断的具体决策/门禁、激活条件、批准者、解除条件和成功条件 |
 | `sources.yaml` | 来源、权威等级、日期、适用范围 |
 | `options.md` | 候选、评分和淘汰原因 |
 | `experiment-plan.md` | 最小实验、数据、命令和判据 |
@@ -52,16 +54,15 @@ priority = impact × uncertainty × irreversibility
 ## 5. 研究结果的升格
 
 ```text
-确认的业务事实 → 业务系统的 business/
-架构选择       → decisions/
-稳定接口       → contracts/
-工程控制要求   → specs/
-可复用编排     → workflows/
-成熟局部能力   → skills/
-原始研究材料   → research/archive/
+研究 Verdict → 责任人批准的事实/需求升格请求，或候选架构决策
+候选架构决策 → 已批准 ADR
+第三方候选   → adapter contract → conformance evidence → pinned dependency/lock
+原始研究材料 → research/archive/
 ```
 
-研究报告本身不得直接成为业务事实或生产声明。
+研究报告本身不得直接成为业务事实、正式依赖或生产声明。业务事实必须由对应 L2/L3 owner 批准；资产跨 L3/L2/L1 升格遵守 [仓库与层级契约](../architecture/REPOSITORY_AND_LAYER_CONTRACT.md)。
+
+planned 任务没有来源审计、实验和 Evidence 时，研究质量必须是 `not_evaluated`。任何分数都必须遵守 [门禁、证据等级与评分](../governance/GATES_PROOF_SCORING.md) 的可重算记录要求。
 
 ## 6. 开源采用门禁
 

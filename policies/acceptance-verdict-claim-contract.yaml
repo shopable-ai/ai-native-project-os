@@ -1,0 +1,90 @@
+# 业务验收裁决与完成声明机器契约
+# 空判据或空证据只能保持 pending，不能利用空集合真值签发接受结论。
+
+schema_version: 1
+contract_id: acceptance-verdict-claim-contract
+contract_version: 1
+
+acceptance_verdict_required_fields:
+  - extends
+  - verdict_id
+  - project_id
+  - route_decision_ref
+  - overlay_status_snapshot_ref
+  - overlay_status_snapshot_hash
+  - control_set_ref
+  - control_set_hash
+  - subject_refs
+  - requirement_baseline_id
+  - subject_and_scope
+  - criteria_refs
+  - evidence_refs
+  - evidence_hashes
+  - environment_and_input_class
+  - approval_and_permission_snapshot_refs
+  - approval_and_permission_snapshot_hashes
+  - decision
+  - claim_ceiling
+  - decided_by
+  - decided_at
+  - signature_ref
+
+completion_claim_required_fields:
+  - extends
+  - claim_id
+  - claim_status
+  - subject_refs
+  - requirement_baseline_id
+  - scope
+  - environment
+  - input_classes
+  - route_decision_ref
+  - overlay_status_snapshot_ref
+  - overlay_status_snapshot_hash
+  - control_set_ref
+  - control_set_hash
+  - proof_level
+  - verdict_ref
+  - evidence_hashes
+  - approval_and_permission_snapshot_refs
+  - approval_and_permission_snapshot_hashes
+  - verification_commands
+  - issued_by
+  - issued_at
+  - expires_at
+  - uncovered_scope
+  - prohibited_extrapolations
+
+enums:
+  verdict_decision: [pending, accepted, rejected, conditional, revoked]
+  claim_status: [draft, issued, expired, withdrawn]
+
+verdict_invariants:
+  - accepted_requires_non_empty_subject_criteria_evidence_and_evidence_hashes
+  - accepted_requires_evidence_refs_and_hashes_same_cardinality
+  - accepted_requires_non_empty_permission_snapshot_refs_and_hashes
+  - accepted_requires_permission_snapshot_refs_and_hashes_same_cardinality
+  - accepted_requires_every_criterion_passed
+  - accepted_requires_every_evidence_verified_fresh_and_subject_matched
+  - accepted_requires_exact_route_overlay_snapshot_and_control_set_binding
+  - accepted_requires_control_set_base_profile_implemented_and_evidenced
+  - accepted_requires_verified_fresh_permission_snapshots_with_matching_hashes
+  - required_unknown_or_required_but_disabled_overlay_blocks_acceptance
+  - pending_may_use_empty_evidence_but_cannot_issue_claim
+
+claim_invariants:
+  - issued_requires_non_empty_subject_refs
+  - issued_requires_non_empty_evidence_hashes
+  - issued_requires_non_empty_verification_commands
+  - issued_requires_non_empty_permission_snapshot_refs_and_hashes
+  - issued_requires_permission_snapshot_refs_and_hashes_same_cardinality
+  - claim_requires_accepted_unexpired_verdict
+  - claim_subject_and_scope_must_not_expand_verdict
+  - claim_route_overlay_snapshot_and_control_set_must_equal_verdict
+  - claim_permission_snapshots_must_equal_verdict
+  - claim_evidence_hashes_must_be_subset_of_verdict_evidence_hashes
+  - claim_proof_level_must_not_exceed_verdict_or_critical_path_ceiling
+  - expired_revoked_or_stale_dependency_withdraws_claim
+  - claim_status_transition_is_draft_to_issued_to_expired_or_withdrawn
+  - expired_or_withdrawn_claim_cannot_return_to_issued
+  - unknown_or_missing_field_fails_closed

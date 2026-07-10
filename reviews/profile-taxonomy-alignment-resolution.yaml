@@ -1,0 +1,86 @@
+schema_version: 1
+resolution_id: PROFILE-TAXONOMY-ALIGNMENT-20260710
+reviewed_at: "2026-07-10"
+scope: framework-edition-project-governance-alignment
+review_roles:
+  - 框架与信息架构审计
+  - Workflow 与治理协议审计
+  - 研究、评分与历史证据审计
+
+supersedes_conclusions:
+  - review_ref: reviews/p0-design-review-architecture-workflow-adversarial.yaml#ARCH-006
+    reason: 旧结论仍把 lite、standard、multi_agent、production 放在同一 Profile 轴，现拆为框架等级、基础治理配置和叠加能力。
+
+findings:
+  - id: TAXONOMY-001
+    severity: P0
+    issue: 根配置用 selected_profile 和 enabled 混合选择、实现与运行激活
+    resolution_status: resolved_in_design
+    resolved_by:
+      - project-os.yaml
+      - docs/architecture/FRAMEWORK_EDITION_MODEL.md
+      - decisions/ADR-0002-separate-framework-edition-and-project-governance.md
+    remaining_risk: 尚无可执行 Schema 校验器和消费者兼容测试
+
+  - id: TAXONOMY-002
+    severity: P0
+    issue: multi_agent 和 production 被错误建模为第三、第四级框架，enterprise 缺失
+    resolution_status: resolved_in_design
+    resolved_by:
+      - docs/architecture/FRAMEWORK_EDITION_MODEL.md
+      - docs/workflows/PROJECT_TYPE_AND_GOVERNANCE_ROUTING.md
+    remaining_risk: platform 与 enterprise 边界尚无异构消费者验证
+
+  - id: TAXONOMY-003
+    severity: P0
+    issue: 项目路由无法表达 standard + multi_agent + production，也没有逐 overlay 状态和控制集绑定
+    resolution_status: resolved_in_design
+    resolved_by:
+      - docs/workflows/PROJECT_TYPE_AND_GOVERNANCE_ROUTING.md
+      - policies/project-governance-routing.yaml
+      - policies/route-decision-contract.yaml
+      - policies/control-set-contract.yaml
+      - policies/overlay-activation-verdict-contract.yaml
+      - policies/authorization-snapshot-contract.yaml
+      - policies/acceptance-verdict-claim-contract.yaml
+      - docs/governance/RUN_EVIDENCE_ACCEPTANCE.md
+    remaining_risk: 路由器、control set 编译器和激活门禁尚未实现
+
+  - id: TAXONOMY-004
+    severity: P0
+    issue: 真实外部写、生产运行和 production_proof 被混用
+    resolution_status: resolved_in_design
+    resolved_by:
+      - docs/workflows/PROJECT_TYPE_AND_GOVERNANCE_ROUTING.md
+      - docs/governance/AUTHORIZATION_SIDE_EFFECTS_AND_ISOLATION.md
+      - docs/governance/GATES_PROOF_SCORING.md
+    remaining_risk: 真实外部写和生产准入均无运行证明
+
+  - id: TAXONOMY-005
+    severity: P0
+    issue: lifecycle、工作、审批、实现、proof 和 stale 字段未在对象模型中正交
+    resolution_status: resolved_in_design
+    resolved_by:
+      - docs/governance/CONTROLLED_OBJECT_MODEL.md
+      - docs/governance/STATE_TRANSITIONS_AND_INVALIDATION.md
+    remaining_risk: 状态 Schema、迁移检查器和失效闭包尚未实现
+
+  - id: TAXONOMY-006
+    severity: P1
+    issue: 研究登记仍使用生产 Profile 和阶段式阻断语言
+    resolution_status: resolved_in_design
+    resolved_by:
+      - docs/research/RESEARCH_WORKFLOW.md
+      - research/registry.yaml
+    remaining_risk: planned 研究均无真实研究包或 Verdict
+
+history_policy:
+  old_reviews_are_immutable_evidence: true
+  old_design_record_restored_as_superseded: true
+  current_normative_authority_must_not_be_inferred_from_old_evidence: true
+
+claim_boundary:
+  design_semantics_status: defined_pending_snapshot_review
+  implementation_status: not_started
+  local_runtime_proof: absent
+  production_proof: absent

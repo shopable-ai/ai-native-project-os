@@ -1,0 +1,367 @@
+schema_version: 1
+review_session_id: P0-DR-20260710-ARCH-WFSC-ADV
+reviewed_at: '2026-07-10'
+roles:
+  - 总体架构师
+  - Workflow、Spec 与 Contract 专家
+  - 反方攻击和证据审计专家
+records:
+  - review_id: ARCH-001
+    reviewer_role: 总体架构师
+    attacked_assumption: "主追溯链已经完整表达从业务真相到资产演进的全部因果关系。"
+    affected_artifact: docs/architecture/AI_PROJECT_OS_CORE.md
+    severity: P0
+    evidence: "第 45—59 行把“能力树”混为单一概念，且 Evidence 后直接进入 Completion Claim；缺少业务能力/功能与技术能力/工程链路分离、Acceptance Verdict、复盘与资产演进。PROJECT_LIFECYCLE.md 第 17 行虽声明阶段是成熟度坐标，但总流程图仍容易被误读成对象主链。"
+    proposed_change: "将唯一主关系固定为“来源→批准事实/需求→场景/触发→业务链路→业务能力/功能→架构决策/技术能力/工程链路→I/O与验收判据→Spec控制外壳→Task→Workflow→Skill/Tool→Run→Evidence→Acceptance Verdict→Completion Claim→复盘与资产演进”；生命周期文件只描述成熟度坐标和重开条件。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "若未形成机器可检查的有类型关系，文档修正仍无法阻止下游绕过批准事实或裁决直接签发声明。"
+
+  - review_id: ARCH-002
+    reviewer_role: 总体架构师
+    attacked_assumption: "写出层级契约文档后，L1/L2/L3 边界、兼容和资产升格就自然成为权威规则。"
+    affected_artifact: "project-os.yaml；README.zh-CN.md；docs/architecture/REPOSITORY_AND_LAYER_CONTRACT.md"
+    severity: P0
+    evidence: "project-os.yaml 尚未登记新层级契约；README 把 projects/{project_id}/ 表述为本仓通用落点；层级契约示例与顶层 schema_version 不一致。这些会使消费者无法确定真实层级、落点和兼容语义。"
+    proposed_change: "先统一 schema/协议版本和真实目录事实，再将层级契约登记为唯一权威；README 改为 L3 位于 L2 定义的项目 namespace。保留 L3→L2→L1 单向依赖，并把 project-os.lock、迁移失败关闭、资产升格/降级/过期/替代规则纳入兼容契约；不得为未来职责预建空目录。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "尚无真实 L2/L3 消费者、锁文件校验器或异构项目证据，层级兼容与资产升格仍只是设计约束。"
+
+  - review_id: ARCH-003
+    reviewer_role: 总体架构师
+    attacked_assumption: "生命周期中的中文六级证据可以作为门禁八级证据的等价摘要独立维护。"
+    affected_artifact: "docs/workflows/PROJECT_LIFECYCLE.md；docs/governance/GATES_PROOF_SCORING.md"
+    severity: P0
+    evidence: "PROJECT_LIFECYCLE.md 第 40 行定义六级“控制包/契约/模拟/本地/只读真实/生产”；GATES_PROOF_SCORING.md 第 5—14 行定义八级机器标识，从 control_package 到 production_proof。二者不是一一对应，存在 schema、contract test 和 fixture runtime 丢失。"
+    proposed_change: "只在一个机器权威位置维护八级 proof_level 枚举及顺序；生命周期文件仅引用该枚举或呈现由其生成的中文名称，不再维护第二套证据阶梯。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "没有枚举唯一性检查和跨文档重复定义检查时，后续仍可能再次产生语义漂移。"
+
+  - review_id: ARCH-004
+    reviewer_role: 总体架构师
+    attacked_assumption: "现有最小产物字段足以支撑所有受控对象的执行、审批、失效和追溯。"
+    affected_artifact: docs/governance/ARTIFACTS_AND_TRACEABILITY.md
+    severity: P0
+    evidence: "第 60—74 行的示例只有 id、type、路径、版本、状态、owner_role、部分关系、proof_level 和 content_hash；缺少 executor、approver、verifier、required_inputs、outputs、gate、failure_routes、stale_status、supersedes 等。第 17—40 行也未完整覆盖来源、假设、未知、研究、触发、架构决策、Run、Acceptance Verdict、Completion Claim、复盘和资产生命周期。"
+    proposed_change: "建立受控对象类型矩阵，统一 stable_id、object_type、canonical_path、version、四类责任、输入输出、有类型关系、门禁、失败路由、内容哈希、证据等级、失效和替代字段；为每种对象明确权威层级、允许消费者和禁止直连关系。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "若矩阵只有 Markdown 而无后续 Schema，仍不能验证关系方向、责任分离或原始来源绕过批准事实。"
+
+  - review_id: ARCH-005
+    reviewer_role: 总体架构师
+    attacked_assumption: "列出四个正交状态和几条阶段回退示例，就已经定义了可实现的状态机与失效传播。"
+    affected_artifact: docs/workflows/PROJECT_LIFECYCLE.md
+    severity: P0
+    evidence: "第 33—44 行只列状态集合，第 62—70 行只列五条阶段回退；没有合法/非法迁移表、迁移前置条件、恢复与重试、过期/废弃，也没有基于 typed_relations 和 content_hash 计算下游闭包、撤销 Verdict/Claim 的规则。"
+    proposed_change: "分别定义 lifecycle_position、work_status、approval_status、proof_level 的合法迁移；覆盖 queued、running、waiting_human、blocked、paused、resumed、failed、retrying、completed、superseded、expired、retired。定义上游变化的影响闭包、stale 标记、重新验证、阶段重开和声明撤销，并明确下游失败只能提交上游复审请求。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "循环关系、部分失效、并发更新和恢复后重复副作用的确定性算法仍需实现期验证。"
+
+  - review_id: ARCH-006
+    reviewer_role: 总体架构师
+    attacked_assumption: "全局 selected_profile: standard 足以表达项目类型、风险路由和动态复判。"
+    affected_artifact: "project-os.yaml；docs/workflows/PROJECT_TYPE_AND_PROFILE_ROUTING.md"
+    severity: P0
+    evidence: "project-os.yaml 第 15 行只有全局 selected_profile，各 Profile 第 39—51 行主要是 enabled/purpose。新路由文件虽在第 7—35 行补充类型、输入、复判和失效语义，但尚未登记为 authority，也未给风险枚举、阈值和可重算路由算法。"
+    proposed_change: "把框架可用 Profile 与每个项目的路由结果分开；登记 project_type/profile 路由权威，定义风险、复杂度、不确定性、敏感度、外部副作用和 production_tier 的机器枚举、选择条件、人工覆盖及复判触发。类型变化必须使依赖旧假设的 Spec、Task、Workflow、Evidence、Verdict 和 Claim 待复核或失效。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "在缺少真实项目样本和边界测试前，lite/standard 阈值可能过松；multi_agent 与 production 也仍未实现。"
+
+  - review_id: ARCH-007
+    reviewer_role: 总体架构师
+    attacked_assumption: "架构师最终责任归人类以及外部副作用需要审批，已经足够防止 Agent 自提、自批、自证和跨项目泄漏。"
+    affected_artifact: "docs/workflows/ARCHITECT_WORKFLOWS.md；project-os.yaml"
+    severity: P0
+    evidence: "ARCHITECT_WORKFLOWS.md 第 3 行仅要求最终责任人为人类，第 54—59 行只有原则性检查；未定义 owner、executor、approver、verifier 的职责冲突矩阵，也没有文件/网络/秘密/数据权限、allowed_roots、缓存/RAG namespace、密钥归属和跨项目隔离协议。"
+    proposed_change: "新增并登记授权、副作用与隔离权威：高风险声明禁止同一主体自提、自批、自证；Skill/Tool 必须声明能力权限。外部写操作必须携带审批票据、幂等键、超时、重试策略、回执、撤销/补偿和 fail-closed 语义；安全、隐私、真实发送、付款、删除和生产发布纳入 standard 最低人工门禁。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "设计无法证明真实文件系统、缓存、日志、网络和秘密隔离；没有故障注入时也无法证明崩溃恢复不会重复发送、扣费或删除。"
+
+  - review_id: ARCH-008
+    reviewer_role: 总体架构师
+    attacked_assumption: "列出 AI 原生检查原则就足以指导执行节点和降级声明的后续实现。"
+    affected_artifact: docs/workflows/ARCHITECT_WORKFLOWS.md
+    severity: P0
+    evidence: "第 52—59 行要求模型结构契约、版本追溯和降级声明，但没有执行节点类型 deterministic_code、model_reasoning、retrieval、agent_action、human_decision、external_system，也未定义模型、提示词、上下文、工具、策略指纹及上下文信任/截断信息。"
+    proposed_change: "建立 AI 原生执行模型权威，定义六类 execution_node、输入输出 Schema、上下文来源/哈希/信任等级/截断、评测集与反例集、失败返回、成本/令牌/延迟/重试预算，以及降级策略对应的 completion claim ceiling；原始资料和检索内容必须作为不可信数据隔离。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "提示注入隔离、上下文失效、模型漂移和降级质量只能在实现、评测及对抗运行后获得证明。"
+
+  - review_id: ARCH-009
+    reviewer_role: 总体架构师
+    attacked_assumption: "runs_and_evidence 原语和 acceptance.md 已经清楚区分事前判据、运行证据、事后裁决与完成声明。"
+    affected_artifact: "project-os.yaml；docs/governance/ARTIFACTS_AND_TRACEABILITY.md；docs/governance/GATES_PROOF_SCORING.md"
+    severity: P0
+    evidence: "project-os.yaml 第 26 行只有 runs_and_evidence 名称；ARTIFACTS_AND_TRACEABILITY.md 第 86 行把判据与证据等级放在 acceptance.md，但对象链第 17—40 行缺少 Run、Acceptance Verdict 和 Completion Claim 的独立职责。GATES_PROOF_SCORING.md 第 32—44 行直接定义完成声明，没有裁决对象。"
+    proposed_change: "建立 Run/Evidence/Acceptance 权威，固定“Acceptance Criterion→Run→Evidence→Acceptance Verdict→Completion Claim”顺序；最小 Run 记录 project/workflow 版本、全部执行指纹、执行者、环境、时间、exit_code、semantic_result、checkpoint、evidence_refs、uncovered_scope 和 known_failures。Verdict 必须由授权 verifier 针对事前判据签发。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "尚无 Schema、签名/身份机制、证据存储和重放验证，无法证明 Verdict 不会伪造或引用过期 Evidence。"
+
+  - review_id: ARCH-010
+    reviewer_role: 总体架构师
+    attacked_assumption: "未执行研究可以拥有 70—92 的当前质量分，并统一阻断标准版阶段；目标设计也可以在无可重算输入时声明 94—97 分。"
+    affected_artifact: "docs/architecture/AI_PROJECT_OS_CORE.md；docs/governance/GATES_PROOF_SCORING.md；research/registry.yaml"
+    severity: P0
+    evidence: "AI_PROJECT_OS_CORE.md 第 108—109 行给出 97/92；GATES_PROOF_SCORING.md 第 90—92 行给出 97/94/92，但没有十维输入、权重证据、处罚或计算记录。registry.yaml status 为 planned，却为所有十项填写 current_research_quality: 70—92，并让候选工具分别阻断 S1、S3、S4、S5、S6。"
+    proposed_change: "无完整输入时将所有当前评分改为 not_evaluated；评分记录必须保存十维分值、权重、依据文件、验证命令、未通过项、评分者、时间、证据引用、处罚和硬封顶。研究登记改为“候选适配器 + 当前决策依赖条件”；只有确实位于关键决策路径的任务才能阻断对应决策，不得把 LangGraph、Temporal、Structurizr、GPT Researcher、Phoenix、Langfuse、OPA、Backstage 等设为标准版通关前置。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "即使设计评分可重算，实现、运行、生产及异构项目证明仍为 0；缺少独立反方审计时设计评分还必须受 94 分硬封顶。"
+
+  - review_id: WFSC-001
+    reviewer_role: "Workflow、Spec 与 Contract 专家"
+    attacked_assumption: "把 Spec 称为控制外壳并列出五个文件，就已经定义了可执行、可版本化的规格控制包。"
+    affected_artifact: "docs/governance/CONTROLLED_OBJECT_MODEL.md；docs/governance/ARTIFACTS_AND_TRACEABILITY.md"
+    severity: P0
+    evidence: "CONTROLLED_OBJECT_MODEL.md 第 14、65 行定义 Spec 是控制外壳；ARTIFACTS_AND_TRACEABILITY.md 第 81—89 行另行维护 spec.md、plan.md、tasks.md、acceptance.md、traceability.md 五文件职责。但两处没有声明组合关系、包级 stable_id/version/content_hash、批准原子性、风险自适应必需项或文件间版本一致性，形成潜在第二真相。"
+    proposed_change: "由受控对象权威定义 Spec 包级协议，并让产物文档只给中文视图：至少包含范围与分母、非目标、方案、Task 图、事前验收判据和追溯；每个成员记录同一 spec_id/version，包级批准必须绑定所有成员哈希。允许低风险裁剪，但裁剪项、理由、批准者和声明上限必须显式记录。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "尚无 Spec Schema、包一致性检查器或真实五文件样例，无法证明控制外壳不会局部批准、局部漂移。"
+
+  - review_id: WFSC-002
+    reviewer_role: "Workflow、Spec 与 Contract 专家"
+    attacked_assumption: "只要 Task 声明 implements spec，就足以证明 Task 来自批准范围且不会静默改变需求分母。"
+    affected_artifact: docs/governance/CONTROLLED_OBJECT_MODEL.md
+    severity: P0
+    evidence: "第 66 行仅规定 Task implements Spec，第 89 行仅检查 Task 来自已批准 Spec；没有要求 Task 引用具体 requirement、acceptance_criterion、spec_version、输入输出契约和依赖，也没有规定新增、拆分、合并、取消 Task 时如何保持批准需求分母。"
+    proposed_change: "定义 Task 最小协议：task_id、spec_ref/version、requirement_refs、criterion_refs、input/output_contract_refs、dependency_refs、executor、权限、失败路由、完成证据出口。Task 新增或范围变化必须回到 Spec 变更审批；取消 Task 只能经批准修改覆盖映射，不能静默删除需求分母。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "没有双向覆盖检查时，仍可能出现孤儿 Task、无 Task 需求或多个 Task 重复计入完成率。"
+
+  - review_id: WFSC-003
+    reviewer_role: "Workflow、Spec 与 Contract 专家"
+    attacked_assumption: "Workflow 被定义为有状态编排并声明恢复/取消路径后，边界已经足够指导运行实现。"
+    affected_artifact: "docs/governance/CONTROLLED_OBJECT_MODEL.md；docs/architecture/AI_NATIVE_EXECUTION_MODEL.md"
+    severity: P0
+    evidence: "CONTROLLED_OBJECT_MODEL.md 第 67 行只有一句 Workflow 约束；AI_NATIVE_EXECUTION_MODEL.md 第 7—18 行定义执行节点类型，但没有规定 Workflow step 如何引用 execution_node、Task、I/O Contract、权限和验收出口，也没有 Workflow 的触发、状态图、分支、循环、并发、超时、取消和补偿协议。"
+    proposed_change: "定义最小 Workflow manifest：workflow_id/version、trigger_ref、task_refs、step_graph、每步 execution_node_ref、input/output/failure_contract_refs、权限、超时、重试、checkpoint、取消、补偿、终止状态、Evidence 出口和 claim ceiling。Workflow 只负责编排，不承载业务事实或隐藏 Skill/Tool 实现。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "没有调度器和状态恢复实验前，分支、并发及恢复语义仍只是声明性设计。"
+
+  - review_id: WFSC-004
+    reviewer_role: "Workflow、Spec 与 Contract 专家"
+    attacked_assumption: "Skill 是可复用能力、Tool 是确定性执行器，这两个标签足以防止职责渗透。"
+    affected_artifact: "docs/governance/CONTROLLED_OBJECT_MODEL.md；docs/architecture/AI_NATIVE_EXECUTION_MODEL.md；docs/governance/AUTHORIZATION_SIDE_EFFECTS_AND_ISOLATION.md"
+    severity: P0
+    evidence: "CONTROLLED_OBJECT_MODEL.md 第 68—69 行将 Skill 简述为局部能力、Tool 简述为确定性执行器；AI_NATIVE_EXECUTION_MODEL.md 第 12—16 行又允许模型推理、Agent 和外部系统节点。当前未说明 Skill 能否内部编排多个步骤、Tool 是否可以包装非确定性外部系统，以及 Tool 回执、失败和副作用如何暴露给 Workflow。"
+    proposed_change: "明确 Skill 是版本化能力契约，可组合确定性代码或模型推理，但不得隐藏跨阶段编排、无限重试和未声明权限；Tool 是最小可审计执行接口，不保证外部结果确定，只保证调用协议、输入输出、错误分类、权限和回执可验证。Workflow 拥有控制流，Tool 拥有真实动作，Skill 不直接签发 Verdict 或 Claim。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "若适配器允许把完整工作流包装成单个 Tool，仍可绕过 checkpoint、审批和逐步 Evidence。"
+
+  - review_id: WFSC-005
+    reviewer_role: "Workflow、Spec 与 Contract 专家"
+    attacked_assumption: "要求 I/O 契约具有版本化 Schema、失败语义和兼容规则，已经足以保证节点可靠交接。"
+    affected_artifact: "docs/governance/CONTROLLED_OBJECT_MODEL.md；docs/workflows/ARCHITECT_WORKFLOWS.md"
+    severity: P0
+    evidence: "CONTROLLED_OBJECT_MODEL.md 第 63 行只有原则性描述；ARCHITECT_WORKFLOWS.md 第 15 行只要求生产者消费者契约可验证。没有最小契约字段、生产者/消费者版本、同步/异步交付、空值与部分结果、错误分类、重试资格、幂等语义、时限、数据分类或兼容测试要求。"
+    proposed_change: "定义 I/O Contract 最小结构：contract_id/version、producer/consumer、request/event/result Schema、成功与失败 envelope、错误码分类、retryable、idempotency_scope、timeout、ordering/delivery、partial/null 语义、数据分类、兼容范围、contract_test_refs 和迁移规则。自然语言说明不能代替机器 Schema 与失败样例。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "没有消费者驱动契约测试和版本协商实现时，Schema 合法仍不能证明语义兼容。"
+
+  - review_id: WFSC-006
+    reviewer_role: "Workflow、Spec 与 Contract 专家"
+    attacked_assumption: "公共 failure_routes 字段和全局工作状态表可以统一表达所有业务失败、技术失败和审批阻断。"
+    affected_artifact: "docs/governance/CONTROLLED_OBJECT_MODEL.md；docs/governance/STATE_TRANSITIONS_AND_INVALIDATION.md"
+    severity: P0
+    evidence: "CONTROLLED_OBJECT_MODEL.md 第 36 行把 failure_routes 定义为空列表但无类型；STATE_TRANSITIONS_AND_INVALIDATION.md 第 16—28 行只描述工作状态迁移。当前无法区分业务拒绝、契约不匹配、可重试技术失败、等待人工、预算耗尽、权限拒绝、未知外部结果和不可恢复失败。"
+    proposed_change: "为 failure_route 定义结构化协议：failure_class、source_step、condition、error_contract_ref、retryable、max_attempts、backoff、next_state、checkpoint_policy、approval_required、compensation_ref、claim_ceiling 和 terminality。业务结果不得伪装成技术成功，技术重试也不得改变批准业务事实。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "错误分类器和适配器映射尚未实现，外部系统模糊错误仍可能被错误重试或错误判定完成。"
+
+  - review_id: WFSC-007
+    reviewer_role: "Workflow、Spec 与 Contract 专家"
+    attacked_assumption: "Run 中提供 checkpoint 字段，并要求暂停时生成 checkpoint，就足以实现安全恢复。"
+    affected_artifact: "docs/governance/RUN_EVIDENCE_ACCEPTANCE.md；docs/governance/STATE_TRANSITIONS_AND_INVALIDATION.md"
+    severity: P0
+    evidence: "RUN_EVIDENCE_ACCEPTANCE.md 第 34 行只有 checkpoint: null；STATE_TRANSITIONS_AND_INVALIDATION.md 第 22、30、34—36 行要求 checkpoint 和恢复复核，但没有 checkpoint ID、Workflow/step 位置、状态快照、输入版本、已完成副作用账本、待处理动作、环境兼容、完整性哈希和消费一次性语义。"
+    proposed_change: "把 Checkpoint 定义为独立受控对象或严格引用：checkpoint_id、run/workflow/version、step_cursor、state/input fingerprints、completed/pending side effects、approval/permission refs、external receipts、created_at、content_hash、resume_compatibility 和 consumed_by_run。恢复必须创建新 Run 并验证版本、权限、外部状态与幂等性。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "没有崩溃注入、重复恢复和未知外部结果测试，无法证明不会重复发送、扣费、删除或发布。"
+
+  - review_id: WFSC-008
+    reviewer_role: "Workflow、Spec 与 Contract 专家"
+    attacked_assumption: "Run 的 semantic_result 可以在 Evidence 和 Verdict 形成前安全地标记 passed。"
+    affected_artifact: docs/governance/RUN_EVIDENCE_ACCEPTANCE.md
+    severity: P0
+    evidence: "第 8 行规定 Run→Evidence→Verdict；但第 33、41 行又规定 Run semantic_result=passed 且所有必需语义判据通过。若必需判据由第 51、61 行的 Evidence criterion_results 承载，则 Run 在 Evidence 尚未形成时判断全局通过，产生顺序循环和提前完成风险。"
+    proposed_change: "把 Run 字段限定为 execution_outcome，表达执行层 success/failure/partial/unknown，不代表验收通过；Run 完成后由 Evidence 收集器逐项计算 criterion_results，再由独立 Verdict 决定 accepted/rejected/conditional。任何面向完成的 passed 只能属于 criterion result 或 Verdict。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "若现有实现或后续适配器继续把 exit_code=0、Run success 与验收通过映射为同一状态，声明越权仍会发生。"
+
+  - review_id: WFSC-009
+    reviewer_role: "Workflow、Spec 与 Contract 专家"
+    attacked_assumption: "把 Spec、Task、Workflow 和最小实现列为 S5 输出，不会与 Spec 控制外壳或成熟度坐标发生冲突。"
+    affected_artifact: "docs/workflows/PROJECT_LIFECYCLE.md；docs/governance/CONTROLLED_OBJECT_MODEL.md；docs/architecture/AI_PROJECT_OS_CORE.md"
+    severity: P1
+    evidence: "PROJECT_LIFECYCLE.md 第 29 行把规格、任务图、工作流、技能和最小实现集中为 S5 输出；CONTROLLED_OBJECT_MODEL.md 第 14 行却定义 Spec 覆盖批准范围、计划、任务、验收和追溯，应跨多个成熟度演进。AI_PROJECT_OS_CORE.md 第 45—59 行仍保留旧主链且缺少 Acceptance Verdict 和复盘资产演进。"
+    proposed_change: "明确每个受控对象都有独立 maturity_position；Spec 可在 S0 建立范围壳、S3/S4 固化方案和契约、S5 激活 Task、S6 绑定 Verdict，而不是到 S5 才创建。生命周期只定义成熟度门禁，主追溯链只由 CONTROLLED_OBJECT_MODEL 维护；核心架构和其他文档改为引用。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "如果目录或自动化仍按 S0—S7 搬移文件，阶段瀑布和权威路径漂移会重新出现。"
+
+  - review_id: WFSC-010
+    reviewer_role: "Workflow、Spec 与 Contract 专家"
+    attacked_assumption: "project-os.lock 记录一个系统版本和兼容范围，就足以保证 Spec、Contract、Workflow、Skill、Tool 与 Checkpoint 的跨版本兼容。"
+    affected_artifact: "docs/architecture/REPOSITORY_AND_LAYER_CONTRACT.md；project-os.yaml"
+    severity: P0
+    evidence: "REPOSITORY_AND_LAYER_CONTRACT.md 第 33—45 行的 lock 示例只有 system/schema/version/profile/adapters；第 49—52 行给出通用兼容原则，但未分别锁定对象模型、证据枚举、I/O Schema、Workflow、Skill、Tool、策略和迁移器版本。project-os.yaml 使用 schema_version: 2，而 research/registry.yaml 使用 schema_version: 1，当前也没有声明各 schema_version 的命名域。"
+    proposed_change: "定义版本命名域和兼容矩阵：system protocol、object schema、proof enum、I/O Contract、Workflow、Skill、Tool、policy、adapter 各自独立版本及内容哈希。lock 必须记录实际消费版本、兼容范围和迁移器；恢复旧 Checkpoint 前验证全部版本。破坏性契约变化必须使依赖 Run/Evidence/Verdict/Claim 失效，不能只提升顶层版本。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "没有迁移 fixture、旧消费者 contract test 和回滚演练，兼容性仍是文档承诺，不能视为已证明。"
+
+  - review_id: ADV-001
+    reviewer_role: 反方攻击和证据审计专家
+    attacked_assumption: "需求集合标记为“已批准”并在公式中使用权重后，Agent 就无法静默删除需求、降低权重或缩小完成分母。"
+    affected_artifact: "docs/governance/CONTROLLED_OBJECT_MODEL.md；docs/governance/GATES_PROOF_SCORING.md"
+    severity: P0
+    evidence: "CONTROLLED_OBJECT_MODEL.md 第 51 行称 requirement 锁定验收分母，但允许 invalidated/retired，未定义基线快照和变更审批记录。GATES_PROOF_SCORING.md 第 48—64 行使用集合 R 和 weight(r)，却没有要求权重非零、总和固定、P0/P1 最低权重、删减前后分母对账或批准者独立性。"
+    proposed_change: "为每次完成声明绑定不可变 requirement_baseline_id、需求版本集合和权重哈希；任何删除、降权、拆并或 retired 必须生成 scope-change 对象、人工批准、前后分母差异及 Claim 影响。P0/P1 不得设零权重，未批准删减仍保留在分母并记为未完成。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "没有机器化分母锁、差异检查和独立审批时，Agent 仍可通过新建较小 Spec 或重编需求版本获得虚假高完成率。"
+
+  - review_id: ADV-002
+    reviewer_role: 反方攻击和证据审计专家
+    attacked_assumption: "把原始来源标记为 non_authoritative，并禁止 source 直接 implements Task，就能阻止原始材料绕过批准事实驱动执行。"
+    affected_artifact: "project-os.yaml；docs/governance/CONTROLLED_OBJECT_MODEL.md；docs/architecture/AI_NATIVE_EXECUTION_MODEL.md"
+    severity: P0
+    evidence: "project-os.yaml 给出原始来源不得驱动执行的原则；CONTROLLED_OBJECT_MODEL.md 只禁止直接 implements/驱动，但未定义 object_type×relation 的边允许矩阵。AI_NATIVE_EXECUTION_MODEL.md 仍允许原始来源进入研究上下文，需要求生产执行输入只能引用批准 fact/requirement，或在显式隔离的 research sandbox 中处理不可信来源。"
+    proposed_change: "建立关系边 allowlist 和执行输入门禁：source 只能 derives_to candidate_fact/assumption/unknown/research，不得被 Spec、Task、Workflow 或执行节点 consumes。研究沙箱若读取 source，必须隔离权限且输出仍是候选；上下文编译产物需分别列 approved_fact_refs 与 untrusted_source_refs，缺少批准输入时 fail-closed。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "在上下文编译器和关系检查器实现前，提示词仍可把原始材料内容当作事实，形成语义绕过而不出现非法文件关系。"
+
+  - review_id: ADV-003
+    reviewer_role: 反方攻击和证据审计专家
+    attacked_assumption: "列出文件、cache、RAG、日志和 secret 的隔离对象，并规定默认拒绝，就足以防止跨项目泄漏。"
+    affected_artifact: docs/governance/AUTHORIZATION_SIDE_EFFECTS_AND_ISOLATION.md
+    severity: P0
+    evidence: "第 40—49 行列出隔离范围和默认拒绝原则，但没有 namespace 生成算法、规范化路径/符号链接规则、缓存键组成、日志脱敏 Schema、RAG collection 创建门禁、secret 引用解析边界或跨项目测试。第 72 行也明确当前没有隔离检查器和运行证明。"
+    proposed_change: "定义不可碰撞 namespace 派生规则并绑定 project_id/tenant/environment；文件访问必须校验 canonical realpath 和允许根，cache/RAG/log/trace/key 必须强制带 namespace，secret broker 校验 owner 与用途。增加双项目对抗 fixture，覆盖路径穿越、符号链接、默认 collection、共享缓存键、日志异常栈和撤销后 secret 使用。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "当前跨项目隔离证明为 0；任何共享临时目录、全局客户端或第三方 SDK 默认缓存都可能绕开文档约束。"
+
+  - review_id: ADV-004
+    reviewer_role: 反方攻击和证据审计专家
+    attacked_assumption: "给对象填写不同的 owner、executor、approver、verifier 字符串，就能阻止 Agent 自提、自批、自证。"
+    affected_artifact: "docs/governance/CONTROLLED_OBJECT_MODEL.md；docs/governance/AUTHORIZATION_SIDE_EFFECTS_AND_ISOLATION.md；docs/governance/RUN_EVIDENCE_ACCEPTANCE.md"
+    severity: P0
+    evidence: "CONTROLLED_OBJECT_MODEL.md 第 28—31 行角色字段只是自由字符串，第 43 行只禁止同一 AI 同时承担四项责任。授权文档第 9—14 行要求高风险分离，但没有主体身份域、会话关联、代理关系或角色冲突检查。RUN_EVIDENCE_ACCEPTANCE.md 的 decided_by 允许 human-or-independent-gate，也没有可验证身份和授权证明。"
+    proposed_change: "定义 actor_id 的不可伪造身份、actor_kind、session/principal、delegated_by 和 role_binding；SoD 检查按真实 principal 而非显示名称执行。高风险 Fact、权限、Verdict 和 Claim 必须绑定人工审批票据或独立 gate 签名，并验证 executor 与 approver/verifier 不共享 principal、会话或控制权。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "在身份代理、签名和审计日志实现前，同一 Agent 可使用多个角色别名满足表面字段分离。"
+
+  - review_id: ADV-005
+    reviewer_role: 反方攻击和证据审计专家
+    attacked_assumption: "要求幂等键、回执和恢复前查询外部状态，就能保证崩溃恢复不会重复发送、扣费、删除或写入。"
+    affected_artifact: "docs/governance/AUTHORIZATION_SIDE_EFFECTS_AND_ISOLATION.md；docs/governance/STATE_TRANSITIONS_AND_INVALIDATION.md；docs/governance/RUN_EVIDENCE_ACCEPTANCE.md"
+    severity: P0
+    evidence: "授权文档第 64—68 行给出原则；状态文档第 34—36 行要求新 Run 和外部状态复核。但 RUN_EVIDENCE_ACCEPTANCE.md 第 34 行只有 checkpoint: null，没有副作用账本、幂等键状态、请求/回执原文哈希、提交前后状态或未知结果终态。外部系统若不支持幂等或查询失败，规则没有安全完成路径。"
+    proposed_change: "建立 append-only side_effect_attempt 账本和 outbox/reconciliation 协议，记录 prepare/approved/dispatched/acknowledged/unknown/compensated 状态、幂等作用域、请求哈希和外部回执。恢复只消费未完成账本；unknown 必须阻断并人工裁决，不能自动重发。无外部幂等和可靠查询能力的不可逆动作禁止自动恢复。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "没有 kill-point 故障注入和真实外部沙箱测试前，重复副作用风险不能视为已关闭。"
+
+  - review_id: ADV-006
+    reviewer_role: 反方攻击和证据审计专家
+    attacked_assumption: "沿当前关系集合计算下游闭包，已经保证上游变化会撤销所有相关 Evidence、Verdict 和 Claim。"
+    affected_artifact: "docs/governance/STATE_TRANSITIONS_AND_INVALIDATION.md；docs/governance/CONTROLLED_OBJECT_MODEL.md"
+    severity: P0
+    evidence: "STATE_TRANSITIONS_AND_INVALIDATION.md 第 45 行只沿 derives_from、implements、consumes、governed_by、verified_by 传播；CONTROLLED_OBJECT_MODEL.md 第 71 行规定 Evidence produced_by Run，第 79 行还定义 produces、produced_by、invalidates、supersedes。传播集合遗漏 produces/produced_by，Run、Evidence 和后续裁决可能不在闭包内。"
+    proposed_change: "为每种 typed_relation 明确传播方向和默认影响级别；至少将 produces/produced_by、criterion/verdict/claim 引用和版本锁定纳入闭包。检查器必须验证从变更的 Fact、Requirement、Contract、Workflow、Policy 或 Run 能到达所有派生 Evidence、Verdict、Claim，并对无法分类的关系 fail-closed。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "人工允许停止传播仍可能误判；没有闭包 fixture 和反例测试时，过期声明可能继续有效。"
+
+  - review_id: ADV-007
+    reviewer_role: 反方攻击和证据审计专家
+    attacked_assumption: "执行节点声明 fallback_claim_ceiling 后，发生降级就一定会同步降低最终完成声明。"
+    affected_artifact: "docs/architecture/AI_NATIVE_EXECUTION_MODEL.md；docs/governance/RUN_EVIDENCE_ACCEPTANCE.md"
+    severity: P0
+    evidence: "AI_NATIVE_EXECUTION_MODEL.md 第 39—40、57 行定义 fallback 和上限；但 RUN_EVIDENCE_ACCEPTANCE.md 第 15—39 行没有 fallback_used、fallback_ref、lost_capabilities 或 effective_claim_ceiling，Verdict 第 65—78 行也未绑定降级记录。执行者可不报告降级而沿用正常路径上限。"
+    proposed_change: "Run 必须逐节点记录 attempted_path、fallback_used、fallback_ref/version、触发原因、丢失能力和 effective_claim_ceiling；Evidence 与 Verdict 必须校验所有节点的最低降级上限。缺少降级遥测、出现未知路径或 fallback 指纹不匹配时，Claim 上限自动降为 unknown/control_package 并阻断高阶声明。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "第三方适配器若内部静默切换模型、工具或数据源，仍可能绕过降级报告，必须用指纹和契约测试检测。"
+
+  - review_id: ADV-008
+    reviewer_role: 反方攻击和证据审计专家
+    attacked_assumption: "评分文档改为 not_evaluated 后，仓库已经不存在无运行证据却获得高分或被伪评分阻断的路径。"
+    affected_artifact: "docs/governance/GATES_PROOF_SCORING.md；research/registry.yaml；project-os.yaml"
+    severity: P0
+    evidence: "GATES_PROOF_SCORING.md 第 122—126 行已把设计分设为 not_evaluated、实现和运行证明设为 0；但 research/registry.yaml 第 3 行仍为 planned，却在第 11—109 行为未开展任务保留 70—92 的 current_research_quality，并把多项候选工具统一 blocks_stage。project-os.yaml 第 73 行明确实现 not_started。"
+    proposed_change: "planned 研究项的 current_research_quality 全部改为 not_evaluated，并保存评分输入后才能出分；blocks_stage 改为 blocks_decision + conditional_on，只有当前关键决策确实依赖时才生效。评分验证必须扫描全仓数字分，拒绝任何缺维度、权重、处罚、Evidence 和可重算记录的 0—100 结论。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "即使文档分数清除，用户界面或未来检查器若把 design_baseline/standard enabled 解释为运行就绪，仍可能产生隐性高成熟度声明。"
+
+  - review_id: ADV-009
+    reviewer_role: 反方攻击和证据审计专家
+    attacked_assumption: "保存每次模型重试并由 Evidence 引用 Run，就能防止只挑最好结果、自选证据或隐藏失败尝试。"
+    affected_artifact: "docs/architecture/AI_NATIVE_EXECUTION_MODEL.md；docs/governance/RUN_EVIDENCE_ACCEPTANCE.md"
+    severity: P0
+    evidence: "AI_NATIVE_EXECUTION_MODEL.md 第 57 行要求保存每次尝试；RUN_EVIDENCE_ACCEPTANCE.md 第 49—59 行只允许 Evidence 引用一个 run_ref 和 artifact_refs，没有 attempt_manifest、预注册采样规则、失败尝试完整性、日志哈希链或证据保管链。collector 仍可选择性提交成功输出。"
+    proposed_change: "Run 建立不可变 attempt_manifest，包含所有模型、Tool、重试、超时和被拒绝输出；Evidence 必须声明 evidence_selection_policy、included/excluded_attempt_refs 及排除理由，并验证 manifest 完整性。关键评测集和抽样规则须事前注册，原始输出使用内容哈希和 append-only custody 记录。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "没有不可改写存储和独立收集器时，执行者仍可能在 Evidence 系统看到之前丢弃不利尝试。"
+
+  - review_id: ADV-010
+    reviewer_role: 反方攻击和证据审计专家
+    attacked_assumption: "Verdict 和 Claim 用自然语言描述 subject_and_scope，并引用若干 Evidence，就足以防止旧裁决被重放到新版本或更大范围。"
+    affected_artifact: docs/governance/RUN_EVIDENCE_ACCEPTANCE.md
+    severity: P0
+    evidence: "第 68 行 subject_and_scope 是自由文本；第 69—77 行没有 subject stable_id/version/content_hash、criterion versions、Spec baseline、环境指纹或授权票据哈希。第 84 行虽要求 Claim 包含指纹，但没有机器示例和严格绑定关系。旧 Verdict 可能被复用于已变化对象、不同输入类别或扩大后的声明范围。"
+    proposed_change: "Verdict 必须绑定 subject_refs 的 stable_id/version/content_hash、requirement_baseline_id、criteria versions、Evidence hashes、environment/input class、profile、权限与审批快照；Claim 只能引用同一精确绑定且不得扩大 scope。任何字段变化、未知引用或签名不一致都自动使 Verdict/Claim 失效。"
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: null
+    remaining_risk: "当前没有签名、不可变存储或重放攻击测试，裁决真实性、完整性和作用域约束仍未得到运行证明。"

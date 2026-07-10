@@ -1,0 +1,71 @@
+# 叠加能力激活裁决机器契约
+
+schema_version: 1
+contract_id: overlay-activation-verdict-contract
+contract_version: 1
+
+required_fields:
+  - extends
+  - verdict_id
+  - project_id
+  - overlay_id
+  - overlay_module_version
+  - overlay_module_hash
+  - route_v1_ref
+  - route_v1_hash
+  - control_set_ref
+  - control_set_hash
+  - environment
+  - criteria_refs
+  - evidence_refs
+  - evidence_hashes
+  - authorization_snapshot_ref
+  - decision
+  - claim_ceiling
+  - decided_by
+  - decided_at
+  - signature_ref
+
+enums:
+  overlay_id: [multi_agent, production]
+  decision: [pending, accepted, rejected, revoked]
+
+manifest_example:
+  extends: controlled_object_base/v1
+  verdict_id: overlay-verdict-id
+  project_id: project-id
+  overlay_id: multi_agent
+  overlay_module_version: 1
+  overlay_module_hash: sha256
+  route_v1_ref: route-id-v1
+  route_v1_hash: sha256
+  control_set_ref: control-set-id
+  control_set_hash: sha256
+  environment: isolated-test
+  criteria_refs: []
+  evidence_refs: []
+  evidence_hashes: []
+  authorization_snapshot_ref: authorization-id
+  decision: pending
+  claim_ceiling: control_package
+  conditions: []
+  expires_at: timestamp-or-null
+  decided_by: independent-verifier
+  decided_at: timestamp
+  signature_ref: signature-id
+
+invariants:
+  - subject_is_exactly_one_overlay_module
+  - route_v1_overlay_is_selected_and_not_enabled
+  - control_set_hash_matches_route_v1
+  - accepted_requires_all_criteria_passed
+  - accepted_requires_non_empty_criteria_refs
+  - accepted_requires_non_empty_evidence_refs_and_hashes
+  - accepted_requires_evidence_refs_and_hashes_same_cardinality
+  - accepted_requires_every_evidence_verified_and_fresh
+  - accepted_requires_evidence_subject_overlay_and_control_set_exact_match
+  - accepted_requires_fresh_evidence
+  - accepted_requires_valid_authorization_snapshot
+  - accepted_verdict_may_only_enable_same_overlay_in_new_route_version
+  - verdict_cannot_accept_business_requirements_or_issue_completion_claim
+  - unknown_or_missing_field_fails_closed

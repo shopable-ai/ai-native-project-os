@@ -1,14 +1,34 @@
-schema_version: 1
+schema_version: 2
 registry_id: ai-project-os-open-source-research
 status: planned
+
+blocking_policy:
+  default_active: false
+  inactive_means_non_blocking: true
+  activation_requires:
+    - blocking_active_is_true
+    - concrete_decision_dependency
+    - blocking_reason
+    - assigned_owner
+    - approved_by
+    - activated_at
+    - unblock_conditions
 
 items:
   - id: RSH-OSS-001
     title: 规格驱动框架比较
-    priority: P0
-    blocks_stage: S3
+    priority: P1
+    adapter_candidate: true
+    blocks_decision: DECIDE-SDD-ADAPTER
+    blocking_active: false
+    owner: unassigned
+    decision_question: 是否需要采用规格驱动适配器，以及采用哪个候选
+    research_package: null
+    evidence_refs: []
+    verdict_ref: null
+    fallback_available: true
     candidates: [Spec-Kit, OpenSpec, BMAD, Spec-Kitty, Agent-OS, GSD]
-    current_research_quality: 92
+    evaluation_status: not_evaluated
     required_evidence:
       - document_comparison
       - license_and_security_review
@@ -17,10 +37,18 @@ items:
 
   - id: RSH-OSS-002
     title: 状态和持久工作流运行时比较
-    priority: P0
-    blocks_stage: S5
+    priority: P1
+    adapter_candidate: true
+    blocks_decision: DECIDE-DURABLE-RUNTIME-ADAPTER
+    blocking_active: false
+    owner: unassigned
+    decision_question: "`standard` 框架等级的最小恢复协议何时需要持久运行时适配器"
+    research_package: null
+    evidence_refs: []
+    verdict_ref: null
+    fallback_available: true
     candidates: [current-lightweight-runner, LangGraph, Temporal]
-    current_research_quality: 85
+    evaluation_status: not_evaluated
     required_evidence:
       - checkpoint_resume_test
       - crash_recovery_test
@@ -29,10 +57,18 @@ items:
 
   - id: RSH-OSS-003
     title: 架构即代码比较
-    priority: P0
-    blocks_stage: S4
+    priority: P1
+    adapter_candidate: true
+    blocks_decision: DECIDE-ARCHITECTURE-MODEL-ADAPTER
+    blocking_active: false
+    owner: unassigned
+    decision_question: 是否需要架构模型导出适配器及其可退出边界
+    research_package: null
+    evidence_refs: []
+    verdict_ref: null
+    fallback_available: true
     candidates: [Mermaid, Structurizr-DSL]
-    current_research_quality: 90
+    evaluation_status: not_evaluated
     required_evidence:
       - same_model_multiple_views
       - diff_and_validation_test
@@ -40,10 +76,18 @@ items:
 
   - id: RSH-OSS-004
     title: 技术研究执行器比较
-    priority: P0
-    blocks_stage: S1
+    priority: P1
+    adapter_candidate: true
+    blocks_decision: DECIDE-RESEARCH-EXECUTOR-ADAPTER
+    blocking_active: false
+    owner: unassigned
+    decision_question: 是否需要专用研究执行器适配器
+    research_package: null
+    evidence_refs: []
+    verdict_ref: null
+    fallback_available: true
     candidates: [controlled-web-research, GPT-Researcher]
-    current_research_quality: 84
+    evaluation_status: not_evaluated
     required_evidence:
       - source_quality_test
       - citation_replay_test
@@ -52,10 +96,18 @@ items:
 
   - id: RSH-OSS-005
     title: AI 观测和评测比较
-    priority: P0
-    blocks_stage: S6
+    priority: P1
+    adapter_candidate: true
+    blocks_decision: DECIDE-OBSERVABILITY-ADAPTER
+    blocking_active: false
+    owner: unassigned
+    decision_question: 何种观测需求需要第三方观测与评测适配器
+    research_package: null
+    evidence_refs: []
+    verdict_ref: null
+    fallback_available: true
     candidates: [OpenTelemetry-plus-Phoenix, OpenTelemetry-plus-Langfuse]
-    current_research_quality: 88
+    evaluation_status: not_evaluated
     required_evidence:
       - trace_interoperability_test
       - evaluation_dataset_test
@@ -64,10 +116,18 @@ items:
 
   - id: RSH-OSS-006
     title: 门禁和策略实现比较
-    priority: P0
-    blocks_stage: S6
+    priority: P1
+    adapter_candidate: true
+    blocks_decision: DECIDE-POLICY-ENGINE-ADAPTER
+    blocking_active: false
+    owner: unassigned
+    decision_question: 何时需要外部策略引擎替代最小门禁检查器
+    research_package: null
+    evidence_refs: []
+    verdict_ref: null
+    fallback_available: true
     candidates: [Python-YAML-validator, Open-Policy-Agent]
-    current_research_quality: 82
+    evaluation_status: not_evaluated
     required_evidence:
       - policy_test_suite
       - failure_closed_test
@@ -77,35 +137,67 @@ items:
   - id: RSH-OSS-007
     title: 模型、上下文和评测架构
     priority: P1
-    blocks_stage: production_profile
+    adapter_candidate: true
+    blocks_decision: ADMIT-PRODUCTION-RUNTIME-CONTROL-SET
+    blocking_active: false
+    owner: unassigned
+    decision_question: production 叠加能力进入真实生产前，模型、上下文和评测控制集如何锁定
+    research_package: null
+    evidence_refs: []
+    verdict_ref: null
+    fallback_available: false
     candidates: [deterministic-router, configurable-model-adapters]
-    current_research_quality: 76
+    evaluation_status: not_evaluated
     required_evidence: [quality_cost_pareto, context_invalidation_test, fallback_claim_test]
-    next_action: 在标准版运行时确定后开展
+    next_action: "在 `standard` 框架等级的最小运行协议确定且出现真实生产准入需求后开展"
 
   - id: RSH-OSS-008
     title: 身份、秘密和权限代理
     priority: P1
-    blocks_stage: production_profile
+    adapter_candidate: true
+    blocks_decision: ENABLE-EXTERNAL-WRITE-WORKFLOW
+    blocking_active: false
+    owner: unassigned
+    decision_question: 首个外部写工作流采用何种身份、秘密和权限代理
+    research_package: null
+    evidence_refs: []
+    verdict_ref: null
+    fallback_available: false
     candidates: [existing-secret-manager, capability-token-proxy]
-    current_research_quality: 72
+    evaluation_status: not_evaluated
     required_evidence: [secret_leak_test, permission_scope_test, revocation_test]
     next_action: 在首次外部副作用工作流前开展
 
   - id: RSH-OSS-009
     title: 数据血缘和资产目录
     priority: P1
-    blocks_stage: production_profile
+    adapter_candidate: true
+    blocks_decision: ADOPT-ENTERPRISE-ASSET-CATALOG
+    blocking_active: false
+    owner: unassigned
+    decision_question: 何时需要企业资产目录而非轻量 manifest
+    research_package: null
+    evidence_refs: []
+    verdict_ref: null
+    fallback_available: true
     candidates: [file-manifest, lightweight-catalog, Backstage]
-    current_research_quality: 74
+    evaluation_status: not_evaluated
     required_evidence: [cross_project_isolation_test, deletion_lineage_test, export_import_test]
-    next_action: 标准版双项目隔离试点后开展
+    next_action: "完成两个采用 `standard` 基础治理配置的异构 L3 隔离试点后开展"
 
   - id: RSH-OSS-010
     title: 打包、升级和供应链
     priority: P1
-    blocks_stage: production_profile
+    adapter_candidate: true
+    blocks_decision: DISTRIBUTE-PRODUCTION-RUNTIME
+    blocking_active: false
+    owner: unassigned
+    decision_question: production 叠加能力的运行资产如何打包、升级、回滚并验证供应链
+    research_package: null
+    evidence_refs: []
+    verdict_ref: null
+    fallback_available: false
     candidates: [signed-packages, template-lock-and-migrators]
-    current_research_quality: 70
+    evaluation_status: not_evaluated
     required_evidence: [upgrade_rollback_test, sbom_generation, clean_environment_restore]
-    next_action: 第一个标准版项目完成后开展
+    next_action: "第一个采用 `standard` 基础治理配置且要求 production 叠加能力的项目完成本地证明后开展"

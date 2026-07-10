@@ -36,6 +36,8 @@ The project root is `.`. Public docs and workflows should live under that active
 ### `.shopme/`
 Use for workspace governance, editor constraints, routing rules, archive policy, and file-placement policy.
 
+这里的 governance 只表示 ShopMe 编辑器与文档落点治理，不是 AI Project OS 产品治理或项目路由权威。AI Project OS 语义以 `project-os.yaml` 为机器入口，并以其中登记的 `authority` 路径为准。
+
 ### `.`
 Use for public docs: methods, taxonomy, system design, workflows, and durable reading paths.
 
@@ -66,6 +68,7 @@ When unsure, use this order:
 - docs root is for active working docs only.
 - `deliverables/` is for directly usable assets.
 - `.shopme/` is the stable home for governance and routing rules.
+- 上述规则只适用于 ShopMe 工作区和编辑器路由；AI Project OS 产品治理仍以 `project-os.yaml` 登记的权威路径为准。
 
 ## Homepage and section placement
 

@@ -30,18 +30,24 @@ R0 存量架构恢复（仅存量项目）
 | S6 验证发布 | 实现和测试计划 | 测试报告、运行结果、证据包、发布决策 | 结构、语义、追溯和证据等级全部通过 | 测试失败、证据过期或发布拒绝 |
 | S7 运行演进 | 发布版本和真实运行 | 指标、事故、复盘、升降级和废弃记录 | 真实结果、成本、责任和恢复链成立 | 生产事故、效果不达标或新目标 |
 
-## 3. 四个正交状态
+项目类型、基础治理配置和叠加能力的选择、复判及变化失效只由[项目类型与治理配置路由](PROJECT_TYPE_AND_GOVERNANCE_ROUTING.md)定义。
+
+## 3. 六个正交坐标
 
 每个工作项分别记录：
 
 ```text
 生命周期位置：R0 / S0 ... S7
-工作状态：排队 / 执行 / 等待人工 / 阻断 / 暂停 / 失败 / 完成 / 被替代
-证据等级：控制包 / 契约 / 模拟 / 本地 / 只读真实 / 生产
-审批状态：不需要 / 待审批 / 已批准 / 拒绝 / 过期 / 撤销
+工作状态：引用 STATE_TRANSITIONS_AND_INVALIDATION.md
+审批状态：引用 STATE_TRANSITIONS_AND_INVALIDATION.md
+实现状态：引用 STATE_TRANSITIONS_AND_INVALIDATION.md 的唯一 implementation_status 枚举
+证据等级：引用 GATES_PROOF_SCORING.md 的唯一 proof_level 枚举
+失效状态：引用 STATE_TRANSITIONS_AND_INVALIDATION.md 的唯一 stale_status 枚举
 ```
 
-禁止用一个 `completed` 同时表达四种状态。
+禁止用一个 `completed` 同时表达六种坐标。合法/非法状态迁移、失败/重试、过期/废弃和下游闭包传播只由 [状态迁移与失效传播](../governance/STATE_TRANSITIONS_AND_INVALIDATION.md) 定义。
+
+达到 S5、S6 或 S7 只表示相应成熟度门禁成立，不能自动把 `implementation_status` 改为已实现、提升 proof level、激活 `multi_agent/production` 叠加能力或签发生产声明。
 
 ## 4. 门禁执行规则
 
@@ -59,7 +65,7 @@ R0 存量架构恢复（仅存量项目）
 
 低风险项目允许带责任人和有效期的显式豁免。安全、隐私、外部不可逆副作用和生产声明不允许静默豁免。
 
-## 5. 允许的回退
+## 5. 阶段重开示例
 
 ```text
 S6 验收失败 → S4 修正契约或 S5 修正实现
@@ -68,3 +74,5 @@ S7 发现业务假设错误 → S1 或 S2 重开
 S7 外部接口变化 → S4 契约失效
 S7 事故证明架构错误 → S3 新建替代决策
 ```
+
+这些是成熟度重开示例，不是工作状态迁移表，也不授权下游直接修改上游批准事实。

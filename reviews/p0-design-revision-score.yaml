@@ -1,0 +1,120 @@
+schema_version: 1
+score_record_id: SCORE-P0-DESIGN-20260710
+formula_version: weighted-geometric-v1
+scored_at: "2026-07-10"
+scorer: primary-agent-integrating-seven-role-review
+scope_version: ai-project-os-0.1.0-design-p0-revision
+evidence_refs:
+  - reviews/p0-design-review-architecture-workflow-adversarial.yaml
+  - reviews/p0-design-review-information-security.yaml
+  - reviews/p0-design-review-ai-research.yaml
+  - project-os.yaml
+
+dimensions:
+  - id: boundaries_and_layers
+    name: 系统边界与分层
+    weight: 0.10
+    target_score: 92
+    current_evidence_score: 89
+    basis: L1/L2/L3 所有权、锁定、迁移和升格语义已形成唯一权威；尚无真实消费者兼容测试
+    files: [docs/architecture/REPOSITORY_AND_LAYER_CONTRACT.md]
+    verification: authority paths and Markdown links validation
+    open_items: [缺 L2/L3 锁文件 fixture 和迁移验证]
+  - id: lifecycle_and_progression
+    name: 生命周期与推进闭环
+    weight: 0.10
+    target_score: 90
+    current_evidence_score: 88
+    basis: 阶段与对象链已分离，合法迁移和失效重开已定义；自动传播未实现
+    files: [docs/workflows/PROJECT_LIFECYCLE.md, docs/governance/STATE_TRANSITIONS_AND_INVALIDATION.md]
+    verification: canonical chain uniqueness and proof enum uniqueness validation
+    open_items: [缺状态机 Schema、闭包 fixture 和并发更新验证]
+  - id: sources_research_decisions
+    name: 来源、事实、研究与决策
+    weight: 0.10
+    target_score: 90
+    current_evidence_score: 89
+    basis: 临时人工笔记不进入 L1 资产或追溯链；正式研究只阻断具体决策，且 planned 项未评估
+    files: [docs/governance/CONTROLLED_OBJECT_MODEL.md, docs/research/RESEARCH_WORKFLOW.md, research/registry.yaml]
+    verification: YAML parse, temporary-note dependency scan, and stale score or blocks_stage scan
+    open_items: [缺真实研究包、来源证据重放和正式事实批准 fixture]
+  - id: artifacts_and_traceability
+    name: 产物职责与追溯
+    weight: 0.10
+    target_score: 92
+    current_evidence_score: 91
+    basis: 固定主链、对象字段、类型矩阵、Spec 外壳和需求分母均有唯一权威
+    files: [docs/governance/CONTROLLED_OBJECT_MODEL.md, docs/governance/ARTIFACTS_AND_TRACEABILITY.md]
+    verification: canonical chain uniqueness validation
+    open_items: [缺机器 Schema、关系 allowlist 全矩阵和双向覆盖检查器]
+  - id: workflow_execution_recovery
+    name: Workflow、执行和恢复
+    weight: 0.12
+    target_score: 88
+    current_evidence_score: 84
+    basis: Task、Workflow、失败路由、Checkpoint 和未知副作用语义已定义；没有运行器或崩溃实验
+    files: [docs/governance/CONTROLLED_OBJECT_MODEL.md, docs/governance/STATE_TRANSITIONS_AND_INVALIDATION.md]
+    verification: seven-role review record validation
+    open_items: [缺最小运行器、kill-point 故障注入和副作用恢复证明]
+  - id: ai_native_governance
+    name: AI 原生上下文、模型和工具治理
+    weight: 0.10
+    target_score: 90
+    current_evidence_score: 88
+    basis: 六类执行节点、指纹、上下文信任、评测、预算和降级封顶已定义
+    files: [docs/architecture/AI_NATIVE_EXECUTION_MODEL.md]
+    verification: authority path and review record validation
+    open_items: [缺上下文编译器、评测集 fixture 和模型漂移实验]
+  - id: security_authorization_isolation
+    name: 安全、权限与项目隔离
+    weight: 0.12
+    target_score: 89
+    current_evidence_score: 86
+    basis: standard 最低责任分离、能力授权、namespace、秘密和副作用账本语义已定义
+    files: [docs/governance/AUTHORIZATION_SIDE_EFFECTS_AND_ISOLATION.md]
+    verification: L2 term scan and seven-role review record validation
+    open_items: [缺权限代理、双项目隔离 fixture、秘密泄漏与外部写恢复实验]
+  - id: tests_evidence_claims
+    name: 测试、证据和完成声明
+    weight: 0.10
+    target_score: 90
+    current_evidence_score: 87
+    basis: 唯一八级 proof_level、Run/Evidence/Verdict/Claim 顺序与精确绑定已定义
+    files: [docs/governance/GATES_PROOF_SCORING.md, docs/governance/RUN_EVIDENCE_ACCEPTANCE.md]
+    verification: proof enum uniqueness and 70-review-record schema validation
+    open_items: [缺机器 Schema、签名、不可变证据存储和端到端 Run]
+  - id: evolution_compatibility_assets
+    name: 演进、兼容和资产生命周期
+    weight: 0.08
+    target_score: 87
+    current_evidence_score: 84
+    basis: 版本域、迁移、升降级、替代和废弃资格已定义
+    files: [docs/architecture/REPOSITORY_AND_LAYER_CONTRACT.md]
+    verification: authority and link validation
+    open_items: [缺异构项目验证、迁移 fixture 和真实消费者]
+  - id: chinese_readability
+    name: 中文可读性与使用体验
+    weight: 0.08
+    target_score: 93
+    current_evidence_score: 92
+    basis: 稳定英文标识配中文解释，README 提供分层阅读入口
+    files: [README.zh-CN.md, project-os.yaml]
+    verification: placeholder and Markdown link validation
+    open_items: [尚无从机器 Schema 自动生成的中文视图]
+
+calculation:
+  target_base_score: 90.02
+  current_evidence_base_score: 87.65
+  penalties: 0
+  hard_gate_ceiling: 84
+  ceiling_reason: 尚无端到端 Run/Evidence 或恢复机制运行证明
+  target_solution_design_score: 84
+  current_design_evidence_score: 84
+  current_implementation_score: 0
+  local_runtime_proof_score: 0
+  production_proof_score: 0
+
+claim_limits:
+  - 84 分只表示本轮设计语义与审查证据达到当前硬封顶，不表示运行就绪
+  - 没有跨项目隔离验证，不得突破 89
+  - 没有异构真实项目证明，不得声明已证明通用 95+

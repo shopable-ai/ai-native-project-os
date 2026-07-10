@@ -1,0 +1,133 @@
+# 控制集合机器契约
+# 每个项目路由引用的 control set 都必须满足本契约。
+
+schema_version: 1
+contract_id: control-set-contract
+contract_version: 1
+included_semantics: configured_in_control_set_not_runtime_enabled
+
+required_fields:
+  - extends
+  - control_set_id
+  - version
+  - content_hash
+  - base_governance_profile
+  - base_control_refs_by_category
+  - overlay_modules
+  - base_profile_implementation_status
+  - base_profile_implementation_evidence_refs
+  - compatibility
+
+manifest_example:
+  extends: controlled_object_base/v1
+  control_set_id: control-set-id
+  version: 1
+  content_hash: sha256
+  base_governance_profile: standard
+  base_control_refs_by_category:
+    objective_scope: [contract-id]
+    source_fact_requirement_governance: [policy-id]
+    lifecycle_state_invalidation: [contract-id]
+    typed_traceability: [contract-id]
+    research_and_architecture_decision: [policy-id]
+    io_and_failure_contracts: [contract-id]
+    workflow_recovery: [contract-id]
+    authorization_and_project_isolation: [policy-id]
+    run_evidence_acceptance_claim: [contract-id]
+    scoring_and_claim_ceiling: [policy-id]
+  base_profile_implementation_status: not_started
+  base_profile_implementation_evidence_refs: []
+  overlay_modules:
+    multi_agent:
+      included: true
+      implementation_status: not_started
+      control_refs_by_category:
+        delegation_identity: [policy-id]
+        message_and_mailbox: [contract-id]
+        ownership_and_lock: [contract-id]
+        conflict_resolution: [policy-id]
+        checkpoint_recovery: [contract-id]
+      implementation_evidence_refs: []
+    production:
+      included: true
+      implementation_status: not_started
+      control_refs_by_category:
+        release_gate: [policy-id]
+        change_management: [policy-id]
+        monitoring_and_alerting: [contract-id]
+        recovery_and_rollback: [contract-id]
+        incident_and_on_call: [policy-id]
+        production_evidence: [contract-id]
+      implementation_evidence_refs: []
+  compatibility:
+    framework_editions: [standard]
+    project_types: []
+    environments: []
+
+hash_policy:
+  excludes: [content_hash]
+  canonicalization: canonical-yaml-v1
+  mismatch: fail_closed
+
+base_profile_contracts:
+  lite:
+    required_control_categories:
+      - objective_scope
+      - approved_requirements
+      - typed_traceability
+      - acceptance_evidence
+      - human_approval
+  standard:
+    required_control_categories:
+      - objective_scope
+      - source_fact_requirement_governance
+      - lifecycle_state_invalidation
+      - typed_traceability
+      - research_and_architecture_decision
+      - io_and_failure_contracts
+      - workflow_recovery
+      - authorization_and_project_isolation
+      - run_evidence_acceptance_claim
+      - scoring_and_claim_ceiling
+
+base_profile_invariants:
+  - selected_base_profile_has_exactly_all_required_control_categories
+  - every_required_base_control_category_has_non_empty_resolvable_refs
+  - every_base_control_ref_is_included_in_content_hash
+  - implemented_base_profile_has_non_empty_implementation_evidence
+
+overlay_module_contracts:
+  multi_agent:
+    required_control_categories:
+      - delegation_identity
+      - message_and_mailbox
+      - ownership_and_lock
+      - conflict_resolution
+      - checkpoint_recovery
+  production:
+    required_control_categories:
+      - release_gate
+      - change_management
+      - monitoring_and_alerting
+      - recovery_and_rollback
+      - incident_and_on_call
+      - production_evidence
+
+overlay_invariants:
+  - every_included_overlay_has_all_required_control_categories
+  - every_required_control_category_has_non_empty_resolvable_refs
+  - every_control_ref_is_included_in_content_hash
+  - implemented_overlay_has_non_empty_implementation_evidence
+  - not_started_overlay_may_have_empty_implementation_evidence
+
+activation_requires:
+  - selected_base_profile_satisfies_base_profile_contract
+  - base_profile_implementation_status_is_implemented
+  - base_profile_has_non_empty_implementation_evidence
+  - target_overlay_is_included
+  - target_overlay_satisfies_overlay_contract
+  - target_overlay_implementation_status_is_implemented
+  - target_overlay_has_non_empty_implementation_evidence
+  - authorization_snapshot_is_valid
+  - overlay_activation_verdict_is_accepted
+  - compatibility_matches_route

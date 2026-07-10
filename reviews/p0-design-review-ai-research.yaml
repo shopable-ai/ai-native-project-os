@@ -1,0 +1,246 @@
+schema_version: 1
+review_session_id: p0-design-review-ai-research-20260710
+reviewed_at: '2026-07-10'
+roles:
+  - AI 原生执行架构专家
+  - 技术研究与开源复用专家
+records:
+  - review_id: AIEX-001
+    reviewer_role: AI 原生执行架构专家
+    attacked_assumption: 只要描述“AI、代码、人工和外部系统协作”，执行节点就已具备机器化语义。
+    affected_artifact: docs/architecture/AI_NATIVE_EXECUTION_MODEL.md
+    severity: P0
+    evidence: 当前仅在 ARCHITECT_WORKFLOWS.md 的 A08 和检查清单中概述边界，未定义 deterministic_code、model_reasoning、retrieval、agent_action、human_decision、external_system 六类稳定枚举及各自必填字段、合法输入输出和失败语义。
+    proposed_change: 新增唯一权威执行节点契约；六类节点使用稳定英文标识和中文说明，并为每类定义执行主体、输入输出 Schema、可用权限、成功条件、失败返回、可重试性与证据要求。
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: 枚举落地后仍需 Schema、检查器和异构节点样例证明其可执行性。
+
+  - review_id: AIEX-002
+    reviewer_role: AI 原生执行架构专家
+    attacked_assumption: deterministic_code 天然确定、可复现，因此只记录代码路径或 exit_code 即可。
+    affected_artifact: docs/governance/RUN_EVIDENCE_ACCEPTANCE.md
+    severity: P0
+    evidence: GATES_PROOF_SCORING.md 明确 exit_code 为 0 不是充分条件，但当前没有要求记录代码提交、依赖锁、配置、输入、环境和 Schema 指纹，也没有把 semantic_result 与进程退出状态分离。
+    proposed_change: 对 deterministic_code 强制记录 code_fingerprint、dependency_fingerprint、config_fingerprint、input_fingerprint、environment_fingerprint、output_schema_ref、exit_code 和 semantic_result；指纹缺失时不得产生可复现声明。
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: 操作系统、外部服务和非锁定构建工具仍可能造成不可复现。
+
+  - review_id: AIEX-003
+    reviewer_role: AI 原生执行架构专家
+    attacked_assumption: 记录模型名称足以重放 model_reasoning 节点。
+    affected_artifact: docs/architecture/AI_NATIVE_EXECUTION_MODEL.md
+    severity: P0
+    evidence: ARCHITECT_WORKFLOWS.md 只要求模型、提示、上下文、工具和策略“版本可追溯”，没有定义统一指纹组合，也未覆盖模型提供商、模型修订、推理参数、提示渲染结果、工具清单和策略快照。
+    proposed_change: 定义 model_fingerprint、prompt_fingerprint、context_fingerprint、toolset_fingerprint、policy_fingerprint；同时保存模型适配器版本、采样参数、结构化输出 Schema 和实际渲染提示哈希，缺一则将重放能力标记为不可保证。
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: 托管模型即使指纹一致也可能因服务端不可见更新而漂移，必须以评测重放而非逐字一致作为证明。
+
+  - review_id: AIEX-004
+    reviewer_role: AI 原生执行架构专家
+    attacked_assumption: retrieval 只是模型上下文装配细节，不需要独立节点和证据。
+    affected_artifact: docs/architecture/AI_NATIVE_EXECUTION_MODEL.md
+    severity: P0
+    evidence: 当前权威文件未把 retrieval 定义为独立执行类型，也没有查询、索引版本、命名空间、过滤条件、排序参数、命中文档和空结果的记录要求。
+    proposed_change: 将 retrieval 建模为一等节点，记录 query_fingerprint、index_or_snapshot_id、project_namespace、filters、ranking_policy、top_k、returned_chunk_refs 和 empty_or_partial_result；禁止跨项目默认检索。
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: 外部检索服务可能无法提供稳定快照，需要适配器声明可重放等级和声明上限。
+
+  - review_id: AIEX-005
+    reviewer_role: AI 原生执行架构专家
+    attacked_assumption: 原始资料进入上下文后，只靠提示词提醒模型忽略恶意指令即可完成注入隔离。
+    affected_artifact: docs/architecture/AI_NATIVE_EXECUTION_MODEL.md
+    severity: P0
+    evidence: ARCHITECT_WORKFLOWS.md 规定原始资料中的指令不得获得系统权限，但尚未定义系统指令、批准事实、检索内容、用户输入和工具结果的信任分区，也没有规定不可信内容不得改变工具权限和审批状态。
+    proposed_change: 定义 context_trust_level、instruction_or_data、source_authority 和 permission_effect；不可信来源只能作为引用数据进入隔离区，不能贡献系统指令、提升权限、批准副作用或直接形成事实，检测到注入时必须 fail-closed 并生成审计事件。
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: 提示注入检测存在漏报，仍需工具层能力控制和人工门禁作为独立防线。
+
+  - review_id: AIEX-006
+    reviewer_role: AI 原生执行架构专家
+    attacked_assumption: 保存 context_fingerprint 就足以解释一次模型输出。
+    affected_artifact: docs/governance/RUN_EVIDENCE_ACCEPTANCE.md
+    severity: P0
+    evidence: 补充要求明确需要上下文来源、哈希、信任等级和截断情况；当前 Run 最小字段与上下文清单尚未形成权威契约，无法判断哪些内容被省略、截断或覆盖。
+    proposed_change: Run 中保存 context_manifest，逐项记录 source_ref、content_hash、trust_level、authority_status、token_count、included_range、ordering、truncated、omission_reason；发生关键批准事实截断时节点必须失败，不得静默继续。
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: 上下文压缩可能改变语义，后续需为摘要器建立独立节点、来源映射和保真评测。
+
+  - review_id: AIEX-007
+    reviewer_role: AI 原生执行架构专家
+    attacked_assumption: 超时、重试和降级可以由运行器自行决定，不必进入设计契约。
+    affected_artifact: docs/architecture/AI_NATIVE_EXECUTION_MODEL.md
+    severity: P0
+    evidence: ARCHITECT_WORKFLOWS.md 仅声明降级必须降低完成声明上限，尚未定义 cost_budget、token_budget、latency_budget、attempt_budget、retryable_errors、backoff、fallback_route 和 budget_exhausted 的机器语义。
+    proposed_change: 每个非纯人工节点必须声明成本、令牌、延迟和尝试预算；重试仅允许针对显式 retryable 错误并记录累计消耗，预算耗尽返回结构化失败；外部副作用重试还必须受幂等键和回执约束。
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: 多节点共享预算和并发争用仍需最小运行器实现后验证。
+
+  - review_id: AIEX-008
+    reviewer_role: AI 原生执行架构专家
+    attacked_assumption: 有备用模型或备用工具就等于具备安全降级能力。
+    affected_artifact: docs/governance/GATES_PROOF_SCORING.md
+    severity: P0
+    evidence: 当前只有“降级执行必须同步降低完成声明上限”的原则，没有建立 fallback_id、触发条件、语义差异、禁用能力、最低评测结果和 claim_ceiling 的映射。
+    proposed_change: 每条降级路径必须事前声明触发条件、替代节点、能力损失、证据损失和 completion_claim_ceiling；未登记的临时降级不得签发完成声明，降级后生成的 Evidence 必须携带 degraded_execution 标记。
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: 声明封顶的自动传播仍依赖状态失效检查器和验收裁决实现。
+
+  - review_id: AIEX-009
+    reviewer_role: AI 原生执行架构专家
+    attacked_assumption: model_reasoning 或 agent_action 只要有少量成功样例和结构化输出，就可以通过验收。
+    affected_artifact: docs/architecture/AI_NATIVE_EXECUTION_MODEL.md
+    severity: P0
+    evidence: ARCHITECT_WORKFLOWS.md 要求非确定性步骤有评测，但没有定义 eval_dataset、counterexample_dataset、adversarial_dataset 的版本、适用范围、泄漏控制、指标阈值和失败样本保留规则。
+    proposed_change: 非确定性节点必须绑定版本化评测集、反例集和注入攻击集，记录 dataset_fingerprint、metric_definition、threshold、baseline、failed_case_refs 和 evaluator_identity；未运行对应评测时 proof_level 不得越过控制设计层。
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: 评测集代表性、数据污染和模型作为裁判的偏差仍需人工抽检与异构项目验证。
+
+  - review_id: AIEX-010
+    reviewer_role: AI 原生执行架构专家
+    attacked_assumption: agent_action、human_decision 和 external_system 可以共用一个“执行成功”状态，候选框架也可顺便承担这些语义。
+    affected_artifact: docs/architecture/AI_NATIVE_EXECUTION_MODEL.md
+    severity: P0
+    evidence: 当前已要求智能体、工作流、技能和工具分开建模，并声明候选框架只能经研究和适配器接入；但尚未定义 agent_action 的授权票据、human_decision 的不可代理裁决记录，以及 external_system 的请求、幂等、回执和撤销语义。
+    proposed_change: 分别定义三类节点契约：agent_action 记录 capability_grant 和实际 tool_calls；human_decision 记录 human_actor、decision_scope、verdict、时间和签名引用且禁止 AI 代签；external_system 记录 adapter_id、request_fingerprint、idempotency_key、timeout、receipt、reconciliation 和 rollback_or_compensation。LangGraph、Temporal、OPA 等仅可作为实现适配器候选，不得进入内核枚举或默认依赖。
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: 高风险操作的身份真实性、撤销可行性和崩溃恢复必须通过运行实验，设计文本不能提供证明。
+
+  - review_id: RSHR-001
+    reviewer_role: 技术研究与开源复用专家
+    attacked_assumption: planned 状态的研究任务可以凭主观判断拥有 70—92 分的 current_research_quality。
+    affected_artifact: research/registry.yaml
+    severity: P0
+    evidence: registry 顶层状态为 planned，十个任务均没有 sources、实验输出、评分维度、权重、处罚、评分者和时间，却分别登记 70—92 的质量分；这与“无法重算必须标记未评估”的规则冲突。
+    proposed_change: 删除所有无证据数值，将 research_quality 统一设为 not_evaluated；只有研究包包含评分维度、权重、处罚、证据引用、评分者、时间和可重算命令后才允许生成分数。
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: 即使改为未评估，后续仍需检查器阻止 planned 或缺证据任务重新写入主观分数。
+
+  - review_id: RSHR-002
+    reviewer_role: 技术研究与开源复用专家
+    attacked_assumption: 只要研究任务优先级为 P0，就可以用 blocks_stage 阻断整个成熟度阶段。
+    affected_artifact: research/registry.yaml
+    severity: P0
+    evidence: RESEARCH_WORKFLOW.md 规定只有研究位于当前关键路径且影响、不确定性、不可逆性达到阈值时才阻断相关架构决策；registry 却把六个 planned 候选比较直接绑定 S1、S3、S4、S5、S6，没有 decision_ref、blocking_reason 或不可替代性证据。
+    proposed_change: 将 blocks_stage 改为默认空值，并新增 blocks_decision、blocking_reason、fallback_available 和 blocking_approved_by；阻断对象必须是具体决策或门禁，不得用候选工具研究阻断整个 S 阶段。
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: 如果没有机器校验，维护者仍可能用模糊的决策编号变相阻断标准版。
+
+  - review_id: RSHR-003
+    reviewer_role: 技术研究与开源复用专家
+    attacked_assumption: 标准版进入 S3 前必须先选定 Spec Kit、OpenSpec、BMAD 或其他规格驱动框架。
+    affected_artifact: research/registry.yaml
+    severity: P0
+    evidence: project-os.yaml 已决策采用自研薄内核且 external_dependencies 为空；规格控制语义由 L1 自身协议定义。RSH-OSS-001 只是适配器候选比较，却以 blocks_stage S3 把可选实现工具提升为架构决策前置条件。
+    proposed_change: 将 RSH-OSS-001 降为 non_blocking 或仅阻断“采用某规格框架适配器”的具体 ADR；标准版使用内核 Spec 契约继续推进，候选试点不得阻断 S3。
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: 未来适配器可能反向污染内核 Spec 语义，仍需契约一致性和可退出测试。
+
+  - review_id: RSHR-004
+    reviewer_role: 技术研究与开源复用专家
+    attacked_assumption: 标准版 S5 计划与最小执行必须等待 LangGraph 或 Temporal 等持久运行时选型。
+    affected_artifact: research/registry.yaml
+    severity: P0
+    evidence: AI_PROJECT_OS_CORE.md 明确自研持久工作流引擎不属于标准版，project-os.yaml 也尚未锁定第三方依赖；RSH-OSS-002 却把 current-lightweight-runner、LangGraph、Temporal 比较设为 S5 的 P0 阻断项。
+    proposed_change: 让标准版以最小 Run、Checkpoint、暂停恢复和幂等协议推进；仅当具体项目的恢复目标无法由薄实现满足时，才创建阻断该运行时决策的研究任务，LangGraph 和 Temporal 始终作为适配器候选。
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: 薄实现的恢复边界尚未经过崩溃、重放和副作用实验，不能因此声称持久运行能力已证明。
+
+  - review_id: RSHR-005
+    reviewer_role: 技术研究与开源复用专家
+    attacked_assumption: S4 工程设计必须先决定使用 Mermaid 还是 Structurizr DSL。
+    affected_artifact: research/registry.yaml
+    severity: P1
+    evidence: RSH-OSS-003 将架构表达工具比较设为 P0 并阻断 S4，但工程设计的必要语义是组件、关系、契约和失败路径；可视化或架构即代码工具只是表示层适配器，不是这些语义的前提。
+    proposed_change: 移除对 S4 的阶段阻断，将研究目标改为“架构模型导出适配器比较”；先定义与工具无关的架构视图契约，再用同一模型验证 Mermaid 或 Structurizr 的导出、差异和退出成本。
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: 若基础架构模型本身不完整，更换表示工具不会改善设计质量。
+
+  - review_id: RSHR-006
+    reviewer_role: 技术研究与开源复用专家
+    attacked_assumption: S1 领域和技术认知必须等待 GPT Researcher 或专用研究执行器选型。
+    affected_artifact: research/registry.yaml
+    severity: P0
+    evidence: RESEARCH_WORKFLOW.md 已定义可由受控人工或 AI 流程执行的研究方法；RSH-OSS-004 把 controlled-web-research 与 GPT-Researcher 比较设为 S1 阻断项，错误地把研究方法与可选执行器绑定。
+    proposed_change: 将该任务设为非阻断适配器研究；S1 可使用受控来源审计、人工复核和证据包继续，只有某具体自动化研究能力被批准进入范围时才阻断其实现决策。
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: 人工或通用模型研究仍可能发生来源漂移，必须保留来源快照、访问日期和引用重放证据。
+
+  - review_id: RSHR-007
+    reviewer_role: 技术研究与开源复用专家
+    attacked_assumption: S6 验证发布必须先选定 Phoenix、Langfuse 或 Open Policy Agent。
+    affected_artifact: research/registry.yaml
+    severity: P0
+    evidence: RSH-OSS-005 和 RSH-OSS-006 均为 planned 候选比较，却分别阻断 S6；门禁、Evidence、Acceptance Verdict 和声明封顶是 L1 内核协议，可由最小检查器和文件证据实现，第三方观测或策略平台不是设计基线前置依赖。
+    proposed_change: 移除两个任务对 S6 的通用阻断；先用内核契约完成最小验证，候选工具仅在具体观测保留、策略复杂度或生产规模需求出现时阻断相应适配器 ADR。
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: 最小检查器尚未实现，因此只能解除错误工具阻断，不能把 S6 运行证明视为已具备。
+
+  - review_id: RSHR-008
+    reviewer_role: 技术研究与开源复用专家
+    attacked_assumption: 在核心架构和研究登记表同时维护候选工具名称不会形成双重真相。
+    affected_artifact: docs/architecture/AI_PROJECT_OS_CORE.md
+    severity: P1
+    evidence: AI_PROJECT_OS_CORE.md 维护 Spec Kit、Structurizr、GPT Researcher、LangGraph、Temporal、Phoenix、Langfuse、OPA 等候选清单，research/registry.yaml 又维护另一套可编辑候选列表；两处可独立修改，存在漂移和候选被误读为推荐依赖的风险。
+    proposed_change: 核心架构只保留能力类别、适配器原则和“当前正式依赖为空”的结论；具体候选名称只在 research/registry.yaml 登记，其他文件通过链接引用，不复制候选清单。
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: README、ADR 或未来规格仍可能复制候选名单，需要重复定义检查。
+
+  - review_id: RSHR-009
+    reviewer_role: 技术研究与开源复用专家
+    attacked_assumption: 研究任务完成并写出 verdict.md 后，候选能力就可以直接成为正式依赖。
+    affected_artifact: docs/research/RESEARCH_WORKFLOW.md
+    severity: P0
+    evidence: 研究方法说明了“采用、适配、延后、拒绝”并形成 ADR，但没有给出从 research verdict 到 project-os.yaml external_dependencies、适配器契约、版本锁、兼容范围和撤销记录的原子升格门禁。
+    proposed_change: 定义研究升格链为 accepted_verdict → approved_ADR → adapter_contract → conformance_evidence → pinned_dependency_and_lock → authority_update；任一步缺失都保持 candidate，研究区不得自行改写正式依赖。
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: 尚无机器化事务或检查器保证 ADR、锁文件和权威登记同步更新。
+
+  - review_id: RSHR-010
+    reviewer_role: 技术研究与开源复用专家
+    attacked_assumption: candidates、required_evidence 和 next_action 足以构成可审计的开源研究登记。
+    affected_artifact: research/registry.yaml
+    severity: P1
+    evidence: 当前任务没有 owner、decision_question、source_refs、research_package_path、license_status、security_status、experiment_status、evidence_refs、exit_cost、fallback、reviewed_at、verdict_ref 和 recheck_trigger，无法证明来源质量、实验是否实际运行或退出成本是否可接受。
+    proposed_change: 扩展登记 Schema，补齐责任人、决策边界、来源与研究包引用、实验状态、证据引用、许可证与供应链审查、数据外传、替换和退出成本、后备方案、裁决引用及重审条件；planned 项的未知字段显式标记 unknown 或 not_evaluated。
+    accepted_or_rejected: accepted
+    rejection_reason: null
+    score_delta: not_evaluated
+    remaining_risk: 字段完整不等于研究质量，需要基于真实研究包、可复现实验和独立反方审查再签发裁决。

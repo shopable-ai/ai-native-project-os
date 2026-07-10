@@ -1,0 +1,75 @@
+# 授权快照机器契约
+# 非空引用不等于有效授权；激活门禁只能接受满足本契约的已验证快照。
+
+schema_version: 1
+contract_id: authorization-snapshot-contract
+contract_version: 1
+
+required_fields:
+  - extends
+  - authorization_snapshot_id
+  - version
+  - project_id
+  - route_decision_ref
+  - route_decision_hash
+  - control_set_ref
+  - control_set_hash
+  - actor_bindings
+  - capability_grant_refs
+  - capability_grant_hashes
+  - approval_ticket_refs
+  - secret_lease_refs
+  - separation_of_duties_result
+  - verification_status
+  - verification_refs
+  - valid_from
+  - expires_at
+  - revocation_status
+  - content_hash
+  - created_by
+  - created_at
+  - signature_ref
+
+enums:
+  separation_of_duties_result: [pending, passed, failed, not_applicable]
+  verification_status: [pending, verified, rejected]
+  revocation_status: [active, revoked, expired]
+
+manifest_example:
+  extends: controlled_object_base/v1
+  authorization_snapshot_id: authorization-snapshot-id
+  version: 1
+  project_id: project-id
+  route_decision_ref: route-id
+  route_decision_hash: sha256
+  control_set_ref: control-set-id
+  control_set_hash: sha256
+  actor_bindings: []
+  capability_grant_refs: [capability-grant-id]
+  capability_grant_hashes: [sha256]
+  approval_ticket_refs: []
+  secret_lease_refs: []
+  separation_of_duties_result: pending
+  verification_status: pending
+  verification_refs: []
+  valid_from: timestamp
+  expires_at: timestamp
+  revocation_status: active
+  content_hash: sha256
+  created_by: actor-id
+  created_at: timestamp
+  signature_ref: signature-id
+
+validity_invariants:
+  - verified_requires_non_empty_actor_bindings
+  - verified_requires_non_empty_capability_grant_refs_and_hashes
+  - capability_grant_refs_and_hashes_have_same_cardinality
+  - every_grant_ticket_and_lease_is_active_unexpired_and_same_project_route_control_set
+  - every_actor_binding_uses_verified_principal_not_display_name
+  - every_referenced_principal_has_actor_binding_and_every_actor_binding_is_backed_by_reference
+  - high_risk_use_requires_separation_of_duties_passed
+  - verified_requires_non_empty_verification_refs_and_valid_signature
+  - expires_at_must_be_after_valid_from
+  - route_control_set_principal_or_permission_change_invalidates_snapshot
+  - revoked_expired_rejected_or_stale_snapshot_is_invalid
+  - unknown_or_missing_field_fails_closed
