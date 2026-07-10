@@ -1,0 +1,111 @@
+schema_version: 1
+registry_id: ai-project-os-open-source-research
+status: planned
+
+items:
+  - id: RSH-OSS-001
+    title: 规格驱动框架比较
+    priority: P0
+    blocks_stage: S3
+    candidates: [Spec-Kit, OpenSpec, BMAD, Spec-Kitty, Agent-OS, GSD]
+    current_research_quality: 92
+    required_evidence:
+      - document_comparison
+      - license_and_security_review
+      - brownfield_fixture_pilot
+    next_action: 用同一存量变更样例比较 OpenSpec、Spec Kit 和 Spec Kitty
+
+  - id: RSH-OSS-002
+    title: 状态和持久工作流运行时比较
+    priority: P0
+    blocks_stage: S5
+    candidates: [current-lightweight-runner, LangGraph, Temporal]
+    current_research_quality: 85
+    required_evidence:
+      - checkpoint_resume_test
+      - crash_recovery_test
+      - idempotent_replay_test
+    next_action: 用同一暂停恢复工作流运行三个候选实验
+
+  - id: RSH-OSS-003
+    title: 架构即代码比较
+    priority: P0
+    blocks_stage: S4
+    candidates: [Mermaid, Structurizr-DSL]
+    current_research_quality: 90
+    required_evidence:
+      - same_model_multiple_views
+      - diff_and_validation_test
+    next_action: 将同一系统上下文分别建模并比较可维护性
+
+  - id: RSH-OSS-004
+    title: 技术研究执行器比较
+    priority: P0
+    blocks_stage: S1
+    candidates: [controlled-web-research, GPT-Researcher]
+    current_research_quality: 84
+    required_evidence:
+      - source_quality_test
+      - citation_replay_test
+      - cost_and_latency_report
+    next_action: 使用同一技术选型问题比较来源质量和结论稳定性
+
+  - id: RSH-OSS-005
+    title: AI 观测和评测比较
+    priority: P0
+    blocks_stage: S6
+    candidates: [OpenTelemetry-plus-Phoenix, OpenTelemetry-plus-Langfuse]
+    current_research_quality: 88
+    required_evidence:
+      - trace_interoperability_test
+      - evaluation_dataset_test
+      - local_export_test
+    next_action: 对同一智能体运行接入两个候选并比较数据可移植性
+
+  - id: RSH-OSS-006
+    title: 门禁和策略实现比较
+    priority: P0
+    blocks_stage: S6
+    candidates: [Python-YAML-validator, Open-Policy-Agent]
+    current_research_quality: 82
+    required_evidence:
+      - policy_test_suite
+      - failure_closed_test
+      - maintenance_cost_report
+    next_action: 用相同阶段门禁和权限策略比较复杂度
+
+  - id: RSH-OSS-007
+    title: 模型、上下文和评测架构
+    priority: P1
+    blocks_stage: production_profile
+    candidates: [deterministic-router, configurable-model-adapters]
+    current_research_quality: 76
+    required_evidence: [quality_cost_pareto, context_invalidation_test, fallback_claim_test]
+    next_action: 在标准版运行时确定后开展
+
+  - id: RSH-OSS-008
+    title: 身份、秘密和权限代理
+    priority: P1
+    blocks_stage: production_profile
+    candidates: [existing-secret-manager, capability-token-proxy]
+    current_research_quality: 72
+    required_evidence: [secret_leak_test, permission_scope_test, revocation_test]
+    next_action: 在首次外部副作用工作流前开展
+
+  - id: RSH-OSS-009
+    title: 数据血缘和资产目录
+    priority: P1
+    blocks_stage: production_profile
+    candidates: [file-manifest, lightweight-catalog, Backstage]
+    current_research_quality: 74
+    required_evidence: [cross_project_isolation_test, deletion_lineage_test, export_import_test]
+    next_action: 标准版双项目隔离试点后开展
+
+  - id: RSH-OSS-010
+    title: 打包、升级和供应链
+    priority: P1
+    blocks_stage: production_profile
+    candidates: [signed-packages, template-lock-and-migrators]
+    current_research_quality: 70
+    required_evidence: [upgrade_rollback_test, sbom_generation, clean_environment_restore]
+    next_action: 第一个标准版项目完成后开展
