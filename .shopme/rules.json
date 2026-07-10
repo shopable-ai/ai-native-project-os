@@ -1,0 +1,276 @@
+{
+  "version": 1,
+  "projectRoot": ".",
+  "docsConfigPath": null,
+  "docsRoot": ".",
+  "localeRoot": ".",
+  "defaultLocale": "en",
+  "editableRoots": [
+    "."
+  ],
+  "forbiddenRoots": [
+    ".shopme",
+    "dist",
+    "build",
+    ".next",
+    "node_modules"
+  ],
+  "optionalContentRoots": {
+    "reference": null,
+    "blog": null,
+    "news": null,
+    "portfolio": null
+  },
+  "sidecars": {
+    "humanRules": ".shopme/rules.md",
+    "machineRules": ".shopme/rules.json",
+    "linkIndex": ".shopme/link-index.json",
+    "projectMap": ".shopme/project-map.md"
+  },
+  "orderPolicy": {
+    "frontmatterField": "order",
+    "requiredFrontmatter": [
+      "title",
+      "description",
+      "order"
+    ],
+    "landingPageFilename": "index.md",
+    "preferredValues": [
+      10,
+      20,
+      30,
+      40
+    ]
+  },
+  "directEditHttp": {
+    "enabled": true,
+    "readBeforeWrite": true,
+    "resolveEndpoint": "POST /api/docs/v1/documents:resolve",
+    "saveEndpoint": "PUT /api/docs/v1/documents/:documentId",
+    "capabilitiesEndpoint": "GET /api/docs/v1/capabilities",
+    "openapiEndpoint": "GET /api/docs/v1/openapi.json",
+    "requiredSaveFields": [
+      "documentId",
+      "baseVersion",
+      "raw"
+    ],
+    "conflictCode": "VERSION_CONFLICT",
+    "gitCommit": {
+      "transport": "mutation request parameter",
+      "requestFields": [
+        "gitCommit",
+        "gitCommitMessage"
+      ],
+      "notCliFlag": true,
+      "rejectedCliFlags": [
+        "--git-commit"
+      ],
+      "commitsOnlyMutationPaths": true
+    },
+    "auth": {
+      "loopbackDevelopmentAllowsNoToken": true,
+      "remoteWritesRequireBearerToken": true,
+      "tokenEnv": "SHOPME_API_TOKEN",
+      "alternateTokenEnv": "SHOPABLE_DOCS_EDIT_TOKEN"
+    },
+    "mcp": {
+      "serverBinary": "shopme-mcp",
+      "baseUrlEnv": "SHOPME_BASE_URL",
+      "tokenEnv": "SHOPME_API_TOKEN",
+      "httpApiOnlyWriteLayer": true,
+      "defaultGitCommitForWrites": true
+    },
+    "safetyRules": [
+      "resolve or get the document before saving",
+      "send the original baseVersion with every save",
+      "reread and merge on VERSION_CONFLICT",
+      "do not write directly to files when the HTTP API is available"
+    ]
+  },
+  "headingPolicy": {
+    "coreRule": "write the section's most important conclusion into the heading before deciding how the body expands it",
+    "routeBeforeDrafting": true,
+    "routeQuestion": "does this document primarily reduce direction error or retrieval cost",
+    "documentTypes": {
+      "strategy_decision_policy_review": {
+        "headingStrength": "strong-conclusion-first",
+        "tocMustReveal": [
+          "main claim",
+          "rejected alternative or misunderstanding",
+          "governing boundary or tradeoff",
+          "reason for the design"
+        ]
+      },
+      "method_rules_mechanism": {
+        "headingStrength": "mechanism-first",
+        "tocMustReveal": [
+          "governing rule",
+          "non-allowed behavior",
+          "boundary that controls later details"
+        ]
+      },
+      "tutorial_runbook_onboarding": {
+        "headingStrength": "scan-first-with-strong-risk-nodes",
+        "tocMustReveal": [
+          "main execution flow",
+          "high-risk steps",
+          "success preconditions",
+          "common false-success states"
+        ]
+      },
+      "reference_index_api_enum": {
+        "headingStrength": "page-level-judgment-item-level-search",
+        "tocMustReveal": [
+          "page-level boundary",
+          "group-level stability",
+          "item-level exactness"
+        ]
+      },
+      "readme_navigation_entry": {
+        "headingStrength": "reading-path-first",
+        "tocMustReveal": [
+          "where to start",
+          "main line vs supporting material",
+          "what can be skipped on first read"
+        ]
+      }
+    },
+    "rejectByDefault": [
+      "背景",
+      "定位",
+      "原则",
+      "说明",
+      "建议",
+      "使用方式",
+      "当前问题",
+      "相关约束",
+      "注意事项",
+      "总结",
+      "目录结构",
+      "文档说明"
+    ],
+    "rejectByDefaultSemantics": "treat these as low-information labels to upgrade when they are used as the whole heading or as the heading's only real information; they are not banned tokens inside an otherwise specific heading",
+    "portableFillerToReject": [
+      "提升文档质量的方法",
+      "构建更清晰的大纲",
+      "优化标题表达的策略"
+    ],
+    "failureTests": [
+      "heading only names a category and leaves the conclusion in the body",
+      "heading can be dropped unchanged into many unrelated documents",
+      "toc alone still cannot reveal the key judgment boundary mechanism or rejected mistake",
+      "heading sounds like a document admin or generic manual instead of a writer with an actual conclusion",
+      "heading strength is wrong for the document type and damages scanability or retrieval"
+    ],
+    "workflow": [
+      "decide document type and heading strength before prose",
+      "draft toc before body",
+      "for each level-1 heading answer the section's most important conclusion",
+      "rewrite category-label or process-bucket headings",
+      "only start body drafting after toc carries first-layer meaning"
+    ],
+    "acceptance": {
+      "tocReadableWithoutBody": true,
+      "maxPortableGenericHeadings": 1,
+      "criticalHeadingMayDependOnBody": false,
+      "headingStrengthMustMatchDocumentType": true
+    }
+  },
+  "apiPageStructure": {
+    "tocGoal": "Keep the right-side TOC focused on page sections, objects, and methods.",
+    "preserveHeadingLevelsFor": [
+      "page sections",
+      "object sections",
+      "method sections"
+    ],
+    "demoteWithinMethods": [
+      "parameters",
+      "return values",
+      "behavior rules",
+      "error conditions",
+      "examples",
+      "notes"
+    ],
+    "preferWithinMethods": [
+      "bold labels",
+      "tables",
+      "compact lists",
+      "intro lines",
+      "blockquotes"
+    ],
+    "avoidHeadingLevels": [
+      "###",
+      "####"
+    ],
+    "pageStyle": "user-facing SDK reference",
+    "itemLevelHeadingRule": "keep api/item headings exact and searchable; apply stronger judgment mainly at page or overview level"
+  },
+  "docsIr": {
+    "enabledByFlag": "DOCS_IR_ENABLED",
+    "shadowModeFlag": "DOCS_IR_SHADOW_MODE",
+    "pageRenderingUnaffected": true,
+    "plainMarkdownCompatibility": "headings automatically compile into implicit section blocks",
+    "sharedBlockSyntax": ":::shared reusable-id ... :::",
+    "includeSyntax": "{{include:reusable-id}}",
+    "normalizedSharedBlockIdPrefix": "shared:",
+    "cycleFailureCode": "include_cycle_detected",
+    "authoringRules": [
+      "do not rewrite old docs just to satisfy IR",
+      "define shared blocks only for reusable transcluded content",
+      "include targets must exist before they are referenced",
+      "do not create include cycles",
+      "rollback retrieval by disabling DOCS_IR_ENABLED rather than changing /docs rendering"
+    ]
+  },
+  "internalLinks": {
+    "preferredLabelField": "title",
+    "labelIndexPath": ".shopme/link-index.json",
+    "resolutionOrder": [
+      "find target page in link-index.json",
+      "copy frontmatter title exactly",
+      "if title missing, add frontmatter title before linking"
+    ],
+    "discouragedFallbacks": [
+      "english filename",
+      "slug"
+    ]
+  },
+  "preferredCommands": {
+    "preview": "shopme .",
+    "help": "shopme --help",
+    "initHelp": "shopme init --help",
+    "build": "shopme build . --out dist",
+    "mountCheck": "shopme mount check dist/html --base-path / --canonical https://example.com"
+  },
+  "autoBootstrap": {
+    "initWritesSidecars": true,
+    "devAndBuildBackfillMissingSidecars": true
+  },
+  "relativeAssets": {
+    "enabled": true,
+    "markdownBehavior": "relative .md/.mdx links resolve to the matching docs/reference route",
+    "assetBehavior": "relative non-Markdown links and image src values resolve to docs asset URLs",
+    "preferredLayouts": [
+      "same-directory sibling files",
+      "child directories under the current page folder",
+      "page-adjacent foo.assets directories"
+    ],
+    "blockedPatterns": [
+      "path traversal outside the active content root",
+      "paths ignored by .docsignore unless explicitly allowed",
+      "system/private paths such as .git, .shopme, .next, build, dist, and node_modules"
+    ]
+  },
+  "projectConventions": {
+    "projectMap": ".shopme/project-map.md",
+    "deliverablesRoot": "deliverables",
+    "preferRulesUnderShopme": true,
+    "avoidExplanationOnlyIndexes": true,
+    "archiveReferenceRoots": [],
+    "activeRootPolicy": {
+      "root": "active working docs only",
+      "deliverables": "directly usable assets",
+      "shopme": "governance and routing rules"
+    }
+  }
+}

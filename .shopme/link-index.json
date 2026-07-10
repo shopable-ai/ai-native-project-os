@@ -1,0 +1,521 @@
+{
+  "version": 1,
+  "projectRoot": ".",
+  "docsConfigPath": null,
+  "preferredLabelField": "title",
+  "defaultLocale": "en",
+  "pages": [
+    {
+      "collection": "docs",
+      "locale": "en",
+      "file": "AGENTS.md",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "AGENTS.md",
+      "preferredHref": "./AGENTS",
+      "routeHint": "/docs/AGENTS",
+      "title": null,
+      "description": null,
+      "order": null
+    },
+    {
+      "collection": "docs",
+      "locale": "en",
+      "file": "decisions/ADR-0001-standard-profile-thin-kernel.md",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "decisions/ADR-0001-standard-profile-thin-kernel.md",
+      "preferredHref": "./decisions/ADR-0001-standard-profile-thin-kernel",
+      "routeHint": "/docs/decisions/ADR-0001-standard-profile-thin-kernel",
+      "title": null,
+      "description": null,
+      "order": null
+    },
+    {
+      "collection": "docs",
+      "locale": "en",
+      "file": "docs/architecture/AI_PROJECT_OS_CORE.md",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "docs/architecture/AI_PROJECT_OS_CORE.md",
+      "preferredHref": "./docs/architecture/AI_PROJECT_OS_CORE",
+      "routeHint": "/docs/docs/architecture/AI_PROJECT_OS_CORE",
+      "title": null,
+      "description": null,
+      "order": null
+    },
+    {
+      "collection": "docs",
+      "locale": "en",
+      "file": "docs/governance/ARTIFACTS_AND_TRACEABILITY.md",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "docs/governance/ARTIFACTS_AND_TRACEABILITY.md",
+      "preferredHref": "./docs/governance/ARTIFACTS_AND_TRACEABILITY",
+      "routeHint": "/docs/docs/governance/ARTIFACTS_AND_TRACEABILITY",
+      "title": null,
+      "description": null,
+      "order": null
+    },
+    {
+      "collection": "docs",
+      "locale": "en",
+      "file": "docs/governance/GATES_PROOF_SCORING.md",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "docs/governance/GATES_PROOF_SCORING.md",
+      "preferredHref": "./docs/governance/GATES_PROOF_SCORING",
+      "routeHint": "/docs/docs/governance/GATES_PROOF_SCORING",
+      "title": null,
+      "description": null,
+      "order": null
+    },
+    {
+      "collection": "docs",
+      "locale": "en",
+      "file": "docs/research/RESEARCH_WORKFLOW.md",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "docs/research/RESEARCH_WORKFLOW.md",
+      "preferredHref": "./docs/research/RESEARCH_WORKFLOW",
+      "routeHint": "/docs/docs/research/RESEARCH_WORKFLOW",
+      "title": null,
+      "description": null,
+      "order": null
+    },
+    {
+      "collection": "docs",
+      "locale": "en",
+      "file": "docs/superpowers/specs/2026-07-10-ai-project-os-standard-profile-design.md",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "docs/superpowers/specs/2026-07-10-ai-project-os-standard-profile-design.md",
+      "preferredHref": "./docs/superpowers/specs/2026-07-10-ai-project-os-standard-profile-design",
+      "routeHint": "/docs/docs/superpowers/specs/2026-07-10-ai-project-os-standard-profile-design",
+      "title": null,
+      "description": null,
+      "order": null
+    },
+    {
+      "collection": "docs",
+      "locale": "en",
+      "file": "docs/workflows/ARCHITECT_WORKFLOWS.md",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "docs/workflows/ARCHITECT_WORKFLOWS.md",
+      "preferredHref": "./docs/workflows/ARCHITECT_WORKFLOWS",
+      "routeHint": "/docs/docs/workflows/ARCHITECT_WORKFLOWS",
+      "title": null,
+      "description": null,
+      "order": null
+    },
+    {
+      "collection": "docs",
+      "locale": "en",
+      "file": "docs/workflows/PROJECT_LIFECYCLE.md",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "docs/workflows/PROJECT_LIFECYCLE.md",
+      "preferredHref": "./docs/workflows/PROJECT_LIFECYCLE",
+      "routeHint": "/docs/docs/workflows/PROJECT_LIFECYCLE",
+      "title": null,
+      "description": null,
+      "order": null
+    },
+    {
+      "collection": "docs",
+      "locale": "en",
+      "file": "README.zh-CN.md",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "README.zh-CN.md",
+      "preferredHref": "./README.zh-CN",
+      "routeHint": "/docs/README.zh-CN",
+      "title": null,
+      "description": null,
+      "order": null
+    },
+    {
+      "collection": "docs",
+      "locale": "en",
+      "file": "research/README.md",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "research/README.md",
+      "preferredHref": "./research/README",
+      "routeHint": "/docs/research/README",
+      "title": null,
+      "description": null,
+      "order": null
+    },
+    {
+      "collection": "docs",
+      "locale": "en",
+      "file": "templates/research-package/README.md",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "templates/research-package/README.md",
+      "preferredHref": "./templates/research-package/README",
+      "routeHint": "/docs/templates/research-package/README",
+      "title": null,
+      "description": null,
+      "order": null
+    }
+  ],
+  "byFile": {
+    "AGENTS.md": {
+      "title": null,
+      "preferredHref": "./AGENTS",
+      "routeHint": "/docs/AGENTS",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "AGENTS.md"
+    },
+    "decisions/ADR-0001-standard-profile-thin-kernel.md": {
+      "title": null,
+      "preferredHref": "./decisions/ADR-0001-standard-profile-thin-kernel",
+      "routeHint": "/docs/decisions/ADR-0001-standard-profile-thin-kernel",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "decisions/ADR-0001-standard-profile-thin-kernel.md"
+    },
+    "docs/architecture/AI_PROJECT_OS_CORE.md": {
+      "title": null,
+      "preferredHref": "./docs/architecture/AI_PROJECT_OS_CORE",
+      "routeHint": "/docs/docs/architecture/AI_PROJECT_OS_CORE",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "docs/architecture/AI_PROJECT_OS_CORE.md"
+    },
+    "docs/governance/ARTIFACTS_AND_TRACEABILITY.md": {
+      "title": null,
+      "preferredHref": "./docs/governance/ARTIFACTS_AND_TRACEABILITY",
+      "routeHint": "/docs/docs/governance/ARTIFACTS_AND_TRACEABILITY",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "docs/governance/ARTIFACTS_AND_TRACEABILITY.md"
+    },
+    "docs/governance/GATES_PROOF_SCORING.md": {
+      "title": null,
+      "preferredHref": "./docs/governance/GATES_PROOF_SCORING",
+      "routeHint": "/docs/docs/governance/GATES_PROOF_SCORING",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "docs/governance/GATES_PROOF_SCORING.md"
+    },
+    "docs/research/RESEARCH_WORKFLOW.md": {
+      "title": null,
+      "preferredHref": "./docs/research/RESEARCH_WORKFLOW",
+      "routeHint": "/docs/docs/research/RESEARCH_WORKFLOW",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "docs/research/RESEARCH_WORKFLOW.md"
+    },
+    "docs/superpowers/specs/2026-07-10-ai-project-os-standard-profile-design.md": {
+      "title": null,
+      "preferredHref": "./docs/superpowers/specs/2026-07-10-ai-project-os-standard-profile-design",
+      "routeHint": "/docs/docs/superpowers/specs/2026-07-10-ai-project-os-standard-profile-design",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "docs/superpowers/specs/2026-07-10-ai-project-os-standard-profile-design.md"
+    },
+    "docs/workflows/ARCHITECT_WORKFLOWS.md": {
+      "title": null,
+      "preferredHref": "./docs/workflows/ARCHITECT_WORKFLOWS",
+      "routeHint": "/docs/docs/workflows/ARCHITECT_WORKFLOWS",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "docs/workflows/ARCHITECT_WORKFLOWS.md"
+    },
+    "docs/workflows/PROJECT_LIFECYCLE.md": {
+      "title": null,
+      "preferredHref": "./docs/workflows/PROJECT_LIFECYCLE",
+      "routeHint": "/docs/docs/workflows/PROJECT_LIFECYCLE",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "docs/workflows/PROJECT_LIFECYCLE.md"
+    },
+    "README.zh-CN.md": {
+      "title": null,
+      "preferredHref": "./README.zh-CN",
+      "routeHint": "/docs/README.zh-CN",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "README.zh-CN.md"
+    },
+    "research/README.md": {
+      "title": null,
+      "preferredHref": "./research/README",
+      "routeHint": "/docs/research/README",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "research/README.md"
+    },
+    "templates/research-package/README.md": {
+      "title": null,
+      "preferredHref": "./templates/research-package/README",
+      "routeHint": "/docs/templates/research-package/README",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "templates/research-package/README.md"
+    }
+  },
+  "byHref": {
+    "docs:en:./AGENTS": {
+      "title": null,
+      "preferredHref": "./AGENTS",
+      "routeHint": "/docs/AGENTS",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "AGENTS.md",
+      "file": "AGENTS.md"
+    },
+    "docs:en:./decisions/ADR-0001-standard-profile-thin-kernel": {
+      "title": null,
+      "preferredHref": "./decisions/ADR-0001-standard-profile-thin-kernel",
+      "routeHint": "/docs/decisions/ADR-0001-standard-profile-thin-kernel",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "decisions/ADR-0001-standard-profile-thin-kernel.md",
+      "file": "decisions/ADR-0001-standard-profile-thin-kernel.md"
+    },
+    "docs:en:./docs/architecture/AI_PROJECT_OS_CORE": {
+      "title": null,
+      "preferredHref": "./docs/architecture/AI_PROJECT_OS_CORE",
+      "routeHint": "/docs/docs/architecture/AI_PROJECT_OS_CORE",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "docs/architecture/AI_PROJECT_OS_CORE.md",
+      "file": "docs/architecture/AI_PROJECT_OS_CORE.md"
+    },
+    "docs:en:./docs/governance/ARTIFACTS_AND_TRACEABILITY": {
+      "title": null,
+      "preferredHref": "./docs/governance/ARTIFACTS_AND_TRACEABILITY",
+      "routeHint": "/docs/docs/governance/ARTIFACTS_AND_TRACEABILITY",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "docs/governance/ARTIFACTS_AND_TRACEABILITY.md",
+      "file": "docs/governance/ARTIFACTS_AND_TRACEABILITY.md"
+    },
+    "docs:en:./docs/governance/GATES_PROOF_SCORING": {
+      "title": null,
+      "preferredHref": "./docs/governance/GATES_PROOF_SCORING",
+      "routeHint": "/docs/docs/governance/GATES_PROOF_SCORING",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "docs/governance/GATES_PROOF_SCORING.md",
+      "file": "docs/governance/GATES_PROOF_SCORING.md"
+    },
+    "docs:en:./docs/research/RESEARCH_WORKFLOW": {
+      "title": null,
+      "preferredHref": "./docs/research/RESEARCH_WORKFLOW",
+      "routeHint": "/docs/docs/research/RESEARCH_WORKFLOW",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "docs/research/RESEARCH_WORKFLOW.md",
+      "file": "docs/research/RESEARCH_WORKFLOW.md"
+    },
+    "docs:en:./docs/superpowers/specs/2026-07-10-ai-project-os-standard-profile-design": {
+      "title": null,
+      "preferredHref": "./docs/superpowers/specs/2026-07-10-ai-project-os-standard-profile-design",
+      "routeHint": "/docs/docs/superpowers/specs/2026-07-10-ai-project-os-standard-profile-design",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "docs/superpowers/specs/2026-07-10-ai-project-os-standard-profile-design.md",
+      "file": "docs/superpowers/specs/2026-07-10-ai-project-os-standard-profile-design.md"
+    },
+    "docs:en:./docs/workflows/ARCHITECT_WORKFLOWS": {
+      "title": null,
+      "preferredHref": "./docs/workflows/ARCHITECT_WORKFLOWS",
+      "routeHint": "/docs/docs/workflows/ARCHITECT_WORKFLOWS",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "docs/workflows/ARCHITECT_WORKFLOWS.md",
+      "file": "docs/workflows/ARCHITECT_WORKFLOWS.md"
+    },
+    "docs:en:./docs/workflows/PROJECT_LIFECYCLE": {
+      "title": null,
+      "preferredHref": "./docs/workflows/PROJECT_LIFECYCLE",
+      "routeHint": "/docs/docs/workflows/PROJECT_LIFECYCLE",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "docs/workflows/PROJECT_LIFECYCLE.md",
+      "file": "docs/workflows/PROJECT_LIFECYCLE.md"
+    },
+    "docs:en:./README.zh-CN": {
+      "title": null,
+      "preferredHref": "./README.zh-CN",
+      "routeHint": "/docs/README.zh-CN",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "README.zh-CN.md",
+      "file": "README.zh-CN.md"
+    },
+    "docs:en:./research/README": {
+      "title": null,
+      "preferredHref": "./research/README",
+      "routeHint": "/docs/research/README",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "research/README.md",
+      "file": "research/README.md"
+    },
+    "docs:en:./templates/research-package/README": {
+      "title": null,
+      "preferredHref": "./templates/research-package/README",
+      "routeHint": "/docs/templates/research-package/README",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "templates/research-package/README.md",
+      "file": "templates/research-package/README.md"
+    }
+  },
+  "byRouteHint": {
+    "docs:en:/docs/AGENTS": {
+      "title": null,
+      "preferredHref": "./AGENTS",
+      "routeHint": "/docs/AGENTS",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "AGENTS.md",
+      "file": "AGENTS.md"
+    },
+    "docs:en:/docs/decisions/ADR-0001-standard-profile-thin-kernel": {
+      "title": null,
+      "preferredHref": "./decisions/ADR-0001-standard-profile-thin-kernel",
+      "routeHint": "/docs/decisions/ADR-0001-standard-profile-thin-kernel",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "decisions/ADR-0001-standard-profile-thin-kernel.md",
+      "file": "decisions/ADR-0001-standard-profile-thin-kernel.md"
+    },
+    "docs:en:/docs/docs/architecture/AI_PROJECT_OS_CORE": {
+      "title": null,
+      "preferredHref": "./docs/architecture/AI_PROJECT_OS_CORE",
+      "routeHint": "/docs/docs/architecture/AI_PROJECT_OS_CORE",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "docs/architecture/AI_PROJECT_OS_CORE.md",
+      "file": "docs/architecture/AI_PROJECT_OS_CORE.md"
+    },
+    "docs:en:/docs/docs/governance/ARTIFACTS_AND_TRACEABILITY": {
+      "title": null,
+      "preferredHref": "./docs/governance/ARTIFACTS_AND_TRACEABILITY",
+      "routeHint": "/docs/docs/governance/ARTIFACTS_AND_TRACEABILITY",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "docs/governance/ARTIFACTS_AND_TRACEABILITY.md",
+      "file": "docs/governance/ARTIFACTS_AND_TRACEABILITY.md"
+    },
+    "docs:en:/docs/docs/governance/GATES_PROOF_SCORING": {
+      "title": null,
+      "preferredHref": "./docs/governance/GATES_PROOF_SCORING",
+      "routeHint": "/docs/docs/governance/GATES_PROOF_SCORING",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "docs/governance/GATES_PROOF_SCORING.md",
+      "file": "docs/governance/GATES_PROOF_SCORING.md"
+    },
+    "docs:en:/docs/docs/research/RESEARCH_WORKFLOW": {
+      "title": null,
+      "preferredHref": "./docs/research/RESEARCH_WORKFLOW",
+      "routeHint": "/docs/docs/research/RESEARCH_WORKFLOW",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "docs/research/RESEARCH_WORKFLOW.md",
+      "file": "docs/research/RESEARCH_WORKFLOW.md"
+    },
+    "docs:en:/docs/docs/superpowers/specs/2026-07-10-ai-project-os-standard-profile-design": {
+      "title": null,
+      "preferredHref": "./docs/superpowers/specs/2026-07-10-ai-project-os-standard-profile-design",
+      "routeHint": "/docs/docs/superpowers/specs/2026-07-10-ai-project-os-standard-profile-design",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "docs/superpowers/specs/2026-07-10-ai-project-os-standard-profile-design.md",
+      "file": "docs/superpowers/specs/2026-07-10-ai-project-os-standard-profile-design.md"
+    },
+    "docs:en:/docs/docs/workflows/ARCHITECT_WORKFLOWS": {
+      "title": null,
+      "preferredHref": "./docs/workflows/ARCHITECT_WORKFLOWS",
+      "routeHint": "/docs/docs/workflows/ARCHITECT_WORKFLOWS",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "docs/workflows/ARCHITECT_WORKFLOWS.md",
+      "file": "docs/workflows/ARCHITECT_WORKFLOWS.md"
+    },
+    "docs:en:/docs/docs/workflows/PROJECT_LIFECYCLE": {
+      "title": null,
+      "preferredHref": "./docs/workflows/PROJECT_LIFECYCLE",
+      "routeHint": "/docs/docs/workflows/PROJECT_LIFECYCLE",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "docs/workflows/PROJECT_LIFECYCLE.md",
+      "file": "docs/workflows/PROJECT_LIFECYCLE.md"
+    },
+    "docs:en:/docs/README.zh-CN": {
+      "title": null,
+      "preferredHref": "./README.zh-CN",
+      "routeHint": "/docs/README.zh-CN",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "README.zh-CN.md",
+      "file": "README.zh-CN.md"
+    },
+    "docs:en:/docs/research/README": {
+      "title": null,
+      "preferredHref": "./research/README",
+      "routeHint": "/docs/research/README",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "research/README.md",
+      "file": "research/README.md"
+    },
+    "docs:en:/docs/templates/research-package/README": {
+      "title": null,
+      "preferredHref": "./templates/research-package/README",
+      "routeHint": "/docs/templates/research-package/README",
+      "collection": "docs",
+      "locale": "en",
+      "localeRoot": ".",
+      "pathFromLocaleRoot": "templates/research-package/README.md",
+      "file": "templates/research-package/README.md"
+    }
+  },
+  "missingTitleFiles": [
+    "AGENTS.md",
+    "README.zh-CN.md",
+    "decisions/ADR-0001-standard-profile-thin-kernel.md",
+    "docs/architecture/AI_PROJECT_OS_CORE.md",
+    "docs/governance/ARTIFACTS_AND_TRACEABILITY.md",
+    "docs/governance/GATES_PROOF_SCORING.md",
+    "docs/research/RESEARCH_WORKFLOW.md",
+    "docs/superpowers/specs/2026-07-10-ai-project-os-standard-profile-design.md",
+    "docs/workflows/ARCHITECT_WORKFLOWS.md",
+    "docs/workflows/PROJECT_LIFECYCLE.md",
+    "research/README.md",
+    "templates/research-package/README.md"
+  ]
+}
