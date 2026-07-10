@@ -1,54 +1,66 @@
-schema_version: 1
-system_id: ai-project-os
-display_name: AI 项目推进操作系统
-version: 0.1.0-design
-status: design_baseline
-primary_language: zh-CN
+# AI Project OS 机器权威配置
+#
+# 阅读约定：
+# - 字段名和枚举编码保留英文，保证程序、Schema 和外部工具稳定解析。
+# - 每个非直观字段必须带中文说明，描述性内容直接使用中文。
+# - 英文编码不是面向用户的文案；未来命令行和界面默认显示中文。
 
-selected_profile: standard
+schema_version: 1                 # 配置结构版本
+system_id: ai-project-os          # 系统稳定标识，不随显示名称变化
+display_name: AI 项目推进操作系统   # 中文显示名称
+version: 0.1.0-design             # 当前为 0.1.0 设计基线，不是运行版本
+status: design_baseline           # 当前状态：设计基线
+primary_language: zh-CN           # 人工阅读和输出的默认语言：简体中文
 
+selected_profile: standard        # 当前启用：标准版
+
+# 架构风格和薄内核原语
 architecture:
-  style: thin_kernel_with_profiles_and_adapters
+  style: thin_kernel_with_profiles_and_adapters  # 薄内核 + 分级配置 + 外部适配器
   kernel_primitives:
-    - objective_and_scope
-    - controlled_artifacts
-    - stable_ids_and_relations
-    - state_transitions
-    - gates_and_claims
-    - runs_and_evidence
+    - objective_and_scope          # 项目目标与范围
+    - controlled_artifacts        # 受控产物及权威位置
+    - stable_ids_and_relations    # 稳定编号与有类型关系
+    - state_transitions           # 状态迁移与重新开启
+    - gates_and_claims            # 阶段门禁与完成声明
+    - runs_and_evidence           # 运行记录与验证证据
 
+# 各类问题的唯一权威文件
 authority:
-  architecture: docs/architecture/AI_PROJECT_OS_CORE.md
-  lifecycle: docs/workflows/PROJECT_LIFECYCLE.md
-  architect_workflows: docs/workflows/ARCHITECT_WORKFLOWS.md
-  artifact_model: docs/governance/ARTIFACTS_AND_TRACEABILITY.md
-  gates_and_scoring: docs/governance/GATES_PROOF_SCORING.md
-  research_method: docs/research/RESEARCH_WORKFLOW.md
-  research_registry: research/registry.yaml
+  architecture: docs/architecture/AI_PROJECT_OS_CORE.md                 # 核心架构
+  lifecycle: docs/workflows/PROJECT_LIFECYCLE.md                         # R0、S0—S7 生命周期
+  architect_workflows: docs/workflows/ARCHITECT_WORKFLOWS.md             # 架构师工作流
+  artifact_model: docs/governance/ARTIFACTS_AND_TRACEABILITY.md          # 产物与追溯关系
+  gates_and_scoring: docs/governance/GATES_PROOF_SCORING.md              # 门禁、证据和评分
+  research_method: docs/research/RESEARCH_WORKFLOW.md                     # 研究方法
+  research_registry: research/registry.yaml                               # 当前研究任务登记表
 
+# 四级框架。当前只启用标准版，其余配置按证据升级。
 profiles:
   lite:
-    enabled: false
-    purpose: low_risk_short_cycle_projects
+    enabled: false                # 是否启用轻量版
+    purpose: 低风险、短周期项目
   standard:
-    enabled: true
-    purpose: architecture_governed_ai_native_delivery
+    enabled: true                 # 当前启用的标准版
+    purpose: 由架构、契约、门禁和证据治理的 AI 原生项目交付
   multi_agent:
-    enabled: false
-    activation_requires: research_and_runtime_proof
+    enabled: false                # 多智能体版尚未启用
+    activation_requires: research_and_runtime_proof  # 启用前必须完成研究和运行证明
   production:
-    enabled: false
-    activation_requires: security_recovery_and_real_runtime_proof
+    enabled: false                # 生产版尚未启用
+    activation_requires: security_recovery_and_real_runtime_proof  # 启用前必须有安全、恢复和真实运行证明
 
+# 当前实现状态和第三方依赖策略
 implementation:
-  status: not_started
-  external_dependencies: []
-  dependency_policy: research_then_pilot_then_pin
+  status: not_started             # 尚未开始运行代码实现
+  external_dependencies: []       # 尚未锁定任何第三方运行依赖
+  dependency_policy: research_then_pilot_then_pin  # 先研究，再试点，最后锁定版本
 
+# 当前完成声明上限
 claim_limits:
-  current_maximum: design_baseline
+  current_maximum: design_baseline  # 当前最多只能声明“设计基线已建立”
   forbidden:
-    - runtime_ready
-    - production_ready
-    - cross_project_proven
-    - requirements_100_percent_complete
+    - runtime_ready                         # 禁止声明：运行时已就绪
+    - production_ready                      # 禁止声明：生产已就绪
+    - cross_project_proven                  # 禁止声明：已完成跨项目验证
+    - requirements_100_percent_complete     # 禁止声明：代码需求已 100% 完成
