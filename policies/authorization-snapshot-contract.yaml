@@ -71,5 +71,8 @@ validity_invariants:
   - verified_requires_non_empty_verification_refs_and_valid_signature
   - expires_at_must_be_after_valid_from
   - route_control_set_principal_or_permission_change_invalidates_snapshot
+  - approval_ticket_authorizes_action_not_content
+  - ai_review_allow_does_not_create_permission
+  - blocked_or_rule_gap_ai_review_cannot_be_overridden_by_authorization
   - revoked_expired_rejected_or_stale_snapshot_is_invalid
   - unknown_or_missing_field_fails_closed

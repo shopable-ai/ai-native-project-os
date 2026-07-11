@@ -70,6 +70,22 @@ required_overlays:
     unknown_when_any:
       production_tier: [unknown]
 
+# 普通内容的语义审核始终由独立 AI 执行；结构化 gate 负责校验契约。
+# 人工等待只用于治理和高风险动作授权，不作为内容审核降级路径。
+review_routing:
+  routine_content_review: ai_automated
+  semantic_reviewer: independent_ai_review_node
+  contract_verification: deterministic_gate
+  human_wait_allowed_for:
+    - rule_set_governance
+    - fact_requirement_scope_approval
+    - exception_and_residual_risk_acceptance
+    - irreversible_action_authorization
+  review_outcomes: [allow, rewrite_required, blocked, rule_gap]
+  rewrite_limit_exhaustion: blocked
+  rule_gap: block_subject_and_open_governance_case
+  action_authorization_cannot_override_review: true
+
 activation_gate:
   evaluation_subject: route_decision.overlays.{overlay_id}
   source_contracts:

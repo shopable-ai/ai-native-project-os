@@ -35,6 +35,8 @@ manifest_example:
     authorization_and_project_isolation: [policy-id]
     run_evidence_acceptance_claim: [contract-id]
     scoring_and_claim_ceiling: [policy-id]
+    human_rule_governance: [governance-rule-set-contract]
+    ai_automated_review: [ai-review-verdict-contract]
   base_profile_implementation_status: not_started
   base_profile_implementation_evidence_refs: []
   overlay_modules:
@@ -76,7 +78,8 @@ base_profile_contracts:
       - approved_requirements
       - typed_traceability
       - acceptance_evidence
-      - human_approval
+      - human_rule_governance
+      - ai_automated_review
   standard:
     required_control_categories:
       - objective_scope
@@ -89,6 +92,8 @@ base_profile_contracts:
       - authorization_and_project_isolation
       - run_evidence_acceptance_claim
       - scoring_and_claim_ceiling
+      - human_rule_governance
+      - ai_automated_review
 
 base_profile_invariants:
   - selected_base_profile_has_exactly_all_required_control_categories

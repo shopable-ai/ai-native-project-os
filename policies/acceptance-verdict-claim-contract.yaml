@@ -20,6 +20,8 @@ acceptance_verdict_required_fields:
   - criteria_refs
   - evidence_refs
   - evidence_hashes
+  - ai_review_verdict_refs
+  - ai_review_verdict_hashes
   - environment_and_input_class
   - approval_and_permission_snapshot_refs
   - approval_and_permission_snapshot_hashes
@@ -46,6 +48,8 @@ completion_claim_required_fields:
   - proof_level
   - verdict_ref
   - evidence_hashes
+  - ai_review_verdict_refs
+  - ai_review_verdict_hashes
   - approval_and_permission_snapshot_refs
   - approval_and_permission_snapshot_hashes
   - verification_commands
@@ -62,6 +66,10 @@ enums:
 verdict_invariants:
   - accepted_requires_non_empty_subject_criteria_evidence_and_evidence_hashes
   - accepted_requires_evidence_refs_and_hashes_same_cardinality
+  - accepted_requires_ai_review_verdict_refs_and_hashes_same_cardinality
+  - accepted_subject_governed_by_ai_review_requires_allow_verdict
+  - blocked_rule_gap_or_rewrite_required_ai_review_blocks_acceptance
+  - accepted_requires_ai_review_rule_set_subject_and_hash_exact_match
   - accepted_requires_non_empty_permission_snapshot_refs_and_hashes
   - accepted_requires_permission_snapshot_refs_and_hashes_same_cardinality
   - accepted_requires_every_criterion_passed
@@ -83,6 +91,8 @@ claim_invariants:
   - claim_route_overlay_snapshot_and_control_set_must_equal_verdict
   - claim_permission_snapshots_must_equal_verdict
   - claim_evidence_hashes_must_be_subset_of_verdict_evidence_hashes
+  - claim_ai_review_verdicts_must_equal_verdict_ai_review_verdicts
+  - action_authorization_cannot_override_blocked_ai_review
   - claim_proof_level_must_not_exceed_verdict_or_critical_path_ceiling
   - expired_revoked_or_stale_dependency_withdraws_claim
   - claim_status_transition_is_draft_to_issued_to_expired_or_withdrawn

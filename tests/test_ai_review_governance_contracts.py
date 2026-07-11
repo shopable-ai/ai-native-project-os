@@ -61,6 +61,58 @@ class GovernanceContractsTests(unittest.TestCase):
         self.assertIn("ai_review_gate_pass", scoring)
         self.assertTrue((ROOT / "decisions/ADR-0003-human-governed-ai-review.md").exists())
 
+    def test_machine_authority_policies_and_chinese_rule_templates_align(self):
+        project_os = yaml.safe_load((ROOT / "project-os.yaml").read_text(encoding="utf-8"))
+        control_set = load_policy("control-set-contract.yaml")
+        routing = load_policy("project-governance-routing.yaml")
+        authorization = load_policy("authorization-snapshot-contract.yaml")
+        acceptance = load_policy("acceptance-verdict-claim-contract.yaml")
+
+        self.assertEqual(
+            project_os["authority"]["governance_rule_set_contract"],
+            "policies/governance-rule-set-contract.yaml",
+        )
+        self.assertEqual(
+            project_os["authority"]["ai_review_verdict_contract"],
+            "policies/ai-review-verdict-contract.yaml",
+        )
+        required = control_set["base_profile_contracts"]["standard"][
+            "required_control_categories"
+        ]
+        self.assertIn("human_rule_governance", required)
+        self.assertIn("ai_automated_review", required)
+        self.assertEqual(
+            routing["review_routing"]["routine_content_review"], "ai_automated"
+        )
+        self.assertIn(
+            "approval_ticket_authorizes_action_not_content",
+            authorization["validity_invariants"],
+        )
+        self.assertIn(
+            "ai_review_verdict_refs", acceptance["acceptance_verdict_required_fields"]
+        )
+        self.assertIn(
+            "accepted_subject_governed_by_ai_review_requires_allow_verdict",
+            acceptance["verdict_invariants"],
+        )
+
+        rules_dir = ROOT / "templates/standard-project/governance/rules"
+        expected_files = {
+            "审核规则集说明.md",
+            "内容与证据审核规则.md",
+            "风险与发布审核规则.md",
+            "多语言与项目一致性审核规则.md",
+        }
+        self.assertEqual({path.name for path in rules_dir.glob("*.md")}, expected_files)
+        manifest = (rules_dir / "审核规则集说明.md").read_text(encoding="utf-8")
+        self.assertIn("rule_set_id:", manifest)
+        self.assertIn("approved_by:", manifest)
+        self.assertIn("rule_refs:", manifest)
+        for name in expected_files - {"审核规则集说明.md"}:
+            rule_text = (rules_dir / name).read_text(encoding="utf-8")
+            self.assertIn("rule_id:", rule_text)
+            self.assertIn("canonical_path:", rule_text)
+
 
 if __name__ == "__main__":
     unittest.main()
