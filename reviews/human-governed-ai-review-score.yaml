@@ -1,0 +1,68 @@
+# 人工治理规则、AI 自动审核机制的分层评分记录
+# 目标设计分不是当前证据分；缺少可重算输入的层级一律 not_evaluated。
+
+schema_version: 1
+score_id: human-governed-ai-review-score-20260711
+formula_version: weighted-geometric-v1
+subject_git_revision: 9052b96
+scored_at: "2026-07-11"
+scorer: codex-implementation-agent
+scorer_independence: not_independent
+
+design_target_score: 96
+design_target_basis:
+  - 人工规则治理、AI 自动审核和动作授权语义分离
+  - Markdown 规则可独立批准、版本化和逐项引用
+  - 生成与审核职责分离
+  - 有界改写、规则缺口和安全阻断闭环
+  - 不使用业务语言关键词硬编码
+  - 目标分只描述批准方案 C 的设计形态
+
+current_design_evidence_score: not_evaluated
+current_design_evidence_reason:
+  - 修改后的全部维度尚未由独立评分者提供可重算原始值
+  - 当前反方审查与实现由同一主体完成，硬门禁最高只能到 94
+
+static_implementation_score: not_evaluated
+static_implementation_evidence:
+  unit_tests: 11_passed
+  checker: p0_0_p1_0
+  yaml_parse: passed
+  markdown_links: passed
+static_implementation_reason:
+  - 静态契约、模板和检查器已验证
+  - 尚无正式维度原始分、处罚项和独立评分输入
+
+local_runtime_proof_score: not_evaluated
+local_runtime_proof_reason:
+  - 没有 AI reviewer 模型指纹、Prompt 渲染、Run、Evidence 或改写重审记录
+
+production_proof_score: not_evaluated
+production_proof_reason:
+  - 没有经批准生产 Run、外部回执、恢复或责任链
+
+proof_level_ceiling: contract_tests_ready
+proof_level_reason:
+  - 契约测试可执行且通过
+  - 尚未形成符合 Run/Evidence 协议的 fixture_runtime_proven 证明
+
+hard_gates:
+  independent_adversarial_review:
+    status: missing
+    ceiling: 94
+  heterogeneous_real_projects:
+    status: missing
+    consequence: cannot_claim_general_95_plus
+  local_ai_review_runtime:
+    status: missing
+    consequence: cannot_claim_local_runtime_proven
+  production_evidence:
+    status: missing
+    consequence: cannot_claim_production_proof
+
+forbidden_claims:
+  - current_score_is_96
+  - independent_review_completed
+  - ai_review_runtime_ready
+  - cross_project_proven
+  - production_ready

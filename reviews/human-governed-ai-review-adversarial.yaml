@@ -1,0 +1,163 @@
+# 人工治理规则、AI 自动审核机制的静态反方审查
+# 本记录由实现主体自审，不是独立外部审计，也不证明真实 AI reviewer 已运行。
+
+schema_version: 1
+review_id: human-governed-ai-review-adversarial-20260711
+review_type: self_adversarial_static_review
+reviewer: codex-implementation-agent
+reviewer_independence: not_independent
+reviewed_at: "2026-07-11"
+subject_git_revision: 9052b96
+subject_scope:
+  - docs/architecture/AI_PROJECT_OS_CORE.md
+  - docs/architecture/AI_NATIVE_EXECUTION_MODEL.md
+  - docs/governance/
+  - policies/governance-rule-set-contract.yaml
+  - policies/ai-review-verdict-contract.yaml
+  - policies/control-set-contract.yaml
+  - policies/project-governance-routing.yaml
+  - policies/acceptance-verdict-claim-contract.yaml
+  - policies/authorization-snapshot-contract.yaml
+  - linters/check_controlled_objects.py
+  - templates/standard-project/governance/rules/
+
+verification:
+  unit_tests: 11_passed
+  checker_findings: p0_0_p1_0
+  yaml_parse: passed
+  markdown_links: passed
+  diff_check: passed
+  runtime_ai_review: not_run
+  heterogeneous_projects: not_run
+  production: not_run
+
+findings:
+  - finding_id: AR-001
+    topic: reviewer_independence
+    severity: p1
+    design_status: resolved
+    runtime_status: open
+    evidence:
+      - policies/ai-review-verdict-contract.yaml
+      - docs/architecture/AI_NATIVE_EXECUTION_MODEL.md
+    resolution: 生成与审核必须使用不同 Run、节点、prompt/context role 和 attempt。
+    residual_risk: 尚无真实模型 Run 证明独立性策略被执行。
+
+  - finding_id: AR-002
+    topic: stale_or_revoked_rules
+    severity: p1
+    design_status: resolved
+    runtime_status: open
+    evidence:
+      - policies/governance-rule-set-contract.yaml
+      - docs/governance/STATE_TRANSITIONS_AND_INVALIDATION.md
+    resolution: 过期、被替代、撤销或 hash 不匹配的规则集不能驱动审核，并传播 Verdict/Claim 失效。
+    residual_risk: 尚无运行时规则加载器和失效传播引擎。
+
+  - finding_id: AR-003
+    topic: conflicting_rules
+    severity: p1
+    design_status: resolved
+    runtime_status: open
+    evidence:
+      - policies/governance-rule-set-contract.yaml
+      - templates/standard-project/governance/rules/审核规则集说明.md
+    resolution: 无优先级解决的规则冲突必须形成 rule_gap 并阻断当前对象。
+    residual_risk: 尚无冲突检测执行器或真实冲突 fixture Run。
+
+  - finding_id: AR-004
+    topic: unbounded_rewrite_loop
+    severity: p0
+    design_status: resolved
+    static_status: verified
+    runtime_status: open
+    evidence:
+      - policies/ai-review-verdict-contract.yaml
+      - linters/check_controlled_objects.py
+      - tests/test_check_controlled_objects.py
+    resolution: rewrite_required 必须有正整数上限；达到上限只能 blocked，并保存全部 attempt。
+    residual_risk: 仅由 synthetic 静态 fixture 验证，尚无模型改写 Run。
+
+  - finding_id: AR-005
+    topic: rule_gap_handling
+    severity: p0
+    design_status: resolved
+    runtime_status: open
+    evidence:
+      - docs/governance/CONTROLLED_OBJECT_MODEL.md
+      - policies/ai-review-verdict-contract.yaml
+    resolution: rule_gap 必须建立 rule_gap_case 并阻断当前输出，不进入人工逐条内容队列。
+    residual_risk: 尚无持久化 case、聚合指标和重新开启执行器。
+
+  - finding_id: AR-006
+    topic: authorization_override
+    severity: p0
+    design_status: resolved
+    static_status: verified
+    runtime_status: open
+    evidence:
+      - docs/governance/AUTHORIZATION_SIDE_EFFECTS_AND_ISOLATION.md
+      - policies/authorization-snapshot-contract.yaml
+      - policies/acceptance-verdict-claim-contract.yaml
+    resolution: AI 审核通过不授予动作权限；人工授权不能覆盖 blocked 或 rule_gap。
+    residual_risk: 尚无真实外部副作用集成证明 fail-closed。
+
+  - finding_id: AR-007
+    topic: empty_rules_or_evidence
+    severity: p0
+    design_status: resolved
+    static_status: verified
+    runtime_status: open
+    evidence:
+      - policies/governance-rule-set-contract.yaml
+      - policies/ai-review-verdict-contract.yaml
+    resolution: active 和 allow 均要求非空配对引用/hash，禁止空集合真值。
+    residual_risk: 尚无完整契约解析运行器执行这些不变量。
+
+  - finding_id: AR-008
+    topic: natural_language_keyword_hardcoding
+    severity: p0
+    design_status: resolved
+    static_status: reviewed
+    runtime_status: open
+    evidence:
+      - linters/check_controlled_objects.py
+      - templates/standard-project/governance/rules/
+    resolution: 检查器只使用稳定字段和枚举；模板通过结构化 scope、rule_id、版本和 hash 定位。
+    residual_risk: 尚无独立静态扫描证明未来实现不会增加业务语言关键词分流。
+
+  - finding_id: AR-009
+    topic: project_isolation
+    severity: p1
+    design_status: resolved
+    runtime_status: open
+    evidence:
+      - docs/governance/AUTHORIZATION_SIDE_EFFECTS_AND_ISOLATION.md
+      - templates/standard-project/governance/rules/多语言与项目一致性审核规则.md
+    resolution: 规则 scope、Run、Evidence 和审核对象绑定 project_id namespace。
+    residual_risk: 尚无两个异构 L2/L3 消费者验证跨项目隔离。
+
+  - finding_id: AR-010
+    topic: proof_overclaiming
+    severity: p0
+    design_status: resolved
+    static_status: verified
+    runtime_status: open
+    evidence:
+      - docs/governance/GATES_PROOF_SCORING.md
+      - reviews/human-governed-ai-review-score.yaml
+    resolution: 目标设计分与当前证据分分开；没有可重算输入时当前分保持 not_evaluated。
+    residual_risk: 后续维护者仍可能错误把静态测试写成真实 AI 审核或生产证明。
+
+open_gates:
+  - genuine_independent_adversarial_review
+  - ai_reviewer_runtime_with_model_fingerprints
+  - bounded_rewrite_and_rule_gap_run_evidence
+  - heterogeneous_l2_l3_validation
+  - production_side_effect_and_recovery_proof
+
+claim_limits:
+  - 本记录只证明静态规范、契约、模板和检查器经过同一实施主体的反方自审。
+  - 不证明真人逐条审核已经发生。
+  - 不证明 AI reviewer、自动改写或规则缺口流程已经真实运行。
+  - 不证明跨项目、生产安全或业务效果。

@@ -113,6 +113,38 @@ class GovernanceContractsTests(unittest.TestCase):
             self.assertIn("rule_id:", rule_text)
             self.assertIn("canonical_path:", rule_text)
 
+    def test_review_and_score_evidence_keep_runtime_claims_unproven(self):
+        project_os = yaml.safe_load((ROOT / "project-os.yaml").read_text(encoding="utf-8"))
+        review = yaml.safe_load(
+            (ROOT / "reviews/human-governed-ai-review-adversarial.yaml").read_text(
+                encoding="utf-8"
+            )
+        )
+        score = yaml.safe_load(
+            (ROOT / "reviews/human-governed-ai-review-score.yaml").read_text(
+                encoding="utf-8"
+            )
+        )
+
+        self.assertEqual(review["review_type"], "self_adversarial_static_review")
+        self.assertEqual(review["reviewer_independence"], "not_independent")
+        self.assertEqual(review["verification"]["unit_tests"], "11_passed")
+        self.assertEqual(review["verification"]["checker_findings"], "p0_0_p1_0")
+        self.assertEqual(score["design_target_score"], 96)
+        self.assertEqual(score["current_design_evidence_score"], "not_evaluated")
+        self.assertEqual(score["static_implementation_score"], "not_evaluated")
+        self.assertEqual(score["local_runtime_proof_score"], "not_evaluated")
+        self.assertEqual(score["production_proof_score"], "not_evaluated")
+        self.assertEqual(score["proof_level_ceiling"], "contract_tests_ready")
+        self.assertIn(
+            "reviews/human-governed-ai-review-adversarial.yaml",
+            project_os["review_evidence"]["human_governed_ai_review"],
+        )
+        self.assertEqual(
+            project_os["scoring_evidence"]["human_governed_ai_review"],
+            "reviews/human-governed-ai-review-score.yaml",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

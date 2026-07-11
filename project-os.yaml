@@ -90,10 +90,13 @@ review_evidence:
   profile_taxonomy_alignment:
     - reviews/profile-taxonomy-alignment-resolution.yaml
     - reviews/profile-taxonomy-file-audit.yaml
+  human_governed_ai_review:
+    - reviews/human-governed-ai-review-adversarial.yaml
 
 scoring_evidence:
   historical_p0_design_revision: reviews/p0-design-revision-score.yaml
   current: reviews/profile-taxonomy-alignment-score.yaml
+  human_governed_ai_review: reviews/human-governed-ai-review-score.yaml
 
 # 第三方依赖策略
 dependencies:
