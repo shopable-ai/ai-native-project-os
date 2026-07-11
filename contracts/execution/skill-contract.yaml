@@ -1,0 +1,39 @@
+# Skill 的单阶段局部能力结构契约；禁止把跨阶段编排伪装成 Skill。
+schema_version: 1
+contract_id: skill-contract
+version: 1
+template_root: templates/skill
+required_files:
+  - README.md
+  - SKILL.md
+  - skill.yaml
+required_fields:
+  skill.yaml:
+    - schema_version
+    - skill_id
+    - consumers
+    - local_responsibility
+    - io_contract_refs
+    - model_code_boundary
+    - permissions
+    - failure_semantics
+    - evaluation
+    - version
+    - compatibility
+    - workflow_scope
+    - cross_stage_workflow
+required_values:
+  skill.yaml:
+    workflow_scope: single_stage_only
+    cross_stage_workflow: forbidden
+required_sections:
+  SKILL.md: [职责, 输入, 输出, 失败处理]
+failure_semantics:
+  mode: fail_closed
+  missing_required_file: invalid_skill
+  missing_required_field: invalid_skill
+  cross_stage_workflow: forbidden
+compatibility:
+  minimum_project_os_schema_version: 3
+  template_contract_version: 1
+  breaking_change_requires_major_version: true

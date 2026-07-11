@@ -1,0 +1,10 @@
+schema_version: 1
+chain_ref: "{{chain_id}}"
+trigger_profiles:
+  - trigger_id: "{{trigger_id}}"
+    source: "{{trigger_source}}"
+    event: "{{event_schema_ref}}"
+    preconditions:
+      - "{{precondition_ref}}"
+    deduplication_key: "{{deduplication_key}}"
+    disabled_behavior: reject_and_record

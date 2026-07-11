@@ -1,0 +1,38 @@
+# 跨组件 I/O 的机器结构契约；不在这里复制业务策略。
+schema_version: 1
+contract_id: io-contract
+version: 1
+template_root: templates/io-contract
+required_files:
+  - README.md
+  - io-contract.yaml
+required_fields:
+  io-contract.yaml:
+    - schema_version
+    - contract_id
+    - producer
+    - consumer
+    - schemas.request
+    - schemas.event
+    - schemas.result
+    - envelopes.success
+    - envelopes.failure
+    - error_taxonomy
+    - retry
+    - idempotency
+    - timeout
+    - ordering
+    - partial_results
+    - data_classification
+    - compatibility
+    - contract_tests
+    - migration
+failure_semantics:
+  mode: fail_closed
+  missing_required_file: invalid_contract
+  missing_required_field: invalid_contract
+  invalid_yaml: invalid_contract
+compatibility:
+  minimum_project_os_schema_version: 3
+  template_contract_version: 1
+  breaking_change_requires_major_version: true

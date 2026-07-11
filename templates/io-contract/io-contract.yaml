@@ -1,0 +1,44 @@
+schema_version: 1
+contract_id: "{{io_contract_id}}"
+version: "{{contract_version}}"
+producer: "{{producer_ref}}"
+consumer: "{{consumer_ref}}"
+schemas:
+  request: "{{request_schema_ref}}"
+  event: "{{event_schema_ref}}"
+  result: "{{result_schema_ref}}"
+envelopes:
+  success: "{{success_envelope_ref}}"
+  failure: "{{failure_envelope_ref}}"
+error_taxonomy:
+  ref: "{{error_taxonomy_ref}}"
+  unknown_error: fail_closed
+retry:
+  policy_ref: "{{retry_policy_ref}}"
+  retryable_error_refs:
+    - "{{retryable_error_ref}}"
+idempotency:
+  key: "{{idempotency_key}}"
+  duplicate_behavior: return_original_result
+timeout:
+  duration_ms: "{{timeout_ms}}"
+  result_on_timeout: failure_envelope
+ordering:
+  guarantee: "{{ordering_guarantee}}"
+  sequence_key: "{{sequence_key}}"
+partial_results:
+  allowed: "{{partial_results_allowed}}"
+  envelope_ref: "{{partial_result_envelope_ref}}"
+data_classification:
+  input: "{{input_classification}}"
+  output: "{{output_classification}}"
+compatibility:
+  mode: "{{compatibility_mode}}"
+  supported_versions:
+    - "{{supported_version}}"
+contract_tests:
+  producer_suite_ref: "{{producer_test_ref}}"
+  consumer_suite_ref: "{{consumer_test_ref}}"
+migration:
+  required_for_breaking_change: true
+  plan_ref: "{{migration_plan_ref}}"

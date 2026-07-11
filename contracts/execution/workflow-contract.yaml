@@ -1,0 +1,36 @@
+# Workflow 的有界执行结构契约；任务定义仍由 Spec tasks.md 权威维护。
+schema_version: 1
+contract_id: workflow-contract
+version: 1
+template_root: templates/workflow
+required_files:
+  - README.md
+  - workflow.yaml
+required_fields:
+  workflow.yaml:
+    - schema_version
+    - workflow_id
+    - task_refs
+    - step_graph.nodes
+    - step_graph.edges
+    - io_contract_refs
+    - permissions
+    - budget
+    - timeout
+    - retry
+    - checkpoint
+    - cancel
+    - compensation
+    - failure_routes
+    - terminal_states
+    - evidence_output
+    - claim_ceiling
+failure_semantics:
+  mode: fail_closed
+  missing_required_file: invalid_workflow
+  missing_required_field: invalid_workflow
+  unresolved_task_ref: blocked
+compatibility:
+  minimum_project_os_schema_version: 3
+  template_contract_version: 1
+  breaking_change_requires_major_version: true

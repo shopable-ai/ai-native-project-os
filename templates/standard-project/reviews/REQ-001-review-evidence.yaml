@@ -1,0 +1,34 @@
+schema_version: 1
+evidence_id: REQ-001-review-evidence
+object_type: evidence
+fixture: true
+subject_refs:
+  - FACT-001
+  - REQ-001
+  - SPEC-REQ-001
+proof_level: control_package
+criterion_results:
+  - criterion_id: AC-001
+    result: passed
+    observation: Spec 五件套路径已登记
+  - criterion_id: AC-002
+    result: passed
+    observation: traceability 只指向 domain 中批准对象
+  - criterion_id: AC-003
+    result: passed
+    observation: Evidence 明确 fixture 和声明边界
+collector: template-static-check
+captured_at: "2000-01-01T00:00:00Z"
+verification_status: captured
+stale_status: fresh
+acceptance_verdict_issued: false
+completion_claim_issued: false
+uncovered_scope:
+  - implementation
+  - local_runtime
+  - real_environment
+  - production
+prohibited_extrapolations:
+  - 不得声称需求已经实现
+  - 不得声称真实 L2 已完成验收
+  - 不得声称存在本地运行或生产证明

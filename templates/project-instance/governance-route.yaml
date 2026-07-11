@@ -1,0 +1,12 @@
+schema_version: 1
+namespace: "projects/{{project_id}}"
+route_lock:
+  route_decision_ref: "{{route_decision_ref}}"
+  route_decision_hash: "{{route_decision_hash}}"
+  control_set_ref: "{{control_set_ref}}"
+  control_set_hash: "{{control_set_hash}}"
+  valid_until: "{{route_valid_until}}"
+facts_ref: facts/facts.yaml
+data_boundaries:
+  policy_ref: "{{data_boundary_policy_ref}}"
+  cross_instance_access: denied_by_default

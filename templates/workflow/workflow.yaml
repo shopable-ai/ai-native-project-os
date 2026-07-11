@@ -1,0 +1,47 @@
+schema_version: 1
+workflow_id: "{{workflow_id}}"
+version: "{{workflow_version}}"
+task_refs:
+  - "{{task_ref}}"
+step_graph:
+  nodes:
+    - node_id: "{{node_id}}"
+      task_ref: "{{task_ref}}"
+      input_ref: "{{input_ref}}"
+      output_ref: "{{output_ref}}"
+  edges:
+    - from: "{{from_node_id}}"
+      to: "{{to_node_id}}"
+      condition: "{{edge_condition}}"
+io_contract_refs:
+  - "{{io_contract_ref}}"
+permissions:
+  required_grants:
+    - "{{grant_ref}}"
+  side_effect_class: "{{side_effect_class}}"
+budget:
+  token_limit: "{{token_limit}}"
+  cost_limit: "{{cost_limit}}"
+timeout:
+  workflow_ms: "{{workflow_timeout_ms}}"
+  step_ms: "{{step_timeout_ms}}"
+retry:
+  max_attempts: "{{max_attempts}}"
+  policy_ref: "{{retry_policy_ref}}"
+checkpoint:
+  enabled: true
+  policy_ref: "{{checkpoint_policy_ref}}"
+cancel:
+  mode: cooperative
+  terminal_state: cancelled
+compensation:
+  required_for_side_effects: true
+  route_ref: "{{compensation_route_ref}}"
+failure_routes:
+  - error_ref: "{{error_ref}}"
+    target: "{{failure_target}}"
+terminal_states: [succeeded, failed, cancelled, compensated]
+evidence_output:
+  schema_ref: "{{evidence_schema_ref}}"
+  destination_ref: "{{evidence_destination_ref}}"
+claim_ceiling: "{{claim_ceiling}}"

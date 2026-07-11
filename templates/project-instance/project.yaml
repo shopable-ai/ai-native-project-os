@@ -1,0 +1,13 @@
+schema_version: 1
+project_id: "{{project_id}}"
+display_name: "{{project_name}}"
+namespace: "projects/{{project_id}}"
+owners:
+  accountable: "{{accountable_owner}}"
+  operator: "{{operator_owner}}"
+facts_ref: facts/facts.yaml
+governance_route_ref: governance-route.yaml
+data_boundaries:
+  input_classification: "{{input_classification}}"
+  output_classification: "{{output_classification}}"
+  cross_instance_access: denied_by_default

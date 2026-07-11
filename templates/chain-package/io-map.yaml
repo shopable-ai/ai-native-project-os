@@ -1,0 +1,12 @@
+schema_version: 1
+chain_ref: "{{chain_id}}"
+producer: "{{producer_ref}}"
+consumer: "{{consumer_ref}}"
+inputs:
+  - name: "{{input_name}}"
+    schema_ref: "{{input_schema_ref}}"
+outputs:
+  - name: "{{output_name}}"
+    schema_ref: "{{output_schema_ref}}"
+io_contract_refs:
+  - "{{io_contract_ref}}"

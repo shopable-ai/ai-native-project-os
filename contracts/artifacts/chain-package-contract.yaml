@@ -1,0 +1,57 @@
+# 业务链包的机器结构契约；业务优先级和内容由 L2 批准事实决定。
+schema_version: 1
+contract_id: chain-package-contract
+version: 1
+template_root: templates/chain-package
+required_files:
+  - README.md
+  - chain.yaml
+  - scenarios.md
+  - triggers.yaml
+  - business-flow.md
+  - exceptions.md
+  - recovery.md
+  - responsibility-map.md
+  - io-map.yaml
+  - traceability.md
+  - acceptance.md
+  - diagrams/README.md
+required_fields:
+  chain.yaml:
+    - schema_version
+    - chain_id
+    - priority
+    - owners
+    - path_types
+    - scenario_refs
+    - trigger_refs
+    - diagram_policy.required_priorities
+    - diagram_policy.requirement
+  triggers.yaml:
+    - schema_version
+    - chain_ref
+    - trigger_profiles
+  io-map.yaml:
+    - schema_version
+    - chain_ref
+    - producer
+    - consumer
+    - inputs
+    - outputs
+required_sections:
+  scenarios.md: [场景, 非目标]
+  business-flow.md: [正常路径]
+  exceptions.md: [异常路径]
+  recovery.md: [恢复路径]
+  responsibility-map.md: [责任映射]
+  traceability.md: [追溯]
+  acceptance.md: [验收判据]
+failure_semantics:
+  mode: fail_closed
+  missing_required_file: invalid_package
+  missing_required_field: invalid_package
+  invalid_yaml: invalid_package
+compatibility:
+  minimum_project_os_schema_version: 3
+  template_contract_version: 1
+  breaking_change_requires_major_version: true

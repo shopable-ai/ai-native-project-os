@@ -1,0 +1,10 @@
+schema_version: 3
+system_id: ai-project-os
+version: "{{project_os_version}}"
+compatibility_range: "{{compatibility_range}}"
+protocol_locks:
+  project_instance_contract: "{{project_instance_contract_version}}"
+  io_contracts:
+    - "{{io_contract_version}}"
+locked_at: "{{locked_at_iso8601}}"
+locked_by: "{{locked_by}}"

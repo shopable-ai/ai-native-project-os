@@ -1,0 +1,32 @@
+# Spec 五件套的机器结构契约；任务内容只在每个 Spec 的 tasks.md 中维护。
+schema_version: 1
+contract_id: spec-package-contract
+version: 1
+template_root: templates/spec-package
+required_files:
+  - README.md
+  - spec.md
+  - plan.md
+  - tasks.md
+  - acceptance.md
+  - traceability.md
+required_sections:
+  spec.md: [范围, 非目标, 约束, 失败状态]
+  plan.md: [task_refs, 排序规则]
+  tasks.md: [单个 Spec 任务的唯一权威, 任务]
+  acceptance.md: [验收判据]
+  traceability.md: [追溯]
+task_authority:
+  declaration_marker: task_declarations
+  declarations_allowed_only_in: tasks.md
+  reference_marker: task_refs
+  references_allowed_in: plan.md
+failure_semantics:
+  mode: fail_closed
+  missing_required_file: invalid_package
+  missing_required_section: invalid_package
+  unresolved_task_ref: blocked
+compatibility:
+  minimum_project_os_schema_version: 3
+  template_contract_version: 1
+  breaking_change_requires_major_version: true

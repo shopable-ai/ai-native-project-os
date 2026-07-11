@@ -1,0 +1,20 @@
+schema_version: 1
+chain_id: "{{chain_id}}"
+display_name: "{{chain_name}}"
+priority: "{{priority}}"
+requirement_refs:
+  - "{{requirement_ref}}"
+owners:
+  business: "{{business_owner}}"
+  execution: "{{execution_owner}}"
+path_types: [normal, exception, recovery]
+scenario_refs:
+  - "{{scenario_ref}}"
+trigger_refs:
+  - "{{trigger_ref}}"
+diagram_policy:
+  required_priorities: [p0, p1]
+  requirement: required
+  source_ref: diagrams/README.md
+acceptance_ref: acceptance.md
+traceability_ref: traceability.md

@@ -1,0 +1,29 @@
+schema_version: 1
+skill_id: "{{skill_id}}"
+version: "{{skill_version}}"
+consumers:
+  - "{{consumer_ref}}"
+local_responsibility: "{{local_responsibility}}"
+stage_scope: "{{stage_id}}"
+workflow_scope: single_stage_only
+cross_stage_workflow: forbidden
+io_contract_refs:
+  - "{{io_contract_ref}}"
+model_code_boundary:
+  model_responsibilities:
+    - "{{model_responsibility}}"
+  code_responsibilities:
+    - "{{code_responsibility}}"
+permissions:
+  required_grants:
+    - "{{grant_ref}}"
+failure_semantics:
+  unknown_input: fail_closed
+  system_failure: return_failure_envelope
+evaluation:
+  suite_ref: "{{evaluation_suite_ref}}"
+  threshold_ref: "{{evaluation_threshold_ref}}"
+compatibility:
+  project_os_range: "{{project_os_range}}"
+  io_contract_versions:
+    - "{{io_contract_version}}"

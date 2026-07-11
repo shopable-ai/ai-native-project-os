@@ -1,0 +1,8 @@
+schema_version: 1
+namespace: "projects/{{project_id}}"
+facts:
+  - fact_id: "{{fact_id}}"
+    value: "{{fact_value}}"
+    approved_by: "{{fact_approver}}"
+    approved_at: "{{fact_approved_at}}"
+    source_ref: "{{source_ref}}"

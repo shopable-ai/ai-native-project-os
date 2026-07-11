@@ -1,35 +1,75 @@
-# 标准版项目模板（Greenfield）
+# 标准版 L2 项目模板（Greenfield）
 
-适用条件：`project_type: greenfield`，`base_governance_profile: standard`。
-复制整个目录到你的 L2 业务仓库根目录，填写 `{{ }}` 占位字段后删除本说明。
+| 问题 | 时机 | 输入 | 输出 | 下一步 |
+|---|---|---|---|---|
+| 新建型业务系统如何接入 AI Project OS？ | L2 Greenfield 建立首个批准需求时 | L1 版本、L2 批准事实和 owner | 位于 L2 根目录的标准控制骨架 | 复制 fixture、替换批准事实并运行接入检查 |
+
+本模板适用于 `project_type: greenfield`（新建型）、`base_governance_profile: standard`（标准基础治理配置）的 L2 业务系统。目录中的 `REQ-001` 是已填好的通用 fixture，用来演示批准事实、需求、Spec 和 review evidence 如何追溯；复制后必须替换为真实批准内容。
+
+默认直接复制到 L2 根目录，不套 `projects/{project_id}/`；后者只有多实例隔离证据成立时才条件启用。
+
+## 复制后的完整目录
+
+```text
+{{l2_repo}}/
+├── project-os.lock.yaml                         # 必需：锁定 L1 版本和协议
+├── domain/                                      # 必需：L2 批准事实与需求
+│   ├── README.md                                # 必需：目录职责说明
+│   ├── glossary.md                              # 必需：示例 fact FACT-001
+│   └── mvp/
+│       └── REQ-001.md                           # 必需：示例 requirement
+├── governance/
+│   └── rules/                                   # standard 基础治理配置必需
+├── specs/
+│   └── REQ-001/                                 # 必需：示例 Spec 五件套
+│       ├── spec.md
+│       ├── plan.md
+│       ├── tasks.md
+│       ├── acceptance.md
+│       └── traceability.md
+├── reviews/
+│   └── REQ-001-review-evidence.yaml             # 必需：fixture review evidence
+├── projects/{project_id}/                       # 条件启用：需要 L3 实例隔离时创建
+├── runs/                                        # 运行时生成：Run 和临时执行产物
+└── artifacts/                                   # 运行时生成：经验收的交付物
+```
+
+模板不预建空的 `projects/`、`runs/` 或 `artifacts/`。只有在条件成立或首个正式产物出现时创建，避免空目录被误读为能力已经实现。
 
 ## 使用步骤
 
 ```bash
-# 1. 复制模板（以 operate-auto-customer 为例）
-cp -r path/to/ai-project-os/templates/standard-project/* your-l2-repo/
+# 1. 复制模板到待接入的 L2 仓库
+cp -R {{l1_repo}}/templates/standard-project/. {{l2_repo}}/
 
-# 2. 填写 project-os.lock.yaml（见下方文件）
+# 2. 填写 L1 版本锁定
+${EDITOR} {{l2_repo}}/project-os.lock.yaml
 
-# 3. 建立 domain/ 业务真相层（见 domain/ 目录骨架）
+# 3. 用已批准事实和需求替换 FACT-001 / REQ-001 fixture
 
-# 4. 按 governance/rules/ 下的中文模板定义并由人类批准审核规则集
+# 4. 更新 Spec 五件套和 reviews/ Evidence，保持 traceability 可解析
 
 # 5. 运行接入检查器
-python3 path/to/ai-project-os/linters/check_controlled_objects.py . --l2-mode --report
-
-# 6. 验收门禁：EXIT=0
+python3 {{l1_repo}}/linters/check_controlled_objects.py \
+  {{l2_repo}} --l2-mode --report
 ```
+
+## 完整样例的声明边界
+
+- `domain/glossary.md` 演示一条由人类批准的 `fact`。
+- `domain/mvp/REQ-001.md` 演示一条由该 fact 推导的 P1 `requirement`。
+- `specs/REQ-001/` 演示范围、计划、任务、验收和追溯五件套。
+- `reviews/REQ-001-review-evidence.yaml` 只记录 fixture 结构检查，`proof_level` 为 `control_package`。
+- 样例没有签发 Acceptance Verdict 或 Completion Claim，不证明实现、本地运行、真实环境或生产能力。
 
 ## 接入后检查清单
 
-```
-[ ] project-os.lock.yaml 存在且版本在兼容范围内
-[ ] domain/glossary.md 已填写，至少包含本项目核心术语的 stable_id
-[ ] domain/ 的事实文件有 approver 字段（不能由 AI 自证）
-[ ] governance/rules/ 的规则集由人类批准并发布，成员文件/hash 与 scope 完整
-[ ] 普通内容由独立 AI reviewer 审核，不进入 waiting_approval
-[ ] specs/ 的 traceability.md 指向 domain/，不再指向 reference/ 中的原始素材
-[ ] 运行检查器 EXIT=0
-[ ] project-os.yaml.scoring_evidence 追加本次接入 Evidence 引用
+```text
+[ ] project-os.lock.yaml 的版本、兼容范围、时间和负责人已填写
+[ ] FACT-001 / REQ-001 已替换为 L2 自己批准的事实和需求
+[ ] fact/requirement 具有 stable_id、canonical_path 和人类 approver
+[ ] governance/rules/ 的 active 规则集具有成员 hash、scope 和批准记录
+[ ] specs/{spec_id}/traceability.md 只指向批准对象，不指向原始来源
+[ ] review Evidence 明确环境、范围、验证状态和禁止外推项
+[ ] --l2-mode 返回 EXIT=0，且 L2 自己的语义验收通过
 ```

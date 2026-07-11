@@ -96,6 +96,12 @@ authority:
   overlay_activation_verdict_contract: contracts/governance/overlay-activation-verdict-contract.yaml # 叠加能力激活裁决契约
   authorization_snapshot_contract: contracts/governance/authorization-snapshot-contract.yaml # 授权快照有效性契约
   acceptance_verdict_claim_contract: contracts/governance/acceptance-verdict-claim-contract.yaml # 业务验收裁决与声明契约
+  chain_package_contract: contracts/artifacts/chain-package-contract.yaml       # 业务链包模板机器契约
+  spec_package_contract: contracts/artifacts/spec-package-contract.yaml         # Spec 五件套模板机器契约
+  io_contract: contracts/io/io-contract.yaml                                    # 跨组件 I/O 模板机器契约
+  workflow_contract: contracts/execution/workflow-contract.yaml                 # Workflow 模板机器契约
+  skill_contract: contracts/execution/skill-contract.yaml                       # Skill 模板机器契约
+  project_instance_contract: contracts/governance/project-instance-contract.yaml # 可选 L3 实例模板机器契约
   architect_workflows: docs/workflows/ARCHITECT_WORKFLOWS.md             # 架构师工作流
   artifact_model: docs/governance/ARTIFACTS_AND_TRACEABILITY.md          # 产物与追溯关系
   controlled_object_model: docs/governance/CONTROLLED_OBJECT_MODEL.md    # 受控对象字段、类型与关系

@@ -1,0 +1,45 @@
+# 可选 L3 实例 namespace 的机器结构契约；L2 默认不套 projects/。
+schema_version: 1
+contract_id: project-instance-contract
+version: 1
+template_root: templates/project-instance
+required_files:
+  - README.md
+  - project.yaml
+  - project-os.lock.yaml
+  - governance-route.yaml
+  - facts/facts.yaml
+required_fields:
+  project.yaml:
+    - schema_version
+    - project_id
+    - namespace
+    - owners
+    - facts_ref
+    - data_boundaries
+  project-os.lock.yaml:
+    - schema_version
+    - system_id
+    - version
+    - compatibility_range
+    - locked_at
+    - locked_by
+  governance-route.yaml:
+    - schema_version
+    - namespace
+    - route_lock
+    - facts_ref
+    - data_boundaries
+  facts/facts.yaml:
+    - schema_version
+    - namespace
+    - facts
+failure_semantics:
+  mode: fail_closed
+  missing_required_file: invalid_instance
+  missing_required_field: invalid_instance
+  missing_or_stale_route_lock: blocked
+compatibility:
+  minimum_project_os_schema_version: 3
+  template_contract_version: 1
+  breaking_change_requires_major_version: true
