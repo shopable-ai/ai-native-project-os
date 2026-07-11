@@ -4,7 +4,7 @@
 
 **Goal:** Establish a project-neutral L1 mechanism in which humans govern versioned Markdown rules, independent AI performs routine review, and humans authorize only rule changes, exceptions, residual risk, and irreversible actions.
 
-**Architecture:** Add two machine contracts (`governance_rule_set` and `ai_review_verdict`) and thread their semantics through the existing authority documents, control-set policies, project templates, and static checker. Keep runtime model execution out of scope; prove the static mechanism with synthetic fixtures, strict nonzero exit behavior for P0/P1 findings, and a versioned adversarial score record.
+**Architecture:** Add two machine contracts (`governance_rule_set` and `ai_review_verdict`) and thread their semantics through the existing authority documents, control-set policies, project templates, and static checker. Keep stable machine paths in English while using Chinese filenames for human-maintained review-rule Markdown. Keep runtime model execution out of scope; prove the static mechanism with synthetic fixtures, strict nonzero exit behavior for P0/P1 findings, and a versioned adversarial score record.
 
 **Tech Stack:** Markdown, YAML 1.2-compatible policy files, Python 3 standard library, PyYAML 6.x for contract tests, `unittest`.
 
@@ -314,12 +314,15 @@ git commit -m "Separate rule governance from automated review and action authori
 - Modify: `README.zh-CN.md`
 - Modify: `templates/standard-project/README.md`
 - Modify: `templates/brownfield-project/README.md`
-- Create: `templates/standard-project/governance/rules/README.md`
+- Create: `templates/standard-project/governance/rules/审核规则集说明.md`
+- Create: `templates/standard-project/governance/rules/内容与证据审核规则.md`
+- Create: `templates/standard-project/governance/rules/风险与发布审核规则.md`
+- Create: `templates/standard-project/governance/rules/多语言与项目一致性审核规则.md`
 - Modify: `tests/test_ai_review_governance_contracts.py`
 
 - [ ] **Step 1: Add failing policy and template assertions**
 
-Assert that `project-os.yaml.authority` points to both new contracts; the standard control set requires `human_rule_governance` and `ai_automated_review`; routing declares `routine_content_review: ai_automated`; the authorization contract states action tickets do not approve content; and the standard template contains `governance/rules/README.md` with `rule_set_id`, `rule_id`, `approved_by`, and `canonical_path`.
+Assert that `project-os.yaml.authority` points to both new contracts; the standard control set requires `human_rule_governance` and `ai_automated_review`; routing declares `routine_content_review: ai_automated`; the authorization contract states action tickets do not approve content; and the standard template contains the four Chinese-named Markdown files with `rule_set_id`, `rule_id`, `approved_by`, and `canonical_path`.
 
 - [ ] **Step 2: Run tests and verify RED**
 
@@ -333,7 +336,7 @@ Add the new contract authority paths without removing the user’s existing unco
 
 - [ ] **Step 4: Add the Markdown rule template**
 
-Create a project-neutral template containing front matter for `rule_set_id`, `version`, `canonical_path`, `scope`, `status`, `approved_by`, dates, and `supersedes`, followed by rule sections with stable `rule_id`, severity, applicability, required Evidence, allowed outcome, and failure action. Do not include any business-language trigger words.
+Create one Chinese-named rule-set manifest and three Chinese-named project-neutral rule files. The manifest contains `rule_set_id`, version, canonical path, scope, status, human approval fields, member refs/hashes, dates, and supersession. Rule files use stable `rule_id`, severity, structured applicability, required Evidence, allowed outcome, and failure action. Do not include any business-language trigger words.
 
 - [ ] **Step 5: Run tests and policy parsing**
 
@@ -348,7 +351,7 @@ Expected: `yaml-ok`.
 - [ ] **Step 6: Commit policy and template alignment**
 
 ```bash
-git add -- policies/control-set-contract.yaml policies/project-governance-routing.yaml policies/acceptance-verdict-claim-contract.yaml policies/authorization-snapshot-contract.yaml project-os.yaml README.zh-CN.md templates/standard-project/README.md templates/brownfield-project/README.md templates/standard-project/governance/rules/README.md tests/test_ai_review_governance_contracts.py
+git add -- policies/control-set-contract.yaml policies/project-governance-routing.yaml policies/acceptance-verdict-claim-contract.yaml policies/authorization-snapshot-contract.yaml project-os.yaml README.zh-CN.md templates/standard-project/README.md templates/brownfield-project/README.md templates/standard-project/governance/rules tests/test_ai_review_governance_contracts.py
 git commit -m "Publish human-governed review rules as reusable project controls"
 ```
 

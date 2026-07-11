@@ -13,7 +13,7 @@
 采用“契约优先的三类职责模型”：
 
 1. 人工规则治理：人类批准规则、业务事实、需求、例外和高风险授权。
-2. AI 自动审核：独立 AI 或确定性 gate 按已批准规则审核每个受控输出。
+2. AI 自动审核：独立 AI 按已批准规则审核每个受控输出；确定性 gate 只验证契约、hash、引用和状态迁移，不代替语义审核。
 3. 高风险动作授权：人类只为不可逆外部动作、剩余风险接受和临时例外签发受限授权。
 
 拒绝只修改术语而不增加机器约束，因为它无法阻止普通 Workflow 继续使用 `waiting_approval` 等待人工内容审核。拒绝在 L1 直接建设完整模型运行时，因为当前仓库成熟度是 `design_only`，且尚未锁定模型、存储或工作流依赖。
@@ -76,7 +76,8 @@ content_hash: sha256
 scope:
   governance_scope: l3
   artifact_classes: [content, evidence]
-rule_ids: []
+rule_refs: []
+rule_hashes: []
 status: draft
 approved_by: human-principal-id
 approved_at: timestamp-or-null
@@ -85,11 +86,25 @@ expires_at: timestamp-or-null
 supersedes: null
 ```
 
-状态使用 `draft/approved/active/superseded/revoked`。只有绑定人类 principal、非空规则列表、内容 hash、适用范围和有效期的 `active` 版本可驱动运行审核。
+状态使用 `draft/approved/active/superseded/revoked`。只有绑定人类 principal、非空规则引用及配对 hash、内容 hash、适用范围和有效期的 `active` 版本可驱动运行审核。
 
-规则正文使用 Markdown，机器层只读取稳定规则 ID、结构化元数据和内容指纹。L1 不规定具体语言词面；L2/L3 可提供多语言规则正文或由权威规则生成的本地化阅读视图。
+规则正文使用 Markdown，机器层只读取稳定规则 ID、结构化元数据和内容指纹。一个规则集可以由多个独立 Markdown 规则文件组成，manifest 必须锁定每个成员文件的路径和 hash。L1 不规定具体语言词面；L2/L3 可提供多语言规则正文或由权威规则生成的本地化阅读视图。
 
-### 4.2 `ai_review_verdict`
+### 4.2 文件命名与阅读体验
+
+机器契约、权威入口和稳定跨仓引用沿用仓库现有英文路径，例如 `policies/ai-review-verdict-contract.yaml`。人类负责维护的规则正文采用中文文件名和中文标题，例如：
+
+```text
+governance/rules/
+├── 审核规则集说明.md
+├── 内容与证据审核规则.md
+├── 风险与发布审核规则.md
+└── 多语言与项目一致性审核规则.md
+```
+
+机器不根据中文文件名或正文关键词分流，而是通过 `rule_set_id`、`rule_id`、`canonical_path`、版本和 hash 定位规则。中文文件名只服务人工阅读，不进入业务判断逻辑。
+
+### 4.3 `ai_review_verdict`
 
 AI 审核裁决至少包含：
 
@@ -121,7 +136,7 @@ decided_at: timestamp
 
 每个 finding 至少包含 `finding_id`、`rule_ref`、`severity`、`subject_location`、`evidence_refs`、`explanation` 和 `recommended_action`。`allow` 必须有非空规则集、审核覆盖清单和审核 Evidence，禁止空集合真值。
 
-### 4.3 `rule_gap_case`
+### 4.4 `rule_gap_case`
 
 规则缺口记录至少包含：
 
@@ -191,7 +206,7 @@ decided_at: timestamp
 - `docs/workflows/ARCHITECT_WORKFLOWS.md`：把“人工审批”改为三类职责检查。
 - `project-os.yaml` 与 `README.zh-CN.md`：增加权威入口和准确成熟度说明。
 
-策略层新增规则集与 AI 审核契约，并调整 control set、routing、acceptance 和 authorization 契约。模板层增加通用 Markdown 规则包入口。历史 `reviews/` 只作为证据保留，不回写其结论。
+策略层新增规则集与 AI 审核契约，并调整 control set、routing、acceptance 和 authorization 契约。模板层增加由中文文件名承载的通用 Markdown 规则包入口。历史 `reviews/` 只作为证据保留，不回写其结论。
 
 重大架构语义变化必须新增 ADR，记录为何日常审核从人工等待改为基于已批准规则的 AI 独立审核。
 
