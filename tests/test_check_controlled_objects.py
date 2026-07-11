@@ -67,6 +67,16 @@ class CheckerGovernanceTests(unittest.TestCase):
         )
         self.assertEqual({finding.rule for finding in findings}, {"C7"})
 
+    def test_repository_scan_skips_project_local_worktrees(self):
+        repo = self.make_repo(
+            {
+                "authority.yaml": "schema_version: 1\n",
+                ".worktrees/feature/duplicate.yaml": "schema_version: 1\n",
+            }
+        )
+        scanned = {path.relative_to(repo).as_posix() for path in checker.iter_repo_files(repo)}
+        self.assertEqual(scanned, {"authority.yaml"})
+
 
 if __name__ == "__main__":
     unittest.main()

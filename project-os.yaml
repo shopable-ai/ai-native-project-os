@@ -71,6 +71,7 @@ authority:
   acceptance_verdict_claim_contract: policies/acceptance-verdict-claim-contract.yaml # 业务验收裁决与声明契约
   governance_rule_set_contract: policies/governance-rule-set-contract.yaml       # 人工批准 Markdown 规则集契约
   ai_review_verdict_contract: policies/ai-review-verdict-contract.yaml           # AI 自动审核裁决契约
+  rule_gap_case_contract: policies/rule-gap-case-contract.yaml                  # 规则缺口异步治理契约
   architect_workflows: docs/workflows/ARCHITECT_WORKFLOWS.md             # 架构师工作流
   artifact_model: docs/governance/ARTIFACTS_AND_TRACEABILITY.md          # 产物与追溯关系
   controlled_object_model: docs/governance/CONTROLLED_OBJECT_MODEL.md    # 受控对象字段、类型与关系

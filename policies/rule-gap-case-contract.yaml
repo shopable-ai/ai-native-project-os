@@ -1,0 +1,65 @@
+# 规则缺口记录机器契约
+# 规则不足时阻断当前对象；人类异步维护规则，不承担单条内容审核。
+
+schema_version: 1
+contract_id: rule-gap-case-contract
+contract_version: 1
+object_type: rule_gap_case
+
+required_fields:
+  - extends
+  - rule_gap_case_id
+  - project_id
+  - subject_ref
+  - subject_hash
+  - trigger_run_ref
+  - ai_review_verdict_ref
+  - rule_set_ref
+  - rule_set_hash
+  - missing_rule_scope
+  - current_subject_disposition
+  - affected_scope
+  - occurrence_count
+  - rule_owner
+  - candidate_rule_change_refs
+  - opened_at
+  - resolution_due_at
+  - gap_state
+  - resolved_by_rule_set_ref
+  - reopened_subject_refs
+
+enums:
+  current_subject_disposition: [blocked]
+  gap_state: [open, rule_revision_active, resolved, superseded]
+
+manifest_example:
+  extends: controlled_object_base/v1
+  rule_gap_case_id: rule-gap-case-id
+  project_id: project-id
+  subject_ref: stable-id/1/sha256
+  subject_hash: sha256
+  trigger_run_ref: review-run-id
+  ai_review_verdict_ref: ai-review-verdict-id
+  rule_set_ref: rule-set-id/1
+  rule_set_hash: sha256
+  missing_rule_scope: description
+  current_subject_disposition: blocked
+  affected_scope: {}
+  occurrence_count: 1
+  rule_owner: human-role-id
+  candidate_rule_change_refs: []
+  opened_at: timestamp
+  resolution_due_at: timestamp
+  gap_state: open
+  resolved_by_rule_set_ref: null
+  reopened_subject_refs: []
+
+invariants:
+  - current_subject_must_remain_blocked
+  - rule_owner_must_be_human_governance_role
+  - case_must_not_become_per_item_human_review
+  - candidate_rule_changes_cannot_activate_without_human_approval
+  - resolved_requires_new_active_rule_set_version_and_hash
+  - resolution_reopens_subjects_with_new_run_or_review_attempt
+  - old_ai_review_verdict_remains_immutable
+  - unknown_or_missing_field_fails_closed

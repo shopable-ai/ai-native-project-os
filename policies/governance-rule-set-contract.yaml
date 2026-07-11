@@ -15,6 +15,7 @@ required_fields:
   - governance_scope
   - scope
   - rule_ids
+  - conflict_resolution
   - status
   - owner
   - approved_by
@@ -25,6 +26,16 @@ required_fields:
 
 enums:
   status: [draft, approved, active, superseded, revoked]
+  conflict_resolution: [explicit_priority_then_fail_closed]
+
+rule_required_fields:
+  - rule_id
+  - priority
+  - severity
+  - applies_to
+  - required_evidence
+  - allowed_outcomes
+  - failure_action
 
 manifest_example:
   extends: controlled_object_base/v1
@@ -38,6 +49,7 @@ manifest_example:
     project_ids: [project-id]
     locales: [all]
   rule_ids: [rule-id]
+  conflict_resolution: explicit_priority_then_fail_closed
   status: draft
   owner: human-role-id
   approved_by: null
@@ -52,6 +64,9 @@ invariants:
   - active_requires_non_empty_rule_ids
   - active_requires_non_empty_scope
   - active_requires_content_hash_matching_markdown
+  - every_rule_has_all_rule_required_fields
+  - rule_priority_must_be_unique_within_scope
+  - unresolved_rule_conflict_blocks_activation
   - active_requires_approved_at_and_effective_from
   - expires_at_when_present_must_be_after_effective_from
   - superseded_requires_resolvable_active_successor

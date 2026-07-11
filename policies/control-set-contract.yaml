@@ -28,7 +28,7 @@ manifest_example:
     objective_scope: [contract-id]
     source_fact_requirement_governance: [policy-id]
     human_rule_governance: [governance-rule-set-contract@1]
-    ai_automated_review: [ai-review-verdict-contract@1]
+    ai_automated_review: [ai-review-verdict-contract@1, rule-gap-case-contract@1]
     lifecycle_state_invalidation: [contract-id]
     typed_traceability: [contract-id]
     research_and_architecture_decision: [policy-id]

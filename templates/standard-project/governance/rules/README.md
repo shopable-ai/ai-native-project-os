@@ -26,6 +26,7 @@ supersedes: null
 
 ```yaml
 rule_id: rule-content-grounding
+priority: 100
 severity: high
 applies_to: [content, evidence]
 required_evidence: [project_fact_ref, source_ref]
@@ -33,6 +34,6 @@ allowed_outcomes: [allow, rewrite_required, blocked, rule_gap]
 failure_action: blocked
 ```
 
-规则正文必须描述可审核的约束、所需 Evidence 和失败动作。不得在 L1 检查器或通用 Workflow 中写入项目术语、具体语言关键词或固定回复触发条件。
+规则正文必须描述唯一 `priority`、可审核的约束、所需 Evidence 和失败动作。同一 scope 出现优先级冲突时必须 fail-closed，规则集不能激活。不得在 L1 检查器或通用 Workflow 中写入项目术语、具体语言关键词或固定回复触发条件。
 
 批准发布时必须：把 `status` 改为 `active`，填写 verified human `approved_by`、时间、scope 和实际 `content_hash`，并确保每个 `rule_id` 唯一。AI 可以提出修订建议，但不能自行修改这些批准字段。
