@@ -1,0 +1,67 @@
+# 人工治理规则集机器契约
+# 规则正文由人类维护为 Markdown；机器只信任已批准、已发布且 hash 匹配的版本。
+
+schema_version: 1
+contract_id: governance-rule-set-contract
+contract_version: 1
+object_type: governance_rule_set
+governance_scope: l1_l2_l3
+
+required_fields:
+  - extends
+  - rule_set_id
+  - version
+  - canonical_path
+  - content_hash
+  - scope
+  - rule_refs
+  - rule_hashes
+  - status
+  - approved_by
+  - approved_at
+  - effective_from
+  - expires_at
+  - supersedes
+
+enums:
+  status: [draft, approved, active, superseded, revoked]
+
+manifest_example:
+  extends: controlled_object_base/v1
+  rule_set_id: governance-rule-set-id
+  version: 1
+  canonical_path: governance/rules/rule-set.md
+  content_hash: sha256
+  scope:
+    governance_scope: l3
+    artifact_classes: [generated_content, evidence]
+    project_id: project-id
+  rule_refs: [governance/rules/content-and-evidence.md#rule-id]
+  rule_hashes: [sha256]
+  status: draft
+  approved_by: null
+  approved_at: null
+  effective_from: null
+  expires_at: null
+  supersedes: null
+
+hash_policy:
+  excludes: [content_hash]
+  canonicalization: canonical-markdown-manifest-v1
+  mismatch: fail_closed
+
+invariants:
+  - active_requires_verified_human_principal
+  - approved_or_active_requires_non_empty_approved_at
+  - active_requires_non_empty_effective_from
+  - active_requires_non_empty_rule_refs_and_hashes
+  - rule_refs_and_hashes_have_same_cardinality
+  - canonical_path_and_rule_refs_must_reference_markdown
+  - every_rule_ref_resolves_to_exact_rule_id_and_content_hash
+  - scope_must_use_structured_fields_not_natural_language_keyword_matching
+  - rule_priority_conflict_without_resolution_requires_rule_gap
+  - expired_superseded_or_revoked_rule_set_cannot_drive_review
+  - only_verified_human_principal_may_approve_activate_supersede_or_revoke
+  - ai_may_propose_but_must_not_publish_or_modify_authoritative_rules
+  - content_or_member_hash_change_requires_new_version_and_human_approval
+  - unknown_or_missing_field_fails_closed

@@ -1,0 +1,89 @@
+# AI 自动审核裁决机器契约
+# 独立 AI 依据已批准规则作出语义审核；确定性 gate 校验本契约但不代替语义审核。
+
+schema_version: 1
+contract_id: ai-review-verdict-contract
+contract_version: 1
+object_type: ai_review_verdict
+
+required_fields:
+  - extends
+  - review_verdict_id
+  - project_id
+  - subject_ref
+  - subject_hash
+  - generator_run_ref
+  - review_run_ref
+  - reviewer_actor_id
+  - reviewer_execution_node_ref
+  - reviewer_model_fingerprint
+  - rule_set_ref
+  - rule_set_hash
+  - rule_results
+  - finding_refs
+  - evidence_refs
+  - evidence_hashes
+  - decision
+  - rewrite_attempt
+  - max_rewrite_attempts
+  - claim_ceiling
+  - decided_at
+
+finding_required_fields:
+  - finding_id
+  - rule_ref
+  - severity
+  - subject_location
+  - evidence_refs
+  - explanation
+  - recommended_action
+
+enums:
+  decision: [pending, allow, rewrite_required, blocked, rule_gap]
+  rule_result: [passed, failed, not_applicable, not_evaluated]
+  severity: [info, warning, blocking]
+
+manifest_example:
+  extends: controlled_object_base/v1
+  review_verdict_id: ai-review-verdict-id
+  project_id: project-id
+  subject_ref: stable-id/version
+  subject_hash: sha256
+  generator_run_ref: run-generator-id
+  review_run_ref: run-reviewer-id
+  reviewer_actor_id: reviewer-actor-id
+  reviewer_execution_node_ref: reviewer-node-id/version
+  reviewer_model_fingerprint: provider-model-version-parameters-hash
+  rule_set_ref: governance-rule-set-id/version
+  rule_set_hash: sha256
+  rule_results: []
+  finding_refs: []
+  evidence_refs: []
+  evidence_hashes: []
+  decision: pending
+  rewrite_attempt: 0
+  max_rewrite_attempts: 2
+  claim_ceiling: control_package
+  decided_at: null
+
+invariants:
+  - reviewer_must_be_independent_from_generator
+  - reviewer_run_and_generator_run_must_be_distinct
+  - reviewer_execution_node_and_generator_execution_node_must_be_distinct
+  - reviewer_prompt_context_role_and_attempt_must_be_separately_recorded
+  - subject_ref_and_hash_must_match_reviewed_content
+  - rule_set_must_be_active_fresh_scope_matched_and_hash_verified
+  - every_finding_requires_resolvable_rule_ref
+  - every_rule_result_requires_resolvable_rule_ref_and_evidence_basis
+  - evidence_refs_and_hashes_have_same_cardinality
+  - allow_requires_non_empty_rule_results_and_evidence_refs
+  - allow_requires_every_applicable_blocking_rule_passed
+  - rewrite_required_requires_positive_max_rewrite_attempts
+  - rewrite_attempt_must_not_exceed_max_rewrite_attempts
+  - rewrite_limit_exhaustion_requires_blocked
+  - every_rewrite_creates_new_attempt_or_run_and_preserves_prior_output
+  - blocked_cannot_continue_to_release_or_side_effect
+  - rule_gap_requires_rule_gap_case_and_blocks_current_subject
+  - human_authorization_cannot_override_blocked_review
+  - action_authorization_does_not_substitute_for_ai_review
+  - unparseable_unknown_or_missing_field_fails_closed
