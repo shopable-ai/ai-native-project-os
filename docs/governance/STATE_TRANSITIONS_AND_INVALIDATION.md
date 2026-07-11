@@ -5,7 +5,7 @@
 ## 1. 六个正交坐标
 
 - 生命周期位置：`R0`、`S0`—`S7`；成熟度坐标，可并行和重开。
-- 工作状态：`not_applicable`、`queued`、`in_progress`、`waiting_approval`、`blocked`、`paused`、`failed`、`completed`、`superseded`、`retired`。
+- 工作状态：`not_applicable`、`queued`、`in_progress`、`waiting_approval`、`blocked`、`paused`、`failed`、`completed`、`superseded`、`retired`。其中 `waiting_approval` 只服务规则/事实/需求治理、例外、剩余风险和动作授权。
 - 审批状态：`not_required`、`pending`、`approved`、`rejected`、`expired`、`revoked`。
 - 实现状态：`not_applicable`、`not_started`、`partial`、`implemented`；只表达实现事实，不能由阶段或审批推导。
 - 证据等级：只引用 `GATES_PROOF_SCORING.md` 的机器枚举，不在本文件复制。
@@ -19,8 +19,8 @@
 |---|---|---|
 | `queued` | `in_progress` / `blocked` / `paused` / `superseded` | 输入、责任和权限已验证，或记录阻断/替代原因 |
 | `not_applicable` | 无 | 非工作型记录使用类型专属状态；不得借此绕过其签名、审批或证据门禁 |
-| `in_progress` | `waiting_approval` / `blocked` / `paused` / `failed` / `completed` / `superseded` | 对象声明的 gate 已通过；只有 gate 类型为 acceptance 时才要求有效 Acceptance Verdict |
-| `waiting_approval` | `in_progress` / `blocked` / `failed` / `superseded` | 批准后恢复；拒绝保留理由 |
+| `in_progress` | `waiting_approval` / `blocked` / `paused` / `failed` / `completed` / `superseded` | 只有治理或授权对象可以进入 `waiting_approval`；其他对象声明的 gate 已通过后按类型专属状态继续 |
+| `waiting_approval` | `in_progress` / `blocked` / `failed` / `superseded` | 仅在规则/事实/需求治理、例外、剩余风险或动作授权完成后恢复；拒绝保留理由 |
 | `blocked` | `queued` / `in_progress` / `failed` / `superseded` | 阻断项关闭并重新校验输入 |
 | `paused` | `queued` / `in_progress` / `superseded` | checkpoint、输入、权限和证据仍有效 |
 | `failed` | `queued` / `superseded` | 创建带因果关系的重试或修订；失败历史不改写 |
@@ -29,6 +29,8 @@
 | `retired` | 无 | 终态；恢复必须新建版本 |
 
 非法迁移包括：从 `not_applicable` 迁移；从 `queued`、`blocked`、`paused` 或 `failed` 直接到 `completed`；从 `retired` 恢复；把失败 Run 原地改成成功；审批过期后继续执行副作用。
+
+普通内容审核不得使用 `waiting_approval`。AI 审核使用 `ai_review_verdict.decision` 表达 `allow/rewrite_required/blocked/rule_gap`；可修复问题自动改写并重新审核，规则不足或达到改写上限时阻断当前输出。不得以人工逐条润色或临时批准作为默认降级路径。
 
 每次迁移记录对象版本、前后状态、发起者、时间、原因、前置 Evidence、审批引用和 checkpoint。
 
@@ -42,7 +44,7 @@
 
 ## 4. 失效传播
 
-触发源包括：批准事实/需求变化、项目类型或版本化治理路由/control set 变化、契约/策略/权限变化、内容或环境指纹变化、Evidence 过期、Verdict 撤销、生产事故反证。
+触发源包括：批准事实/需求变化、active 规则集变更/过期/撤销、项目类型或版本化治理路由/control set 变化、契约/策略/权限变化、内容或环境指纹变化、Evidence 过期、Verdict 撤销、生产事故反证。
 
 传播语义：
 
@@ -51,9 +53,10 @@
 3. 每个下游对象先做影响分类：`unaffected`、`review_required`、`invalidated`；必须记录理由和分析者。
 4. 未完成对象转 `blocked` 或待复核；已完成对象重开为 `in_progress`；Evidence 的 `stale_status` 转为 `expired/invalidated`，不改写其历史 `verification_status`。
 5. 相关 Verdict 转 `revoked/pending`；Completion Claim 转 `withdrawn/expired`。
-6. 传播只在版本隔离证据充分、边界明确不受影响或人工影响分析批准处停止。
-7. 下游只能发起 `requests_review_of`；上游 owner/approver 决定是否修订批准事实、需求、契约或决策。
-8. 新 Evidence 和新 Verdict 通过全部受影响门禁后，才可重新签发声明。
+6. 规则集变化使引用旧版本/hash 的 AI Review Verdict 进入 `revoked/pending`，相关输出重新审核；开放的 `rule_gap_case` 只有在新规则发布并完成重审后才能关闭。
+7. 传播只在版本隔离证据充分、边界明确不受影响或人工影响分析批准处停止。
+8. 下游只能发起 `requests_review_of`；上游 owner/approver 决定是否修订批准事实、需求、契约或决策。
+9. 新 Evidence 和新 Verdict 通过全部受影响门禁后，才可重新签发声明。
 
 历史 Run 是不可改写的执行事实。控制集升级只会使旧 Evidence 对当前要求变为不足、待复核或失效，并撤销相应 Verdict/Claim；不得把旧 Run 改写为符合新控制集。
 

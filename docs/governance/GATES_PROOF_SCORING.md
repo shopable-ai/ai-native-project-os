@@ -36,11 +36,29 @@ gate_pass =
   AND required_artifacts_exist
   AND schemas_are_valid
   AND semantic_invariants_pass
+  AND applicable_governance_rule_sets_are_active
+  AND ai_review_gate_pass
   AND no_open_p0_or_p1_findings
   AND critical_traceability_is_complete
   AND evidence_stale_status_is_fresh
   AND proof_level_meets_claim
 ```
+
+其中 AI 自动审核门禁为：
+
+```text
+ai_review_gate_pass =
+  subject_did_not_require_ai_review
+  OR (
+    rule_set_is_active_fresh_scope_matched_and_hash_verified
+    AND reviewer_is_independent_from_generator
+    AND every_applicable_rule_has_a_result_and_evidence_basis
+    AND ai_review_decision_is_allow
+    AND no_open_blocking_finding_or_rule_gap
+  )
+```
+
+`rewrite_required` 只能进入有界改写和重新审核；达到上限、`blocked` 或 `rule_gap` 都使门禁失败。人工动作授权不能把失败门禁改为通过；AI 审核通过也不能免除高风险动作授权。
 
 ## 3. 完成声明
 
@@ -50,6 +68,7 @@ gate_pass =
 - 环境和输入类别；
 - 证据等级；
 - 证据引用；
+- 适用规则集版本/hash 与 AI 审核裁决引用；
 - 验证命令；
 - 内容和环境指纹；
 - 时间和有效期；

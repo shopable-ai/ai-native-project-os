@@ -8,14 +8,22 @@
 |---|---|---|
 | `owner` | 对对象生命周期和业务后果负责 | 必须是可追责的人类角色 |
 | `executor` | 产生内容或执行动作 | 不能自批、自证自己的高风险声明 |
-| `approver` | 批准事实、范围、权限或副作用 | AI 不得最终批准安全、隐私、发送、付款、删除、生产发布 |
+| `approver` | 批准规则、事实、需求、范围、例外或剩余风险 | 必须绑定可验证人类 principal；不承担日常逐条内容审核 |
+| `ai_reviewer` | 按 active Markdown 规则独立审核内容、Evidence、风险和质量 | 不能与生成节点复用同一 Run step、prompt/context role 或 attempt |
 | `verifier` | 独立检查 Evidence 与判据 | 不得修改原始 Evidence 迎合结论 |
+| `action_authorizer` | 为明确的高风险或不可逆动作签发受限授权 | 必须绑定精确目标、内容/hash、期限和单次消费语义 |
 
-低风险场景允许人类兼任角色，但每个动作仍须单独记录。涉及真实外部写、敏感数据、例外、高风险 Verdict 或生产声明时，executor、approver、verifier 三方必须身份互斥，owner 必须是可追责人类。
+低风险场景允许同一基础模型承担生成与审核的不同执行节点，但节点、上下文、attempt 和 Evidence 必须独立。涉及真实外部写、敏感数据、例外、高风险 Verdict 或生产声明时，executor、ai_reviewer、verifier 和 action_authorizer 按路由策略满足职责分离，owner 必须是可追责人类。
 
 身份校验基于不可伪造的 `actor_id`、`actor_kind`、真实 principal/session、`delegated_by` 和 role binding，而不是显示名称。高风险 Fact、授权、Verdict 和 Claim 必须绑定人工票据或独立 gate 签名；同一 principal、会话或控制主体使用多个角色别名仍视为冲突。
 
-## 2. 能力授权
+## 2. 审核与授权不得互相替代
+
+内容审核通过不授予动作权限。`ai_review_verdict.decision: allow` 只证明被审核对象满足已绑定规则集，不能生成 Capability Grant、Approval Ticket、Secret Lease 或 Authorization Snapshot。
+
+动作授权也不批准内容。即使目标、账号和副作用票据有效，只要适用的 AI 审核为 `blocked/rule_gap`、规则集失效或审核 Evidence 不完整，动作仍必须 fail-closed。人工只在规则发布、例外、剩余风险接受和高风险动作授权上作决定，不成为日常内容队列的逐条 reviewer。
+
+## 3. 能力授权
 
 Skill 和 Tool 不获得项目级通配权限，必须逐项声明：
 
@@ -41,7 +49,7 @@ purpose: description
 issued_for_run: run-id
 policy_version: version
 max_uses: 1
-approved_by: human-or-policy
+approved_by: action-authorizer-or-policy
 issued_at: timestamp
 expires_at: timestamp
 revocation_ref: null
@@ -57,7 +65,7 @@ revocation_ref: null
 
 秘密只通过项目绑定的短时 lease 引用，记录 owner、用途、主体、环境、有效期、轮换和撤销传播。prompt、Tool I/O、异常、日志、trace、Evidence 和缓存写入前必须脱敏与秘密扫描；疑似泄漏时隔离产物、撤销凭据并阻断 Claim。
 
-## 3. 项目隔离
+## 4. 项目隔离
 
 每个 L3 必须拥有稳定 `project_id` 和不可碰撞 namespace。namespace 由 `project_id + environment + resource_type` 生成并注册，创建时检测碰撞；空值、`default`、`global` 或未登记 namespace 一律 fail-closed。至少隔离：
 
@@ -70,7 +78,7 @@ revocation_ref: null
 
 缓存、RAG、日志、trace、secret 和幂等键必须携带完整 namespace。跨项目读取或复用必须有版本化共享资产 ID、去敏规则、消费者列表、复制/引用方式、撤销/删除传播和审批；默认拒绝，不得直接挂接源项目私有存储。
 
-## 4. 副作用等级
+## 5. 副作用等级
 
 | 等级 | 语义 | 最低控制 |
 |---|---|---|
@@ -81,7 +89,7 @@ revocation_ref: null
 
 安全、隐私、真实发送、付款、删除和生产发布必须有人工门禁，不允许静默豁免。
 
-## 5. 外部副作用记录
+## 6. 外部副作用记录
 
 执行前必须绑定：`approval_ticket`、Run、namespace、真实 actor、外部账号、动作、精确目标集合、规范化内容/金额及 hash、Tool/策略版本、环境、幂等键、超时、最大重试、撤销或补偿方案和 `max_uses`。不可逆动作默认单次消费，票据以原子 `pending → consumed` 转换；任何绑定内容变化、重复消费或并发冲突都使审批失效。
 
@@ -93,6 +101,6 @@ revocation_ref: null
 
 高风险外部 Evidence 必须由独立 verifier 通过外部状态读取或第二可信通道确认；补偿 Verdict 分别记录原动作、补偿动作、最终状态和不可恢复残余影响。
 
-## 6. 声明边界
+## 7. 声明边界
 
 本文件当前只有设计语义。尚无权限代理、秘密管理、隔离检查器或副作用运行证明；因此不能声明跨项目隔离已验证或生产安全已就绪。
