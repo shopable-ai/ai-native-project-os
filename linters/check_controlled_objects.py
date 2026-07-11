@@ -287,6 +287,76 @@ def check_c5_proof_level_single_authority(repo: Path, files: list[Path]) -> list
     return findings
 
 
+def check_c6_ai_review_no_routine_human_wait(
+    repo: Path, files: list[Path]
+) -> list[Finding]:
+    """C6: AI 自动审核不得回退到逐条人工等待。"""
+    findings: list[Finding] = []
+    for p in files:
+        if p.suffix not in {".yaml", ".yml"}:
+            continue
+        text = read_text(p)
+        if not re.search(r"^\s*review_mode\s*:\s*ai_automated\s*$", text, re.M):
+            continue
+        for line_number, line in enumerate(text.splitlines(), 1):
+            if re.search(r"\bwaiting_approval\b", line):
+                findings.append(Finding(
+                    "C6", "P0", rel(repo, p), line_number,
+                    "AI 自动审核 Workflow 不得进入 waiting_approval；应自动改写、阻断或记录规则缺口",
+                ))
+                break
+    return findings
+
+
+AI_REVIEW_REQUIRED_FIELDS = {
+    "subject_ref",
+    "generator_run_ref",
+    "generator_execution_node_ref",
+    "review_run_ref",
+    "reviewer_actor_id",
+    "reviewer_execution_node_ref",
+    "rule_set_ref",
+    "rule_set_hash",
+    "evidence_refs",
+    "decision",
+    "max_rewrite_attempts",
+}
+
+
+def check_c7_ai_review_manifest(repo: Path, files: list[Path]) -> list[Finding]:
+    """C7: AI 审核裁决必须绑定规则集、独立 Run 和有界改写。"""
+    findings: list[Finding] = []
+    for p in files:
+        if p.suffix not in {".yaml", ".yml"}:
+            continue
+        text = read_text(p)
+        if not re.search(r"^\s*object_type\s*:\s*ai_review_verdict\s*$", text, re.M):
+            continue
+        present_fields = {
+            match.group(1)
+            for match in re.finditer(r"^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:", text, re.M)
+        }
+        missing = sorted(AI_REVIEW_REQUIRED_FIELDS - present_fields)
+        if missing:
+            findings.append(Finding(
+                "C7", "P0", rel(repo, p), 0,
+                "ai_review_verdict 缺少必需字段: " + ", ".join(missing),
+            ))
+
+        decision_match = re.search(r"^\s*decision\s*:\s*([a-z_]+)\s*$", text, re.M)
+        limit_match = re.search(r"^\s*max_rewrite_attempts\s*:\s*(-?\d+)\s*$", text, re.M)
+        if (
+            decision_match
+            and decision_match.group(1) == "rewrite_required"
+            and (not limit_match or int(limit_match.group(1)) <= 0)
+        ):
+            findings.append(Finding(
+                "C7", "P0", rel(repo, p), 0,
+                "rewrite_required 必须声明正整数 max_rewrite_attempts",
+            ))
+    return findings
+
+
 def check_l2_mode(repo: Path) -> list[Finding]:
     """L2 模式：额外检查 project-os.lock 是否存在。"""
     findings: list[Finding] = []
@@ -326,6 +396,8 @@ def main() -> int:
     if not l2_mode:
         all_findings += check_c4_l1_no_l2_refs(repo, files)
     all_findings += check_c5_proof_level_single_authority(repo, files)
+    all_findings += check_c6_ai_review_no_routine_human_wait(repo, files)
+    all_findings += check_c7_ai_review_manifest(repo, files)
     if l2_mode:
         all_findings += check_l2_mode(repo)
 
