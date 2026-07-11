@@ -24,9 +24,14 @@ framework:
     enterprise:
       scope_status: bounded       # 最大企业版本，只定义边界，本阶段不建设
 
-# 项目治理能力目录。实际选择属于 L3 项目，L1 不替项目启用。
+# 项目治理能力目录。默认由 L2 系统选择；只有多实例隔离成立时才下沉到可选 L3 实例。
 project_governance_catalog:
-  selection_scope: l3_project
+  selection_scope: l2_system_or_optional_l3_instance
+  default_project_fact_scope: l2_system
+  optional_instance_scope:
+    scope: l3_project_instance
+    namespace: projects/{project_id}
+    activation_requires: multi_instance_isolation_evidence
   default_base_profile_when_unknown: standard
   base_profiles: [lite, standard]
   overlay_catalog: [multi_agent, production]
@@ -37,6 +42,20 @@ maturity:
   design_status: review_required
   implementation_status: not_started
   verification_status: unverified
+  proof_boundary: maturity_fields_do_not_prove_runtime # 成熟度坐标不能替代任何运行 Evidence/Verdict
+
+# 评分与证明观察面。目标设计分不是当前分；每一证明层必须独立形成 Evidence。
+score_summary:
+  current_overall_score: not_evaluated # 缺完整可重算评分输入，不沿用历史数字
+  design_target_score: 95.93            # 仅描述目标方案形态，不表示已经达到
+  static_implementation_evidence: present_unscored # 有静态资产/检查，但尚未形成当前总评分
+  fixture_proof: not_evaluated          # 受控样例证明尚未在本阶段收口
+  local_runtime_proof: not_evaluated    # 没有非 fixture 本地真实运行证明
+  readonly_real_proof: not_evaluated    # 没有真实目标环境只读预检证明
+  production_proof: not_evaluated       # 没有经批准生产 Run/Evidence/Verdict
+  hard_gates:
+    cross_project_isolation: unmet      # 跨项目隔离与安全验证尚未成立
+    second_heterogeneous_l2: unmet      # 第二个异构 L2 真实验证尚未成立
 
 # 架构风格和薄内核原语
 architecture:
@@ -57,11 +76,15 @@ authority_policy:
 
 # 各类问题的唯一权威文件
 authority:
+  overview: docs/architecture/AI_PROJECT_OS_OVERVIEW.md                  # 人类总览与四条不可折叠主线
   architecture: docs/architecture/AI_PROJECT_OS_CORE.md                 # 核心架构
   framework_editions: docs/architecture/FRAMEWORK_EDITION_MODEL.md       # 四级框架版本范围
   repository_and_layers: docs/architecture/REPOSITORY_AND_LAYER_CONTRACT.md # L1/L2/L3 仓库与兼容契约
   ai_native_execution: docs/architecture/AI_NATIVE_EXECUTION_MODEL.md    # AI 原生执行节点语义
   lifecycle: docs/workflows/PROJECT_LIFECYCLE.md                         # R0、S0—S7 生命周期
+  project_delivery_workflow: docs/workflows/PROJECT_DELIVERY_WORKFLOW.md # 从入口到声明的推进控制流
+  stage_exit_gates: docs/workflows/STAGE_EXIT_GATES.md                   # 九阶段人类退出门禁视图
+  l2_progression: docs/workflows/L2_PROGRESSION.md                       # L2 接入后的端到端推进与重开 SOP
   project_type_and_governance: docs/workflows/PROJECT_TYPE_AND_GOVERNANCE_ROUTING.md # 类型与治理配置路由
   project_governance_policy: policies/project-governance-routing.yaml   # 机器可判定路由条件
   route_decision_contract: policies/route-decision-contract.yaml        # 路由裁决与逐 overlay 状态契约
@@ -79,6 +102,7 @@ authority:
   authorization_and_isolation: docs/governance/AUTHORIZATION_SIDE_EFFECTS_AND_ISOLATION.md # 权限、副作用、隔离
   run_evidence_acceptance: docs/governance/RUN_EVIDENCE_ACCEPTANCE.md    # Run、Evidence、裁决和声明
   gates_and_scoring: docs/governance/GATES_PROOF_SCORING.md              # 门禁、证据和评分
+  terminology: docs/governance/TERMINOLOGY.md                            # 中文术语和稳定 term-id
   research_method: docs/research/RESEARCH_WORKFLOW.md                     # 研究方法
   research_registry: research/registry.yaml                               # 当前研究任务登记表
 
@@ -93,6 +117,8 @@ review_evidence:
     - reviews/profile-taxonomy-file-audit.yaml
   human_governed_ai_review:
     - reviews/human-governed-ai-review-adversarial.yaml
+  historical_invalidated:
+    - reviews/phase0-checker-evidence.yaml # 旧检查快照已失效，只保留历史审计
 
 scoring_evidence:
   historical_p0_design_revision: reviews/p0-design-revision-score.yaml

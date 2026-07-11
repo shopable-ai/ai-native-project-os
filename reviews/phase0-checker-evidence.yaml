@@ -1,0 +1,32 @@
+# Phase 0 检查器运行证据
+# 产生方式：python3 linters/check_controlled_objects.py . --report
+# 时间：2026-07-10
+# 验收结论：EXIT=0，P0=0，P1=0，通过
+
+checker: check_controlled_objects
+version: "0.1.0"
+scored_at: "2026-07-10"
+executor: ai-agent
+repo: ai-project-os
+files_scanned: 55
+p0_count: 0
+p1_count: 0
+pass: true
+findings: []
+
+claim_limits:
+  - 本 Evidence 证明 Phase 0 检查器在 L1 自身仓库上 EXIT=0
+  - 不证明 L2 业务项目已接入（需 Phase 2 完成后补 phase2-l2-onboarding-evidence.yaml）
+  - 不证明端到端业务链路运行（production_proof 仍不存在）
+  - 设计态评分从 84 推进到预计 89（解除"无 Run/Evidence"封顶，"无跨项目隔离"89 封顶接着咬）
+
+reproducible_command: "python3 linters/check_controlled_objects.py . --report"
+
+# 以下字段只追加失效元数据；上方历史载荷保持采集时原值，不代表当前扫描结果。
+evidence_status: historical_invalidated
+stale_status: invalidated
+current_scoring_authority: false
+invalidation_reason:
+  - 当前受控文件与 authority 集合已变化，历史 files_scanned 不能覆盖当前范围
+  - 记录未绑定当前 Git revision 与全部输入 hash，不能作为不可变当前评分快照
+  - 后续检查结果只能形成新的独立 Evidence，不能改写本历史记录
