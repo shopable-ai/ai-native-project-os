@@ -20,7 +20,7 @@
 | `queued` | `in_progress` / `blocked` / `paused` / `superseded` | 输入、责任和权限已验证，或记录阻断/替代原因 |
 | `not_applicable` | 无 | 非工作型记录使用类型专属状态；不得借此绕过其签名、审批或证据门禁 |
 | `in_progress` | `waiting_approval` / `blocked` / `paused` / `failed` / `completed` / `superseded` | 对象声明的 gate 已通过；只有 gate 类型为 acceptance 时才要求有效 Acceptance Verdict |
-| `waiting_approval` | `in_progress` / `blocked` / `failed` / `superseded` | 批准后恢复；拒绝保留理由 |
+| `waiting_approval` | `in_progress` / `blocked` / `failed` / `superseded` | 仅用于规则/事实/需求批准、例外/剩余风险接受或动作授权；批准后恢复，拒绝保留理由 |
 | `blocked` | `queued` / `in_progress` / `failed` / `superseded` | 阻断项关闭并重新校验输入 |
 | `paused` | `queued` / `in_progress` / `superseded` | checkpoint、输入、权限和证据仍有效 |
 | `failed` | `queued` / `superseded` | 创建带因果关系的重试或修订；失败历史不改写 |
@@ -29,6 +29,8 @@
 | `retired` | 无 | 终态；恢复必须新建版本 |
 
 非法迁移包括：从 `not_applicable` 迁移；从 `queued`、`blocked`、`paused` 或 `failed` 直接到 `completed`；从 `retired` 恢复；把失败 Run 原地改成成功；审批过期后继续执行副作用。
+
+声明 `review_mode: ai_automated` 的普通内容审核不得迁移到 `waiting_approval`。其类型专属决策使用 `allow/rewrite_required/blocked/rule_gap`：自动改写创建新 attempt 或 Run；规则缺口阻断当前对象并异步创建规则修订工作，不把单条内容交给人类审核。
 
 每次迁移记录对象版本、前后状态、发起者、时间、原因、前置 Evidence、审批引用和 checkpoint。
 
@@ -42,7 +44,7 @@
 
 ## 4. 失效传播
 
-触发源包括：批准事实/需求变化、项目类型或版本化治理路由/control set 变化、契约/策略/权限变化、内容或环境指纹变化、Evidence 过期、Verdict 撤销、生产事故反证。
+触发源包括：批准事实/需求变化、active 治理规则集变化、项目类型或版本化治理路由/control set 变化、契约/策略/权限变化、内容或环境指纹变化、Evidence 过期、Verdict 撤销、生产事故反证。
 
 传播语义：
 
@@ -54,6 +56,7 @@
 6. 传播只在版本隔离证据充分、边界明确不受影响或人工影响分析批准处停止。
 7. 下游只能发起 `requests_review_of`；上游 owner/approver 决定是否修订批准事实、需求、契约或决策。
 8. 新 Evidence 和新 Verdict 通过全部受影响门禁后，才可重新签发声明。
+9. 规则集被替代、撤销或 scope/hash 改变时，相关 AI Review Verdict 进入失效传播；旧 Verdict 不能审核新内容或新规则版本。
 
 历史 Run 是不可改写的执行事实。控制集升级只会使旧 Evidence 对当前要求变为不足、待复核或失效，并撤销相应 Verdict/Claim；不得把旧 Run 改写为符合新控制集。
 

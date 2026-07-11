@@ -4,14 +4,19 @@
 
 ## 1. 责任分离
 
+本系统把“人工规则治理、AI 自动内容审核、人工高风险动作授权”视为三项正交责任。人工批准规则不等于逐条审核运行内容；AI 内容审核通过也不等于获得外部动作权限。
+
 | 责任 | 含义 | 高风险约束 |
 |---|---|---|
 | `owner` | 对对象生命周期和业务后果负责 | 必须是可追责的人类角色 |
 | `executor` | 产生内容或执行动作 | 不能自批、自证自己的高风险声明 |
-| `approver` | 批准事实、范围、权限或副作用 | AI 不得最终批准安全、隐私、发送、付款、删除、生产发布 |
+| `approver` | 批准规则、事实、范围、例外、权限或副作用 | AI 不得最终批准规则发布、风险例外、发送、付款、删除或生产发布 |
 | `verifier` | 独立检查 Evidence 与判据 | 不得修改原始 Evidence 迎合结论 |
+| `ai_reviewer` | 依据 active Markdown 规则集审核普通内容、Evidence、风险和质量 | 必须独立于生成节点并逐项引用 `rule_ref`；不能授予动作权限 |
 
-低风险场景允许人类兼任角色，但每个动作仍须单独记录。涉及真实外部写、敏感数据、例外、高风险 Verdict 或生产声明时，executor、approver、verifier 三方必须身份互斥，owner 必须是可追责人类。
+低风险场景允许人类兼任治理角色，但普通内容仍由 AI reviewer 自动审核。涉及真实外部写、敏感数据、例外、高风险 Verdict 或生产声明时，executor、approver、verifier 三方必须身份互斥，owner 必须是可追责人类。
+
+内容审核通过不授予动作权限；Capability Grant、Approval Ticket、Secret Lease 和 Authorization Snapshot 也不能把 `ai_review_verdict=blocked|rule_gap` 改写为允许。若内容规则与动作授权任一侧失败，只阻断对应对象并保存各自 Evidence。
 
 身份校验基于不可伪造的 `actor_id`、`actor_kind`、真实 principal/session、`delegated_by` 和 role binding，而不是显示名称。高风险 Fact、授权、Verdict 和 Claim 必须绑定人工票据或独立 gate 签名；同一 principal、会话或控制主体使用多个角色别名仍视为冲突。
 
@@ -79,7 +84,7 @@ revocation_ref: null
 | `write_reversible` | 可明确撤销的外部写入 | 审批票据、幂等键、前后快照、超时、回执和撤销步骤 |
 | `write_irreversible` | 发送、付款、删除、发布等不可逆动作 | 每次人工门禁、精确目标预览、短时授权、双重检查、失败关闭 |
 
-安全、隐私、真实发送、付款、删除和生产发布必须有人工门禁，不允许静默豁免。
+安全与隐私内容风险先由 AI 按已批准规则自动审核；规则例外、剩余风险接受、真实发送、付款、删除和生产发布必须有人工门禁，不允许静默豁免。不得把这条人工授权要求扩大成普通内容逐条人工审核。
 
 ## 5. 外部副作用记录
 

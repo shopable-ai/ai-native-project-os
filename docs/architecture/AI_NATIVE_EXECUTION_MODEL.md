@@ -14,10 +14,18 @@
 | `model_reasoning` | 非确定性理解、生成、比较和判断 | 结构化输出、评测、失败返回和声明封顶 |
 | `retrieval` | 检索或上下文装配 | 来源、信任级别、hash、截断和新鲜度 |
 | `agent_action` | 依据目标选择步骤并调用能力 | 能力白名单、预算、checkpoint、审批和停止条件 |
-| `human_decision` | 事实批准、风险接受、验收或不可逆动作授权 | 人类身份、输入摘要、决定、时间和有效期 |
+| `human_decision` | 规则/事实/需求批准、例外与剩余风险接受、不可逆动作授权 | 人类身份、输入摘要、决定、时间和有效期；不承担普通内容逐条审核 |
 | `external_system` | 受控边界之外的服务或设备 | 契约、超时、幂等、回执、失败和恢复语义 |
 
 能够由确定性代码可靠完成的步骤，不默认交给模型。模型、Agent 和 Tool 是不同对象；Workflow 负责编排，不隐含无限权限。
+
+### 1.1 独立 AI 审核节点
+
+普通内容、Evidence、风险和质量审核使用独立 `model_reasoning` 节点，并声明 `review_mode: ai_automated`。审核节点必须与生成节点使用不同 Run step、execution node、prompt/context role 和 attempt 记录；风险路由可以进一步要求不同模型或供应商。每项 finding 必须指向 active Markdown 规则集中的精确 `rule_ref`。
+
+审核裁决只使用 `allow/rewrite_required/blocked/rule_gap`。可修复问题进入有界自动改写并创建新 attempt 或 Run；达到上限后阻断。规则不足时创建 `rule_gap_case` 并阻断当前输出，由人类异步完善规则。普通内容审核不得进入 `waiting_approval`，也不得把人工逐条润色作为失败降级路径。
+
+AI 审核通过只证明内容满足已加载规则，不授予外部动作权限。发送、付款、删除、生产发布等不可逆动作仍需独立授权快照。
 
 ## 2. 节点最小声明
 
@@ -31,6 +39,8 @@ prompt_ref: prompt-version-or-null
 context_policy_ref: policy-version-or-null
 tool_refs: []
 policy_refs: []
+review_mode: ai_automated-or-not_applicable
+rule_set_refs: []
 evaluation_refs: []
 budgets:
   token_limit: 0

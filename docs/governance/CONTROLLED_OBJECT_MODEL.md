@@ -5,9 +5,9 @@
 ## 1. 固定主关系
 
 ```text
-来源→批准事实/需求→场景/触发→业务链路→业务能力/功能
+来源→批准事实/需求→人工批准治理规则→场景/触发→业务链路→业务能力/功能
 →架构决策/技术能力/组件/工程链路→I/O与验收判据→Spec→Task
-→Workflow→Skill/Tool→Run→Evidence→验收裁决→完成声明
+→Workflow→Skill/Tool→Run→Evidence→AI审核裁决→验收裁决→完成声明
 →复盘与资产演进
 ```
 
@@ -53,7 +53,7 @@ supersedes: null
 
 `lifecycle_stage`、`work_status`、`approval_status`、`implementation_status` 和 `stale_status` 的枚举与迁移只引用状态权威，不在本文件复制。实现状态不得由阶段、批准状态或 proof level 推导。普通对象只保存 `proof_refs`，有效 proof level 由 Evidence、Verdict 和 Claim 计算，禁止对象自证。
 
-`owner` 对对象生命周期负责；`executor` 产生或修改内容；`approver` 批准进入受控状态；`verifier` 检验证据。高风险对象不得由同一 AI 同时承担四项责任。
+`owner` 对对象生命周期负责；`executor` 产生或修改内容；`approver` 批准规则、事实、需求、例外或动作权限进入受控状态；`verifier` 独立检验证据。普通运行内容由独立 AI reviewer 按已批准规则审核，不把 `approver` 解释为逐条内容审核者。高风险对象不得由同一 AI 同时承担生成、审核、验证和声明责任。
 
 ## 3. 类型矩阵
 
@@ -67,6 +67,7 @@ supersedes: null
 | `research` | 研究 | 服务明确 `blocks_decision`，报告不自动成为事实 | research_state: planned / active / decided / archived |
 | `route_decision` | 项目治理路由裁决 | 绑定基础配置、逐 overlay 状态、routing policy 和 control set；不得自引用 | route_state: proposed / approved / expired / superseded |
 | `control_set` | 项目控制集合 | 组合基础配置、overlay 模块、策略、契约和实现证据 | control_set_state: draft / approved / superseded |
+| `governance_rule_set` | 人工治理规则集 | 权威正文为版本化 Markdown；active 版本必须绑定人类批准身份、scope、规则 ID 和内容 hash | rule_set_state: draft / approved / active / superseded / revoked |
 | `scenario` | 场景 | `derives_from requirement` | —（使用公共坐标） |
 | `trigger` | 触发 | 声明 actor、条件、入口和权限 | —（使用公共坐标） |
 | `business_chain` | 业务链路 | 从场景/触发推导业务状态变化 | —（使用公共坐标） |
@@ -91,6 +92,8 @@ supersedes: null
 | `side_effect_operation` | 外部副作用操作 | 稳定 operation 与独立 attempt；未知结果先对账，禁止盲重试 | operation_state: prepared / approved / dispatched / acknowledged / reconciled / unknown / compensated |
 | `run` | 一次执行事实 | 不可改写历史结果 | run_state: created / running / waiting_approval / succeeded / failed / cancelled |
 | `evidence` | 可复现证据 | `produced_by run/verification`；有新鲜度 | verification_status: captured / verified / rejected |
+| `ai_review_verdict` | AI 自动审核裁决 | 独立审核节点依据 active 规则集逐项引用 `rule_ref`；人工授权不能覆盖 blocked 结论 | decision: pending / allow / rewrite_required / blocked / rule_gap |
+| `rule_gap_case` | 规则缺口记录 | 规则不足时阻断当前对象，异步路由给人类规则 owner，不转为逐条人工内容审核 | gap_state: open / rule_revision_active / resolved / superseded |
 | `overlay_activation_verdict` | 叠加能力激活裁决 | 只裁决 control set 是否可激活，不代替业务验收 | decision: pending / accepted / rejected / revoked |
 | `acceptance_verdict` | 事后验收裁决 | 只引用事前判据和 Evidence | decision: pending / accepted / rejected / conditional / revoked |
 | `completion_claim` | 完成声明 | 受 Verdict 和最低 proof_level 封顶 | claim_status: draft / issued / expired / withdrawn |
@@ -99,7 +102,7 @@ supersedes: null
 
 ## 4. 关系类型
 
-`derives_from`、`governed_by`、`implements`、`consumes`、`produces`、`produced_by`、`verified_by`、`authorized_by`、`approved_by`、`checkpoint_of`、`resumes_from`、`attempt_of`、`invalidates`、`supersedes`、`requests_review_of`。
+`derives_from`、`governed_by`、`implements`、`consumes`、`produces`、`produced_by`、`reviewed_by`、`verified_by`、`authorized_by`、`approved_by`、`identifies_gap_in`、`checkpoint_of`、`resumes_from`、`attempt_of`、`invalidates`、`supersedes`、`requests_review_of`。
 
 每个活跃对象只有一个 `canonical_path`，但可以有多个有类型上游。禁止把“唯一权威位置”误解为“只能有一个父节点”。
 
@@ -114,6 +117,10 @@ supersedes: null
 7. 上游变化必须触发下游闭包影响分析。
 8. L3 的 Capability Grant、Approval Ticket、Secret Lease、Checkpoint 和 Side-effect Operation 必须绑定当前 `route_decision_ref`、`control_set_ref` 与 `control_set_hash`；引用过期路由时禁止继续授权、恢复或执行副作用。
 9. 授权快照只有在底层授权全部有效、引用/hash 一一对应、职责分离通过且验证 Evidence 新鲜时才可供激活或验收使用；非空引用不代表有效。
+10. active `governance_rule_set` 必须引用 Markdown 权威、非空规则 ID、精确 scope、内容 hash 和可验证的人类批准 principal。
+11. `ai_review_verdict=allow` 必须绑定 subject/rule set hash、非空规则覆盖和新鲜 Evidence；每项 finding 必须引用可解析的 `rule_ref`。
+12. `rewrite_required` 必须有正整数上限并保留全部 attempt；上限耗尽只能转 blocked。
+13. `rule_gap` 必须创建 `rule_gap_case` 并阻断当前对象；人工授权不得覆盖 blocked AI Review Verdict。
 
 ## 6. Spec 包和需求分母
 
@@ -128,6 +135,8 @@ Spec 包使用一个 `spec_id/version` 覆盖 `spec.md`、`plan.md`、`tasks.md`
 Task 至少记录：`task_id`、`spec_ref/version`、`requirement_refs`、`criterion_refs`、输入/输出契约、依赖、executor、权限、失败路由和 Evidence 出口。孤儿 Task 或无 Task 覆盖的 P0/P1 需求必须阻断门禁。
 
 Workflow manifest 至少记录：`workflow_id/version`、trigger、Task、step graph、每步 execution node、输入/输出/失败契约、权限、超时、重试、checkpoint、取消、补偿、终态、Evidence 出口和 claim ceiling。Workflow 拥有控制流，不保存业务事实，也不把完整工作流隐藏成一个 Tool。
+
+声明 `review_mode: ai_automated` 的 Workflow 必须引用 `governance_rule_set` 与 `ai-review-verdict-contract`，并提供 allow、自动改写、安全阻断和规则缺口四条终止路径。普通审核不得进入 `waiting_approval`；人工等待只用于规则/事实/需求批准、例外、剩余风险和动作授权。
 
 Skill 是版本化局部能力契约，可以组合确定性代码或模型推理，但不得隐藏跨阶段编排、无限重试、未声明权限或验收裁决。Tool 是最小可审计执行接口，保证调用协议、错误分类、权限和回执可验证；外部结果本身可能非确定。Skill/Tool 均不能签发 Verdict 或 Claim。
 

@@ -39,6 +39,9 @@ gate_pass =
   AND no_open_p0_or_p1_findings
   AND critical_traceability_is_complete
   AND evidence_stale_status_is_fresh
+  AND active_rule_set_is_human_approved_scope_matched_and_hash_matched
+  AND required_ai_review_verdict_is_allow_with_exact_rule_refs
+  AND no_unresolved_rule_gap_or_exhausted_rewrite_loop
   AND proof_level_meets_claim
 ```
 
@@ -54,9 +57,12 @@ gate_pass =
 - 内容和环境指纹；
 - 时间和有效期；
 - 审核身份；
+- 人工批准规则集版本/hash与 AI 审核裁决；
 - 未覆盖边界。
 
 Run、Evidence、Acceptance Verdict 与 Completion Claim 的字段和固定顺序只由 [Run、Evidence、验收裁决与完成声明](RUN_EVIDENCE_ACCEPTANCE.md) 定义。
+
+普通内容审核不得用人工逐条签字提高 proof level。只有 active 规则集、独立 AI Review Verdict、精确规则引用、完整 attempt 和新鲜 Evidence 才能证明自动审核门禁。人工授权只证明动作获准，不能替代内容审核。
 
 ## 4. “100%代码需求完成”
 
