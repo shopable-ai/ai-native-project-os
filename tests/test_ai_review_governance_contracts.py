@@ -162,7 +162,8 @@ class GovernanceContractsTests(unittest.TestCase):
 
         self.assertEqual(review["review_type"], "self_adversarial_static_review")
         self.assertEqual(review["reviewer_independence"], "not_independent")
-        self.assertEqual(review["verification"]["unit_tests"], "11_passed")
+        self.assertEqual(review["verification"]["unit_tests"], "14_passed")
+        self.assertEqual(review["verification"]["checker_files_scanned"], 71)
         self.assertEqual(review["verification"]["checker_findings"], "p0_0_p1_0")
         self.assertEqual(score["design_target_score"], 96)
         self.assertEqual(score["current_design_evidence_score"], "not_evaluated")

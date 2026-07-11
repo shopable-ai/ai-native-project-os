@@ -7,7 +7,7 @@ review_type: self_adversarial_static_review
 reviewer: codex-implementation-agent
 reviewer_independence: not_independent
 reviewed_at: "2026-07-11"
-subject_git_revision: 9052b96
+subject_git_revision: a34ee62
 subject_scope:
   - docs/architecture/AI_PROJECT_OS_CORE.md
   - docs/architecture/AI_NATIVE_EXECUTION_MODEL.md
@@ -22,8 +22,9 @@ subject_scope:
   - templates/standard-project/governance/rules/
 
 verification:
-  unit_tests: 11_passed
+  unit_tests: 14_passed
   checker_findings: p0_0_p1_0
+  checker_files_scanned: 71
   yaml_parse: passed
   markdown_links: passed
   diff_check: passed
@@ -58,6 +59,7 @@ findings:
     topic: conflicting_rules
     severity: p1
     design_status: resolved
+    static_status: verified
     runtime_status: open
     evidence:
       - policies/governance-rule-set-contract.yaml
@@ -82,6 +84,7 @@ findings:
     topic: rule_gap_handling
     severity: p0
     design_status: resolved
+    static_status: verified
     runtime_status: open
     evidence:
       - docs/governance/CONTROLLED_OBJECT_MODEL.md
@@ -148,6 +151,18 @@ findings:
       - reviews/human-governed-ai-review-score.yaml
     resolution: 目标设计分与当前证据分分开；没有可重算输入时当前分保持 not_evaluated。
     residual_risk: 后续维护者仍可能错误把静态测试写成真实 AI 审核或生产证明。
+
+  - finding_id: AR-011
+    topic: empty_checker_scope_false_positive
+    severity: p0
+    design_status: resolved
+    static_status: verified
+    runtime_status: not_applicable
+    evidence:
+      - linters/check_controlled_objects.py
+      - tests/test_check_controlled_objects.py
+    resolution: 检查器只排除仓库根目录内部的嵌套 worktree，不因仓库绝对路径包含 .worktrees 而跳过全部文件。
+    residual_risk: 新增其他隔离目录约定时必须补充对应 fixture。
 
 open_gates:
   - genuine_independent_adversarial_review

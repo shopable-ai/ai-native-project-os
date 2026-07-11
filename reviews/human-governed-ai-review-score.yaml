@@ -4,7 +4,7 @@
 schema_version: 1
 score_id: human-governed-ai-review-score-20260711
 formula_version: weighted-geometric-v1
-subject_git_revision: 9052b96
+subject_git_revision: a34ee62
 scored_at: "2026-07-11"
 scorer: codex-implementation-agent
 scorer_independence: not_independent
@@ -25,7 +25,7 @@ current_design_evidence_reason:
 
 static_implementation_score: not_evaluated
 static_implementation_evidence:
-  unit_tests: 11_passed
+  unit_tests: 14_passed
   checker: p0_0_p1_0
   yaml_parse: passed
   markdown_links: passed
