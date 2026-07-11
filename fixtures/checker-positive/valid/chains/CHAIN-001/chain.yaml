@@ -1,0 +1,6 @@
+object_type: business_chain
+stable_id: CHAIN-001
+priority: p0
+cross_node: true
+multi_state: true
+authorization_or_data_boundary: true

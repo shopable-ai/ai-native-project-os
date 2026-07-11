@@ -1,0 +1,7 @@
+schema_version: 1
+contract_id: sample-contract
+version: 1
+template_root: templates/sample
+required_files: [sample.yaml]
+required_fields:
+  sample.yaml: [schema_version, 7]

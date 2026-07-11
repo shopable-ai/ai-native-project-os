@@ -1,0 +1,17 @@
+schema_version: 1
+contract_id: sample-contract
+version: 1
+template_root: templates/sample
+required_files: [README.md, sample.yaml]
+required_fields:
+  sample.yaml: [schema_version, nested.value]
+required_sections:
+  README.md: [用途]
+required_values:
+  sample.yaml:
+    nested.value: ready
+task_authority:
+  declaration_marker: task_declarations
+  declarations_allowed_only_in: sample.yaml
+  reference_marker: task_refs
+  references_allowed_in: README.md

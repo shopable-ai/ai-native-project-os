@@ -1,0 +1,7 @@
+schema_version: 3
+authority:
+  terminology: docs/governance/TERMINOLOGY.md
+  stage_contract: contracts/governance/stage-exit-gates-contract.yaml
+  sample_contract: contracts/execution/sample-contract.yaml
+terminology_manifest:
+  required_term_ids: [source, business-truth, research, framework-edition, governance-configuration, base-governance-profile, overlay-capability, repository-layer, governance-scope, lifecycle-stage, work-status, approval-status, implementation-status, proof-level, invalidation-status, business-chain, engineering-chain, capability-tree, function-tree, task-tree, workflow, skill, tool, spec, run, evidence, verdict, claim]

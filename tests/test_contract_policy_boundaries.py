@@ -17,7 +17,10 @@ MOVED_CONTRACTS = {
     "route-decision-contract.yaml",
     "rule-gap-case-contract.yaml",
 }
-GOVERNANCE_CONTRACTS = MOVED_CONTRACTS | {"stage-exit-gates-contract.yaml"}
+GOVERNANCE_CONTRACTS = MOVED_CONTRACTS | {
+    "project-instance-contract.yaml",
+    "stage-exit-gates-contract.yaml",
+}
 STAGES = ["R0", "S0", "S1", "S2", "S3", "S4", "S5", "S6", "S7"]
 STAGE_SECTIONS = {
     "required_inputs",

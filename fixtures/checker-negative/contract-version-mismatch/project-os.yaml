@@ -1,0 +1,3 @@
+schema_version: 3
+authority:
+  sample_contract: contracts/sample-contract.yaml

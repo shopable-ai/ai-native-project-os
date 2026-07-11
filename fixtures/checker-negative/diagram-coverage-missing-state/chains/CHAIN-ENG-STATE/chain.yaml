@@ -1,0 +1,6 @@
+object_type: engineering_chain
+stable_id: CHAIN-ENG-STATE
+priority: p2
+cross_node: false
+multi_state: true
+authorization_or_data_boundary: false

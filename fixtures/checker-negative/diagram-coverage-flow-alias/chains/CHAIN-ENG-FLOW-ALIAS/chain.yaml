@@ -1,0 +1,6 @@
+object_type: engineering_chain
+stable_id: CHAIN-ENG-FLOW-ALIAS
+priority: p1
+cross_node: false
+multi_state: false
+authorization_or_data_boundary: false

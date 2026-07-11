@@ -1,0 +1,6 @@
+object_type: engineering_chain
+stable_id: CHAIN-ENG-SEQUENCE
+priority: p2
+cross_node: true
+multi_state: false
+authorization_or_data_boundary: false

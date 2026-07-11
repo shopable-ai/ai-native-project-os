@@ -1,0 +1,8 @@
+schema_version: 3
+authority:
+  terminology: docs/governance/TERMINOLOGY.md
+terminology_manifest:
+  required_term_ids: [source, missing-term]
+profiles:
+  standard:
+    enabled: true

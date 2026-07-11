@@ -568,6 +568,8 @@ class TemplatePackageTests(unittest.TestCase):
             ROOT / "tests" / "fixtures",
             ROOT / "tests" / "checker-negative",
             ROOT / "tests" / "checker_negative",
+            ROOT / "fixtures" / "checker-positive",
+            ROOT / "fixtures" / "checker-negative",
         }
         occurrences = {contract_id: [] for contract_id in target_contract_ids}
         for path in ROOT.rglob("*"):

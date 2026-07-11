@@ -1,0 +1,4 @@
+schema_version: 3
+authority:
+  broken: docs/missing.md
+unresolved_contract_ref: unknown-contract@9

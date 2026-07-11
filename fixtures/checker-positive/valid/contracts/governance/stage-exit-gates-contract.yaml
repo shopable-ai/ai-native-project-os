@@ -1,0 +1,34 @@
+schema_version: 1
+contract_id: stage-exit-gates-contract
+version: 1
+independent_axes: [stage, work_status, approval_status, implementation_status, proof_level, framework_edition, governance_profile]
+invariants: [axes_are_independent]
+stage_gate_record:
+  required_fields: [stage, scope, work_status, approval_status, implementation_status, proof_level, framework_edition, governance_profile, stage_definition_ref, stage_definition_hash, exit_criterion_results, required_object_refs, required_proof_level, verification_commands, result, uncovered_items, waivers, approved_by, verified_by, checked_at, valid_until, invalidation_conditions, reopen_target, evidence_refs, evidence_hashes]
+  exit_criterion_result:
+    required_fields: [criterion_ref, criterion_hash, status, evidence_refs, waiver_ref]
+  invariants: [failed_or_unknown_blocks_exit]
+manifest_example:
+  stage: R0
+  exit_criterion_results: [{criterion_ref: criterion/r0, criterion_hash: sha256:r0, status: passed, evidence_refs: [evidence/r0], waiver_ref: null}]
+  evidence_refs: [evidence/r0]
+  evidence_hashes: [sha256:r0]
+negative_examples:
+  missing_evidence: {result: blocked, handling: fail_closed}
+x-stage: &stage
+  required_inputs: [input]
+  required_artifacts: [artifact]
+  exit_criteria: [criterion]
+  evidence_requirements: [evidence]
+  invalidation_triggers: [change]
+  reopen_targets: [R0]
+stages:
+  R0: *stage
+  S0: *stage
+  S1: *stage
+  S2: *stage
+  S3: *stage
+  S4: *stage
+  S5: *stage
+  S6: *stage
+  S7: *stage

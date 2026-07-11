@@ -68,6 +68,50 @@ class CheckerGovernanceTests(unittest.TestCase):
 
         self.assertEqual([finding.rule for finding in findings], ["C6"])
 
+    def test_c4_scans_templates_for_concrete_l3_paths(self):
+        repo = self.make_repo({
+            "templates/standard-project/README.md": (
+                "复制后写入 projects/" "fixture_project/config.yaml\n"
+            )
+        })
+
+        findings = checker.check_c4_l1_no_l2_refs(
+            repo, checker.iter_repo_files(repo)
+        )
+
+        self.assertEqual(
+            [(finding.rule, finding.file) for finding in findings],
+            [("C4", "templates/standard-project/README.md")],
+        )
+
+    def test_c4_allows_generic_l3_and_l2_placeholders(self):
+        repo = self.make_repo({
+            "docs/workflows/L2_ONBOARDING.md": (
+                "项目目录：projects/{project_id}/\n"
+                "L2 仓库：{{l2_repo}}/reviews/{{evidence_file}}\n"
+            )
+        })
+
+        findings = checker.check_c4_l1_no_l2_refs(
+            repo, checker.iter_repo_files(repo)
+        )
+
+        self.assertEqual(findings, [])
+
+    def test_c1_resolves_canonical_paths_inside_project_templates(self):
+        repo = self.make_repo({
+            "templates/standard-project/domain/glossary.md": (
+                "stable_" "id: FACT-001\n"
+                "canonical_path: domain/glossary.md#fact-001\n"
+            )
+        })
+
+        findings = checker.check_c1_stable_id_unique(
+            repo, checker.iter_repo_files(repo)
+        )
+
+        self.assertEqual(findings, [])
+
     def test_review_verdict_requires_rule_binding_and_bounded_rewrite(self):
         repo = self.make_repo({
             "artifacts/review-verdict.yaml": (

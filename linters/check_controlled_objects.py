@@ -10,6 +10,11 @@
   C5  proof_level 枚举只在 GATES_PROOF_SCORING.md 一处定义
   C6  AI 自动审核不得降级为逐条等待人工批准
   C7  AI 审核裁决必须绑定规则、独立 Run、Evidence 和有界改写
+  C8  阶段门禁契约完整覆盖 R0、S0—S7 及记录/证据/失效语义
+  C9  模板包满足机器契约声明的文件、字段、章节和值约束
+  C10 术语 term-id 只由唯一权威定义并与机器清单精确一致
+  C11 权威路径与契约引用存在、唯一且版本匹配
+  C12 结构化业务链/工程链具备按风险字段要求的 Mermaid 图
 
 退出码 0 = 无 P0/P1 发现；1 = 有发现（CI 可拦）。只读，不改任何文件。
 
@@ -27,6 +32,8 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+import yaml
+
 # ── 常量 ──────────────────────────────────────────────────────────────────────
 
 PROOF_LEVEL_AUTHORITY = "docs/governance/GATES_PROOF_SCORING.md"
@@ -41,17 +48,10 @@ PROOF_LEVEL_ENUM = [
     "production_proof",
 ]
 
-# L2/L3 仓库路径特征（L1 文件不得引用这些路径）
+# 具体 L3 namespace 路径特征。`projects/{project_id}/` 这类通用占位符不匹配。
 L2_PATH_PATTERNS = [
-    r"operate-auto-customer/",
-    r"projects/[a-zA-Z0-9_\-]+/",   # L3 项目 namespace
+    r"projects/[a-zA-Z0-9_\-]+/",
 ]
-
-# 豁免：这些文件允许出现 L2 路径（模板、接入指南、linter 自身的模式定义）
-C4_EXEMPT_FILES = {
-    "docs/workflows/L2_ONBOARDING.md",    # 接入指南本身需要引用 L2 示例路径
-    "linters/check_controlled_objects.py", # linter 自身定义的模式字符串
-}
 
 # 被认为是"实现驱动"的关系关键词（source 不得出现在这些上下文）
 IMPL_RELATION_KEYWORDS = [
@@ -99,14 +99,39 @@ def read_text(p: Path) -> str:
         return ""
 
 
+def resolve_repo_path(
+    repo: Path,
+    raw: object,
+    rule: str,
+    context: str,
+) -> tuple[Path | None, list[Finding]]:
+    """解析受控相对路径；绝对路径、父级跳转和仓库逃逸一律 fail-closed。"""
+    if not isinstance(raw, str) or not raw:
+        return None, [Finding(rule, "P0", ".", 0, f"{context} 必须是非空相对路径")]
+    raw_path = Path(raw)
+    if raw_path.is_absolute() or ".." in raw_path.parts:
+        return None, [Finding(rule, "P0", ".", 0, f"{context} 必须是仓库内且不含 '..' 的相对路径: {raw}")]
+    resolved = (repo / raw_path).resolve()
+    try:
+        resolved.relative_to(repo.resolve())
+    except ValueError:
+        return None, [Finding(rule, "P0", ".", 0, f"{context} 解析后越过仓库边界: {raw}")]
+    return resolved, []
+
+
 def iter_repo_files(repo: Path, skip_run_artifacts: bool = False) -> list[Path]:
-    """遍历仓库所有受扫描文件，跳过版本控制元数据和隔离 worktree。"""
+    """遍历受扫描文件，跳过元数据、隔离 worktree 和 checker fixture。"""
     result = []
     for p in repo.rglob("*"):
         if not p.is_file():
             continue
         parts = p.relative_to(repo).parts
-        if ".git" in parts or ".worktrees" in parts or "worktrees" in parts:
+        if ".git" in parts or ".worktrees" in parts or "worktrees" in parts or ".shopme" in parts:
+            continue
+        if len(parts) >= 2 and parts[:2] in {
+            ("fixtures", "checker-positive"),
+            ("fixtures", "checker-negative"),
+        }:
             continue
         if p.suffix not in SCAN_EXTENSIONS:
             continue
@@ -151,12 +176,15 @@ def check_c1_stable_id_unique(repo: Path, files: list[Path]) -> list[Finding]:
             cp_m = re.search(r"canonical_path\s*:\s*['\"]?([^\s'\"#\{\}]+)['\"]?", text)
             if cp_m:
                 cp_val = cp_m.group(1)
-                # 跳过模板占位符（如 path/to/authority、{{ xxx }}）
+                # 跳过模板占位符（如 path/to/authority、{{placeholder_name}}）
                 if cp_val.startswith("path/to") or "{{" in cp_val or cp_val == "null":
                     pass
                 else:
-                    cp = repo / cp_val
-                    if not cp.exists():
+                    candidates = [repo / cp_val]
+                    parts = p.relative_to(repo).parts
+                    if len(parts) >= 2 and parts[0] == "templates":
+                        candidates.append(repo / parts[0] / parts[1] / cp_val)
+                    if not any(candidate.exists() for candidate in candidates):
                         findings.append(Finding(
                             "C1", "P1", rp, i,
                             f"canonical_path '{cp_val}' 文件不存在",
@@ -237,9 +265,6 @@ def check_c4_l1_no_l2_refs(repo: Path, files: list[Path]) -> list[Finding]:
 
     for p in files:
         rp = rel(repo, p)
-        # 跳过模板和豁免文件（接入指南、linter 自身的模式定义字符串）
-        if "templates/" in rp or rp in C4_EXEMPT_FILES:
-            continue
         text = read_text(p)
         for i, line in enumerate(text.splitlines(), 1):
             for pat in patterns:
@@ -369,6 +394,521 @@ def check_c7_ai_review_manifest(repo: Path, files: list[Path]) -> list[Finding]:
     return findings
 
 
+def _load_yaml(repo: Path, path: Path, rule: str) -> tuple[object | None, list[Finding]]:
+    """加载 YAML；解析错误是契约检查失败，不能静默降级。"""
+    try:
+        return yaml.safe_load(path.read_text(encoding="utf-8")), []
+    except (OSError, yaml.YAMLError) as exc:
+        return None, [Finding(rule, "P0", rel(repo, path), 0, f"YAML 无法解析: {exc}")]
+
+
+def _dotted_value(data: object, dotted: str) -> tuple[bool, object | None]:
+    current = data
+    for part in dotted.split("."):
+        if not isinstance(current, dict) or part not in current:
+            return False, None
+        current = current[part]
+    return True, current
+
+
+def check_c8_stage_gate_contract(repo: Path, files: list[Path]) -> list[Finding]:
+    """C8: 阶段门禁契约完整覆盖阶段、独立坐标、记录和反例。"""
+    del files
+    path = repo / "contracts/governance/stage-exit-gates-contract.yaml"
+    if not path.is_file():
+        return [Finding("C8", "P0", rel(repo, path), 0, "阶段门禁契约不存在")]
+    data, findings = _load_yaml(repo, path, "C8")
+    if findings:
+        return findings
+    if not isinstance(data, dict):
+        return [Finding("C8", "P0", rel(repo, path), 0, "阶段门禁契约顶层必须是映射")]
+
+    expected_stages = {"R0", *(f"S{i}" for i in range(8))}
+    stages = data.get("stages")
+    if not isinstance(stages, dict) or set(stages) != expected_stages:
+        findings.append(Finding("C8", "P0", rel(repo, path), 0, "stages 必须精确覆盖 R0、S0—S7"))
+    stage_lists = (
+        "required_inputs", "required_artifacts", "exit_criteria",
+        "evidence_requirements", "invalidation_triggers", "reopen_targets",
+    )
+    if isinstance(stages, dict):
+        for stage_name in sorted(expected_stages & set(stages)):
+            stage = stages[stage_name]
+            for field in stage_lists:
+                if not isinstance(stage, dict) or not isinstance(stage.get(field), list) or not stage[field]:
+                    findings.append(Finding("C8", "P0", rel(repo, path), 0, f"{stage_name}.{field} 必须是非空列表"))
+
+    axes = {
+        "stage", "work_status", "approval_status", "implementation_status",
+        "proof_level", "framework_edition", "governance_profile",
+    }
+    independent_axes = data.get("independent_axes")
+    if not isinstance(independent_axes, list) or any(not isinstance(item, str) for item in independent_axes):
+        findings.append(Finding("C8", "P0", rel(repo, path), 0, "independent_axes 必须是 list[str]"))
+    elif set(independent_axes) != axes:
+        findings.append(Finding("C8", "P0", rel(repo, path), 0, "independent_axes 不完整或包含额外坐标"))
+    if not isinstance(data.get("invariants"), list) or not data["invariants"]:
+        findings.append(Finding("C8", "P0", rel(repo, path), 0, "顶层 invariants 必须非空"))
+
+    record = data.get("stage_gate_record")
+    required_record_fields = {
+        "stage", "scope", "work_status", "approval_status", "implementation_status",
+        "proof_level", "framework_edition", "governance_profile", "stage_definition_ref",
+        "stage_definition_hash", "exit_criterion_results", "required_object_refs",
+        "required_proof_level", "verification_commands", "result", "uncovered_items",
+        "waivers", "approved_by", "verified_by", "checked_at", "valid_until",
+        "invalidation_conditions", "reopen_target", "evidence_refs", "evidence_hashes",
+    }
+    criterion_fields = {"criterion_ref", "criterion_hash", "status", "evidence_refs", "waiver_ref"}
+    if not isinstance(record, dict):
+        findings.append(Finding("C8", "P0", rel(repo, path), 0, "stage_gate_record 必须存在"))
+    else:
+        record_fields = record.get("required_fields")
+        if not isinstance(record_fields, list) or any(not isinstance(item, str) for item in record_fields):
+            findings.append(Finding("C8", "P0", rel(repo, path), 0, "stage_gate_record.required_fields 必须是 list[str]"))
+        elif not required_record_fields.issubset(set(record_fields)):
+            findings.append(Finding("C8", "P0", rel(repo, path), 0, "stage_gate_record.required_fields 不完整"))
+        criterion = record.get("exit_criterion_result")
+        criterion_required_fields = criterion.get("required_fields") if isinstance(criterion, dict) else None
+        if not isinstance(criterion_required_fields, list) or any(not isinstance(item, str) for item in criterion_required_fields):
+            findings.append(Finding("C8", "P0", rel(repo, path), 0, "exit_criterion_result.required_fields 必须是 list[str]"))
+        elif not criterion_fields.issubset(set(criterion_required_fields)):
+            findings.append(Finding("C8", "P0", rel(repo, path), 0, "exit_criterion_result.required_fields 不完整"))
+        if not isinstance(record.get("invariants"), list) or not record["invariants"]:
+            findings.append(Finding("C8", "P0", rel(repo, path), 0, "stage_gate_record.invariants 必须非空"))
+
+    manifest = data.get("manifest_example")
+    manifest_required = {"stage", "exit_criterion_results", "evidence_refs", "evidence_hashes"}
+    if not isinstance(manifest, dict) or not manifest_required.issubset(manifest):
+        findings.append(Finding("C8", "P1", rel(repo, path), 0, "manifest_example 缺少记录、criterion 或 Evidence 示例"))
+    negative = data.get("negative_examples")
+    if not isinstance(negative, dict) or not negative or "missing_evidence" not in negative:
+        findings.append(Finding("C8", "P1", rel(repo, path), 0, "negative_examples 必须包含 missing_evidence 反例"))
+    return findings
+
+
+def _markdown_has_section(text: str, section: str) -> bool:
+    return any(
+        line.lstrip("#").strip() == section
+        for line in text.splitlines()
+        if line.startswith("#")
+    )
+
+
+def check_c9_template_packages(repo: Path, files: list[Path]) -> list[Finding]:
+    """C9: template_root 契约声明的包必须满足全部机器约束。"""
+    findings: list[Finding] = []
+    contracts_root = repo / "contracts"
+    contract_files = [p for p in files if contracts_root in p.parents and p.suffix in {".yaml", ".yml"}]
+    for contract_path in contract_files:
+        contract, parse_findings = _load_yaml(repo, contract_path, "C9")
+        findings.extend(parse_findings)
+        if parse_findings or not isinstance(contract, dict) or "template_root" not in contract:
+            continue
+        template_root_value = contract.get("template_root")
+        template_root, path_findings = resolve_repo_path(repo, template_root_value, "C9", "template_root")
+        findings.extend(path_findings)
+        if path_findings or template_root is None:
+            continue
+        required_files = contract.get("required_files")
+        if not isinstance(required_files, list) or not required_files:
+            findings.append(Finding("C9", "P0", rel(repo, contract_path), 0, "required_files 必须是非空列表"))
+            continue
+        for required_file in required_files:
+            joined = str(Path(template_root_value) / required_file) if isinstance(required_file, str) else required_file
+            target, errors = resolve_repo_path(repo, joined, "C9", f"required_files[{required_file!r}]")
+            findings.extend(errors)
+            if errors or target is None:
+                continue
+            if not target.is_file():
+                findings.append(Finding("C9", "P0", rel(repo, target), 0, f"模板缺少 required_file: {required_file}"))
+
+        mapping_fields: dict[str, dict] = {}
+        for field_name in ("required_fields", "required_values", "required_sections"):
+            field_value = contract.get(field_name)
+            if field_value is None:
+                mapping_fields[field_name] = {}
+            elif not isinstance(field_value, dict):
+                findings.append(Finding("C9", "P0", rel(repo, contract_path), 0, f"{field_name} 必须是 mapping"))
+                mapping_fields[field_name] = {}
+            else:
+                mapping_fields[field_name] = field_value
+
+        yaml_cache: dict[str, object | None] = {}
+        for filename, required_fields in mapping_fields["required_fields"].items():
+            joined = str(Path(template_root_value) / filename) if isinstance(filename, str) else filename
+            target, errors = resolve_repo_path(repo, joined, "C9", f"required_fields filename {filename!r}")
+            findings.extend(errors)
+            if errors or target is None:
+                continue
+            if not isinstance(required_fields, list) or any(not isinstance(field, str) for field in required_fields):
+                findings.append(Finding("C9", "P0", rel(repo, contract_path), 0, f"required_fields[{filename}] 必须是 list[str]"))
+                continue
+            if not target.is_file():
+                continue
+            content, errors = _load_yaml(repo, target, "C9")
+            findings.extend(errors)
+            yaml_cache[filename] = content
+            if errors:
+                continue
+            for field in required_fields:
+                exists, _ = _dotted_value(content, field)
+                if not exists:
+                    findings.append(Finding("C9", "P0", rel(repo, target), 0, f"缺少 required_field: {field}"))
+
+        for filename, expected_values in mapping_fields["required_values"].items():
+            joined = str(Path(template_root_value) / filename) if isinstance(filename, str) else filename
+            target, errors = resolve_repo_path(repo, joined, "C9", f"required_values filename {filename!r}")
+            findings.extend(errors)
+            if errors or target is None:
+                continue
+            if not isinstance(expected_values, dict):
+                findings.append(Finding("C9", "P0", rel(repo, contract_path), 0, f"required_values[{filename}] 必须是 mapping"))
+                continue
+            if any(not isinstance(field, str) for field in expected_values):
+                findings.append(Finding("C9", "P0", rel(repo, contract_path), 0, f"required_values[{filename}] field keys 必须是 string"))
+                continue
+            if not target.is_file():
+                continue
+            content = yaml_cache.get(filename)
+            if filename not in yaml_cache:
+                content, errors = _load_yaml(repo, target, "C9")
+                findings.extend(errors)
+            for field, expected in expected_values.items():
+                exists, actual = _dotted_value(content, field)
+                if not exists or actual != expected:
+                    findings.append(Finding("C9", "P0", rel(repo, target), 0, f"required_value 不匹配: {field}"))
+
+        for filename, sections in mapping_fields["required_sections"].items():
+            joined = str(Path(template_root_value) / filename) if isinstance(filename, str) else filename
+            target, errors = resolve_repo_path(repo, joined, "C9", f"required_sections filename {filename!r}")
+            findings.extend(errors)
+            if errors or target is None:
+                continue
+            if not isinstance(sections, list) or any(not isinstance(section, str) for section in sections):
+                findings.append(Finding("C9", "P0", rel(repo, contract_path), 0, f"required_sections[{filename}] 必须是 list[str]"))
+                continue
+            text = read_text(target)
+            if not target.is_file():
+                continue
+            for section in sections:
+                if not _markdown_has_section(text, section):
+                    findings.append(Finding("C9", "P1", rel(repo, target), 0, f"缺少 required_section: {section}"))
+
+        task_authority = contract.get("task_authority")
+        if "task_authority" in contract and not isinstance(task_authority, dict):
+            findings.append(Finding("C9", "P0", rel(repo, contract_path), 0, "task_authority 必须是 mapping"))
+        elif isinstance(task_authority, dict):
+            for marker_key, allowed_key in (
+                ("declaration_marker", "declarations_allowed_only_in"),
+                ("reference_marker", "references_allowed_in"),
+            ):
+                marker = task_authority.get(marker_key)
+                allowed = task_authority.get(allowed_key)
+                if not isinstance(marker, str) or not isinstance(allowed, str):
+                    findings.append(Finding("C9", "P0", rel(repo, contract_path), 0, f"task_authority.{marker_key}/{allowed_key} 无效"))
+                    continue
+                marker_pattern = re.compile(
+                    rf"^\s*(?:#+\s*)?{re.escape(marker)}(?:\s*:.*)?$",
+                    re.M,
+                )
+                occurrences = [
+                    p for p in template_root.rglob("*")
+                    if p.is_file() and marker_pattern.search(read_text(p))
+                ]
+                if not occurrences or any(p.relative_to(template_root).as_posix() != allowed for p in occurrences):
+                    findings.append(Finding("C9", "P0", rel(repo, template_root), 0, f"task_authority marker '{marker}' 不在唯一允许文件 {allowed}"))
+    return findings
+
+
+TERM_ID_DEFINITION = re.compile(r"^\s*term-id\s*:\s*`([a-z][a-z0-9-]*)`\s*$", re.M)
+
+
+def check_c10_terminology_authority(repo: Path, files: list[Path]) -> list[Finding]:
+    """C10: 术语权威 term-id 与 project-os 机器清单精确一致。"""
+    findings: list[Finding] = []
+    project_path = repo / "project-os.yaml"
+    project, errors = _load_yaml(repo, project_path, "C10")
+    if errors:
+        return errors
+    if not isinstance(project, dict):
+        return [Finding("C10", "P0", rel(repo, project_path), 0, "project-os.yaml 顶层必须是映射")]
+    authority = project.get("authority")
+    terminology_path = authority.get("terminology") if isinstance(authority, dict) else None
+    if not isinstance(terminology_path, str):
+        return [Finding("C10", "P0", rel(repo, project_path), 0, "authority.terminology 缺失")]
+    terminology_file = repo / terminology_path
+    if not terminology_file.is_file():
+        return [Finding("C10", "P0", terminology_path, 0, "术语权威路径不存在")]
+    ids = TERM_ID_DEFINITION.findall(read_text(terminology_file))
+    duplicates = sorted({term_id for term_id in ids if ids.count(term_id) > 1})
+    if duplicates:
+        findings.append(Finding("C10", "P0", terminology_path, 0, "term-id 重复定义: " + ", ".join(duplicates)))
+    manifest = project.get("terminology_manifest")
+    required_ids = manifest.get("required_term_ids") if isinstance(manifest, dict) else None
+    if not isinstance(required_ids, list) or any(not isinstance(item, str) for item in required_ids):
+        findings.append(Finding("C10", "P0", rel(repo, project_path), 0, "terminology_manifest.required_term_ids 缺失或无效"))
+    elif set(required_ids) != set(ids) or len(required_ids) != len(ids):
+        findings.append(Finding("C10", "P0", rel(repo, project_path), 0, "术语清单必须精确覆盖权威 term-id"))
+    for path in files:
+        if path == terminology_file or path.suffix != ".md":
+            continue
+        if TERM_ID_DEFINITION.search(read_text(path)):
+            findings.append(Finding("C10", "P1", rel(repo, path), 0, "活动文档不得定义 term-id；请引用术语权威"))
+    if "selected_profile" in project:
+        findings.append(Finding("C10", "P0", rel(repo, project_path), 0, "旧 selected_profile 字段已禁止"))
+    profiles = project.get("profiles")
+    if isinstance(profiles, dict) and any(
+        isinstance(profile, dict) and "enabled" in profile
+        for profile in profiles.values()
+    ):
+        findings.append(Finding("C10", "P0", rel(repo, project_path), 0, "旧 profiles.*.enabled 轴已禁止"))
+    return findings
+
+
+CONTRACT_REFERENCE = re.compile(r"\b([a-z][a-z0-9-]*-contract)@([0-9]+)\b")
+MARKDOWN_INLINE_LINK = re.compile(
+    r"\[[^\]\n]*\]\(\s*(?:<([^>\n]+)>|([^\s)\n]+))"
+    r"(?:\s+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*\)"
+)
+MARKDOWN_REFERENCE_DEFINITION = re.compile(
+    r"^\s{0,3}\[[^\]\n]+\]:\s*(?:<([^>\n]+)>|([^\s\n]+))",
+    re.M,
+)
+
+
+def _active_markdown_for_c11(repo: Path, path: Path) -> bool:
+    parts = path.relative_to(repo).parts
+    excluded_prefixes = (
+        ("docs", "superpowers", "plans"),
+        ("docs", "superpowers", "specs"),
+        ("docs", "superpowers", "reviews"),
+        ("fixtures", "checker-positive"),
+        ("fixtures", "checker-negative"),
+    )
+    return (
+        path.suffix == ".md"
+        and ".shopme" not in parts
+        and not any(parts[:len(prefix)] == prefix for prefix in excluded_prefixes)
+    )
+
+
+def _markdown_without_fenced_code(text: str) -> tuple[str, bool]:
+    visible: list[str] = []
+    fence_char: str | None = None
+    fence_length = 0
+    for line in text.splitlines(keepends=True):
+        raw_line = line.rstrip("\r\n")
+        if fence_char is None:
+            opening = re.match(r"^ {0,3}(`{3,}|~{3,})", raw_line)
+            if opening:
+                fence = opening.group(1)
+                fence_char = fence[0]
+                fence_length = len(fence)
+                visible.append("\n" if line.endswith(("\n", "\r")) else "")
+            else:
+                visible.append(line)
+        elif re.fullmatch(
+            rf" {{0,3}}{re.escape(fence_char)}{{{fence_length},}}[ \t]*",
+            raw_line,
+        ):
+            fence_char = None
+            fence_length = 0
+            visible.append("\n" if line.endswith("\n") else "")
+        else:
+            visible.append("\n" if line.endswith("\n") else "")
+    return "".join(visible), fence_char is not None
+
+
+def _markdown_relative_links(text: str) -> list[tuple[int, str]]:
+    links: list[tuple[int, str]] = []
+    for pattern in (MARKDOWN_INLINE_LINK, MARKDOWN_REFERENCE_DEFINITION):
+        for match in pattern.finditer(text):
+            target = match.group(1) or match.group(2)
+            links.append((text[:match.start()].count("\n") + 1, target.strip()))
+    return links
+
+
+def check_c11_authority_and_contract_references(repo: Path, files: list[Path]) -> list[Finding]:
+    """C11: 权威路径和活动契约引用必须存在、唯一并匹配版本。"""
+    findings: list[Finding] = []
+    project_path = repo / "project-os.yaml"
+    project, errors = _load_yaml(repo, project_path, "C11")
+    findings.extend(errors)
+    authority = project.get("authority") if isinstance(project, dict) else None
+    if not isinstance(authority, dict):
+        if not errors:
+            findings.append(Finding("C11", "P0", rel(repo, project_path), 0, "authority 必须是路径映射"))
+        return findings
+    authority_paths: dict[str, Path] = {}
+    for name, value in authority.items():
+        authority_path, path_findings = resolve_repo_path(repo, value, "C11", f"authority.{name}")
+        findings.extend(path_findings)
+        if path_findings or authority_path is None:
+            continue
+        authority_paths[name] = authority_path
+        if Path(value).parts and Path(value).parts[0] == ".prompts":
+            findings.append(Finding("C11", "P0", rel(repo, project_path), 0, f"authority.{name} 不得指向 .prompts"))
+        if not authority_path.is_file():
+            findings.append(Finding("C11", "P0", rel(repo, project_path), 0, f"authority.{name} 路径不存在: {value}"))
+
+    registry: dict[str, tuple[int, Path]] = {}
+    contracts_root = repo / "contracts"
+    for path in files:
+        if contracts_root not in path.parents or path.suffix not in {".yaml", ".yml"}:
+            continue
+        contract, parse_errors = _load_yaml(repo, path, "C11")
+        findings.extend(parse_errors)
+        if parse_errors or not isinstance(contract, dict) or "contract_id" not in contract:
+            continue
+        contract_id = contract.get("contract_id")
+        version = contract.get("version", contract.get("contract_version"))
+        if not isinstance(contract_id, str) or type(version) is not int or version <= 0:
+            findings.append(Finding("C11", "P0", rel(repo, path), 0, "contract_id 必须稳定且 version 必须是正整数"))
+            continue
+        if contract_id in registry:
+            findings.append(Finding("C11", "P0", rel(repo, path), 0, f"contract_id 重复: {contract_id}"))
+        else:
+            registry[contract_id] = (version, path)
+
+    for name, value in authority.items():
+        path = authority_paths.get(name)
+        if not isinstance(value, str) or not value.startswith("contracts/") or path is None or not path.is_file():
+            continue
+        registered = next(((cid, item) for cid, item in registry.items() if item[1] == path), None)
+        if registered is None:
+            findings.append(Finding("C11", "P0", rel(repo, path), 0, f"authority.{name} 指向的契约无顶层 contract_id/version"))
+            continue
+        contract_id, _ = registered
+        if path.stem != contract_id:
+            findings.append(Finding("C11", "P0", rel(repo, path), 0, f"契约文件名与 contract_id 不匹配: {contract_id}"))
+
+    for path in files:
+        relative_parts = path.relative_to(repo).parts
+        if path.suffix not in {".yaml", ".yml"} or (relative_parts and relative_parts[0] in {"plans", "specs", "reviews"}):
+            continue
+        text = read_text(path)
+        for line_number, line in enumerate(text.splitlines(), 1):
+            if "{{" in line or "}}" in line:
+                continue
+            for match in CONTRACT_REFERENCE.finditer(line):
+                contract_id, version_text = match.groups()
+                registered = registry.get(contract_id)
+                if registered is None or registered[0] != int(version_text):
+                    findings.append(Finding("C11", "P1", rel(repo, path), line_number, f"契约引用无法唯一解析: {match.group(0)}"))
+    policies_root = repo / "policies"
+    if policies_root.exists():
+        for path in policies_root.rglob("*-contract.yaml"):
+            findings.append(Finding("C11", "P1", rel(repo, path), 0, "policies/ 不得承载 *-contract.yaml"))
+
+    repo_resolved = repo.resolve()
+    ignored_link_prefixes = ("http://", "https://", "mailto:", "#")
+    for path in files:
+        if not _active_markdown_for_c11(repo, path):
+            continue
+        markdown, unclosed_fence = _markdown_without_fenced_code(read_text(path))
+        if unclosed_fence:
+            findings.append(Finding("C11", "P1", rel(repo, path), 0, "Markdown fenced code block 未闭合"))
+            continue
+        for line_number, target in _markdown_relative_links(markdown):
+            if target.lower().startswith(ignored_link_prefixes) or "{{" in target or "}}" in target:
+                continue
+            target_without_fragment = target.split("#", 1)[0].split("?", 1)[0]
+            if not target_without_fragment:
+                continue
+            resolved = (path.parent / target_without_fragment).resolve()
+            try:
+                relative_target = resolved.relative_to(repo_resolved).as_posix()
+            except ValueError:
+                findings.append(Finding("C11", "P1", rel(repo, path), line_number, f"Markdown 相对链接越过仓库边界: {target}"))
+                continue
+            if not resolved.exists():
+                findings.append(Finding("C11", "P1", rel(repo, path), line_number, f"Markdown 相对链接目标不存在: {relative_target}"))
+    return findings
+
+
+def _diagram_frontmatter(repo: Path, path: Path) -> tuple[dict | None, list[Finding]]:
+    text = read_text(path)
+    if not text.startswith("---\n"):
+        return None, []
+    end = text.find("\n---", 4)
+    if end < 0:
+        return None, [Finding("C12", "P1", rel(repo, path), 0, "图文档 frontmatter 未闭合")]
+    try:
+        data = yaml.safe_load(text[4:end])
+    except yaml.YAMLError as exc:
+        return None, [Finding("C12", "P1", rel(repo, path), 0, f"图文档 frontmatter 无法解析: {exc}")]
+    if isinstance(data, dict) and ("diagram_type" in data or "governs_object" in data):
+        if "```mermaid" not in text:
+            return data, [Finding("C12", "P1", rel(repo, path), 0, "图文档必须包含 Mermaid 代码块")]
+        return data, []
+    return None, []
+
+
+def check_c12_diagram_coverage(repo: Path, files: list[Path]) -> list[Finding]:
+    """C12: chain.yaml 的结构字段决定 flowchart/sequence/state/boundary 图。"""
+    findings: list[Finding] = []
+    chains: dict[str, tuple[Path, dict]] = {}
+    for path in files:
+        parts = path.relative_to(repo).parts
+        if "templates" in parts or path.name != "chain.yaml":
+            continue
+        data, errors = _load_yaml(repo, path, "C12")
+        if errors:
+            findings.extend(errors)
+            continue
+        if isinstance(data, dict) and data.get("object_type") in {"business_chain", "engineering_chain"}:
+            required_fields = ("stable_id", "priority", "cross_node", "multi_state", "authorization_or_data_boundary")
+            missing = [field for field in required_fields if field not in data]
+            if missing:
+                findings.append(Finding("C12", "P1", rel(repo, path), 0, "结构化 chain 缺字段: " + ", ".join(missing)))
+                continue
+            stable_id = data.get("stable_id")
+            if not isinstance(stable_id, str):
+                findings.append(Finding("C12", "P1", rel(repo, path), 0, "chain stable_id 必须是字符串"))
+                continue
+            chains[stable_id] = (path, data)
+
+    coverage: dict[str, set[str]] = {stable_id: set() for stable_id in chains}
+    allowed_diagram_types = {"flowchart", "sequence", "state", "boundary"}
+    for stable_id, (chain_path, _) in chains.items():
+        diagram_root = chain_path.parent / "diagrams"
+        for path in files:
+            if path.suffix != ".md" or diagram_root not in path.parents:
+                continue
+            diagram, errors = _diagram_frontmatter(repo, path)
+            findings.extend(errors)
+            if errors:
+                continue
+            if diagram is None:
+                findings.append(Finding("C12", "P1", rel(repo, path), 0, "chain diagram 必须声明 frontmatter"))
+                continue
+            diagram_type = diagram.get("diagram_type")
+            governs = diagram.get("governs_object")
+            if not isinstance(diagram_type, str) or not isinstance(governs, str):
+                findings.append(Finding("C12", "P1", rel(repo, path), 0, "图文档必须声明 diagram_type 和 governs_object"))
+            elif diagram_type not in allowed_diagram_types:
+                findings.append(Finding("C12", "P1", rel(repo, path), 0, f"非法 diagram_type: {diagram_type}；允许值为 flowchart/sequence/state/boundary"))
+            elif governs != stable_id:
+                findings.append(Finding("C12", "P1", rel(repo, path), 0, f"orphan diagram 未治理同目录 chain: {governs}"))
+            else:
+                coverage[stable_id].add(diagram_type)
+
+    for stable_id, (path, chain) in chains.items():
+        required: set[str] = set()
+        if chain.get("object_type") in {"business_chain", "engineering_chain"} and str(chain.get("priority")).lower() in {"p0", "p1"}:
+            required.add("flowchart")
+        if chain.get("cross_node") is True:
+            required.add("sequence")
+        if chain.get("multi_state") is True:
+            required.add("state")
+        if chain.get("authorization_or_data_boundary") is True:
+            required.add("boundary")
+        for diagram_type in sorted(required - coverage[stable_id]):
+            findings.append(Finding("C12", "P1", rel(repo, path), 0, f"{stable_id} 缺少必需 {diagram_type} diagram"))
+    return findings
+
+
 def check_l2_mode(repo: Path) -> list[Finding]:
     """L2 模式：额外检查 project-os.lock 是否存在。"""
     findings: list[Finding] = []
@@ -415,6 +955,11 @@ def main() -> int:
     all_findings += check_c5_proof_level_single_authority(repo, files)
     all_findings += check_c6_ai_review_no_routine_human_wait(repo, files)
     all_findings += check_c7_ai_review_manifest(repo, files)
+    all_findings += check_c8_stage_gate_contract(repo, files)
+    all_findings += check_c9_template_packages(repo, files)
+    all_findings += check_c10_terminology_authority(repo, files)
+    all_findings += check_c11_authority_and_contract_references(repo, files)
+    all_findings += check_c12_diagram_coverage(repo, files)
     if l2_mode:
         all_findings += check_l2_mode(repo)
 
@@ -451,7 +996,7 @@ def main() -> int:
     # 输出机器可读 JSON（供保存为 Evidence）
     report = {
         "checker": "check_controlled_objects",
-        "version": "0.3.0",
+        "version": "0.4.0",
         "repo": str(repo),
         "files_scanned": len(files),
         "p0_count": len(p0),

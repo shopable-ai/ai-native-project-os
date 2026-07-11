@@ -1,0 +1,6 @@
+object_type: business_chain
+stable_id: NOT-A-CHAIN-MANIFEST
+priority: p0
+cross_node: false
+multi_state: false
+authorization_or_data_boundary: false

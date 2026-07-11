@@ -113,6 +113,38 @@ authority:
   research_method: docs/research/RESEARCH_WORKFLOW.md                     # 研究方法
   research_registry: research/registry.yaml                               # 当前研究任务登记表
 
+# 稳定 term-id 的机器清单必须与 authority.terminology 精确一致；定义仍只在术语权威维护。
+terminology_manifest:
+  required_term_ids:
+    - source
+    - business-truth
+    - research
+    - framework-edition
+    - governance-configuration
+    - base-governance-profile
+    - overlay-capability
+    - repository-layer
+    - governance-scope
+    - lifecycle-stage
+    - work-status
+    - approval-status
+    - implementation-status
+    - proof-level
+    - invalidation-status
+    - business-chain
+    - engineering-chain
+    - capability-tree
+    - function-tree
+    - task-tree
+    - workflow
+    - skill
+    - tool
+    - spec
+    - run
+    - evidence
+    - verdict
+    - claim
+
 # 审查记录是证据，不承载可编辑规范。
 review_evidence:
   p0_design_revision:

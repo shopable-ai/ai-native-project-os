@@ -1,0 +1,9 @@
+schema_version: 1
+contract_id: sample-contract
+version: 1
+template_root: templates/sample
+required_files: [sample.yaml, other.yaml]
+required_values:
+  sample.yaml: [invalid]
+  other.yaml:
+    7: invalid
