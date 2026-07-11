@@ -113,7 +113,7 @@ def iter_repo_files(repo: Path, skip_run_artifacts: bool = False) -> list[Path]:
     for p in repo.rglob("*"):
         if not p.is_file():
             continue
-        parts = p.parts
+        parts = p.relative_to(repo).parts
         if ".git" in parts or ".worktrees" in parts or "worktrees" in parts:
             continue
         if p.suffix not in SCAN_EXTENSIONS:

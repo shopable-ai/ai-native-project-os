@@ -1,0 +1,104 @@
+schema_version: 1
+review_id: human-governed-ai-review-adversarial-20260711
+reviewed_at: "2026-07-11"
+scope: human-governed-ai-review-static-design-and-checker
+reviewer:
+  actor: primary-agent-adversarial-pass
+  kind: same_agent_self_review
+  independent_external: false
+reviewed_revision_base: 572167d
+claim_ceiling: static_contract_and_checker_only
+
+summary:
+  open_p0: 0
+  open_p1: 3
+  open_p2: 3
+  resolved_during_review: 5
+
+resolved_findings:
+  - id: ADV-RESOLVED-001
+    severity: p1
+    issue: P1 检查结果的退出码与 JSON pass 字段不一致
+    resolution: P0/P1 统一使进程和机器 Evidence 失败
+    evidence:
+      - linters/check_controlled_objects.py
+      - tests/test_check_controlled_objects.py
+  - id: ADV-RESOLVED-002
+    severity: p1
+    issue: ignored worktree 被重复扫描并污染权威检查
+    resolution: iter_repo_files 排除 .worktrees 与 worktrees 路径
+    evidence:
+      - tests/test_check_controlled_objects.py
+  - id: ADV-RESOLVED-003
+    severity: p1
+    issue: 规则优先级冲突没有机器化失败语义
+    resolution: active 规则要求唯一 priority，未解决冲突阻断激活
+    evidence:
+      - policies/governance-rule-set-contract.yaml
+  - id: ADV-RESOLVED-004
+    severity: p1
+    issue: rule_gap_case 只有名称和引用，没有独立契约
+    resolution: 新增异步规则缺口契约，当前 subject 必须保持 blocked
+    evidence:
+      - policies/rule-gap-case-contract.yaml
+  - id: ADV-RESOLVED-005
+    severity: p0
+    issue: worktree 根路径导致检查器扫描 0 文件并产生假绿
+    resolution: 排除逻辑改为只判断相对仓库根的路径部分，并新增根位于 .worktrees 下的回归测试
+    evidence:
+      - linters/check_controlled_objects.py
+      - tests/test_check_controlled_objects.py
+
+open_findings:
+  - id: ADV-OPEN-001
+    severity: p1
+    issue: 独立外部反方审查不可用
+    evidence:
+      - Claude CLI 存在但非交互执行无模型输出并返回 Execution error
+      - Gemini CLI 未安装
+    impact: 按 GATES_PROOF_SCORING.md 当前设计 Evidence 不得超过 94
+    disposition: blocked_external_review
+  - id: ADV-OPEN-002
+    severity: p1
+    issue: 没有 AI reviewer 运行器、模型指纹和真实有界改写 Run/Evidence
+    impact: 不能声明 local_runtime_proven
+    disposition: future_runtime_phase
+  - id: ADV-OPEN-003
+    severity: p1
+    issue: 没有两个业务和语言特征不同的 L2/L3 项目验证
+    impact: 不得声明已证明通用 95+
+    disposition: future_heterogeneous_validation
+  - id: ADV-OPEN-004
+    severity: p2
+    issue: checker 的 C6/C7 是结构扫描，不是完整 YAML Schema 或运行状态机
+    impact: static implementation 分数受限
+    disposition: future_schema_runtime
+  - id: ADV-OPEN-005
+    severity: p2
+    issue: 低风险 reviewer 独立性允许同一基础模型的不同节点，尚无漂移或串扰实验
+    impact: 只能证明身份与节点契约，不能证明模型行为独立
+    disposition: future_model_evaluation
+  - id: ADV-OPEN-006
+    severity: p2
+    issue: 模板包含待项目填写的 draft 元数据，未验证生成器能正确计算 hash 和 principal binding
+    impact: 模板存在不等于 active 规则集可用
+    disposition: future_template_generator
+
+adversarial_cases_checked:
+  - routine_review_waits_for_human
+  - empty_rule_or_evidence_allows_output
+  - unresolved_rule_priority_conflict
+  - rewrite_loop_has_no_bound
+  - rule_gap_becomes_per_item_human_review
+  - human_authorization_overrides_blocked_review
+  - l1_business_language_keyword_routing
+  - l1_directly_references_l2_evidence_path
+  - ignored_worktree_duplicates_authority
+  - static_fixture_is_reported_as_runtime_or_production
+
+verdict:
+  design_direction: accepted_with_open_gates
+  static_contracts: accepted
+  runtime_capability: not_evaluated
+  independent_review: unavailable
+  general_95_plus_proof: not_proven

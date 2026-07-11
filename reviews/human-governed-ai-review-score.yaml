@@ -1,0 +1,91 @@
+schema_version: 1
+score_record_id: SCORE-HUMAN-GOVERNED-AI-REVIEW-20260711
+formula_version: weighted-geometric-v1
+scored_at: "2026-07-11"
+scope: human-governed-ai-review-static-design-and-checker
+revision_base: 572167d
+
+design_target_score: 96
+self_review_base_score: 95.00
+current_design_evidence_score: 94
+static_implementation_score: 90
+local_runtime_proof_score: 0
+production_proof_score: 0
+heterogeneous_project_proof_score: 0
+
+dimensions:
+  - id: boundaries_and_layers
+    weight: 0.10
+    score: 98
+    basis: 三类职责、L1/L2/L3 与规则正文所有权明确分离
+  - id: lifecycle_and_progression
+    weight: 0.10
+    score: 94
+    basis: waiting_approval、规则失效、改写与 rule gap 重开语义已定义，未运行状态机
+  - id: sources_research_decisions
+    weight: 0.10
+    score: 96
+    basis: active 规则必须有人类 principal、Markdown 权威、版本和 hash
+  - id: artifacts_and_traceability
+    weight: 0.10
+    score: 97
+    basis: rule set、AI review verdict、rule gap case 与精确 rule_ref 已建模
+  - id: workflow_execution_recovery
+    weight: 0.12
+    score: 92
+    basis: 四路裁决与有界改写已定义和静态检查，未实现运行器
+  - id: ai_native_governance
+    weight: 0.10
+    score: 96
+    basis: 生成与审核节点、attempt、模型上下文和声明边界分离
+  - id: security_authorization_isolation
+    weight: 0.12
+    score: 96
+    basis: 内容审核与动作授权正交，授权不能覆盖 blocked 或 rule_gap
+  - id: tests_evidence_claims
+    weight: 0.10
+    score: 94
+    basis: 13 项测试与 P0/P1 fail gate 可重放，缺真实 Run/Evidence
+  - id: evolution_compatibility_assets
+    weight: 0.08
+    score: 91
+    basis: supersedes、rule gap 重开和模板已定义，缺异构消费者验证
+  - id: chinese_readability
+    weight: 0.08
+    score: 96
+    basis: 中文权威说明与稳定英文机器字段同步
+
+calculation:
+  geometric_base_score: 95.00
+  hard_gate_ceiling: 94
+  effective_score: 94
+
+independent_external_review:
+  status: unavailable
+  claude_cli: execution_error_without_model_output
+  gemini_cli: command_not_found
+
+hard_gate_reasons:
+  - independent_external_review
+  - no_runtime_ai_review_run_evidence
+  - no_heterogeneous_l2_l3_validation
+
+verification:
+  commands:
+    - python3 -m unittest discover -s tests -v
+    - python3 linters/check_controlled_objects.py . --report
+    - python3 -c "parse all policy YAML and project-os.yaml"
+    - git diff --check
+  expected:
+    unit_tests: 15_passed
+    checker: p0_0_p1_0
+    yaml: parsed
+    diff_check: clean
+
+claim_limits:
+  - 95.00 是同一 agent 的设计基准计算，不是独立证据分
+  - 94 是当前可声明的设计 Evidence 分
+  - 90 只表示静态契约、模板和检查器实现，不表示 AI reviewer 已运行
+  - local_runtime、production 和异构项目证明仍为 0
+  - 外部独立审查通过后才能解除 94 封顶
+  - 两个异构 L2/L3 项目通过前不得声明已证明通用 95+

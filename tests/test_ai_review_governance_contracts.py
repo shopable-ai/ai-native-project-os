@@ -119,6 +119,22 @@ class GovernanceContractsTests(unittest.TestCase):
         ):
             self.assertIn(marker, template)
 
+    def test_score_record_separates_design_static_runtime_and_production(self):
+        score = yaml.safe_load(
+            (ROOT / "reviews/human-governed-ai-review-score.yaml").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertEqual(score["design_target_score"], 96)
+        self.assertEqual(score["current_design_evidence_score"], 94)
+        self.assertGreaterEqual(score["self_review_base_score"], 95)
+        self.assertGreater(score["static_implementation_score"], 0)
+        self.assertEqual(score["local_runtime_proof_score"], 0)
+        self.assertEqual(score["production_proof_score"], 0)
+        self.assertEqual(score["independent_external_review"]["status"], "unavailable")
+        self.assertIn("independent_external_review", score["hard_gate_reasons"])
+        self.assertEqual(score["verification"]["expected"]["unit_tests"], "15_passed")
+
 
 if __name__ == "__main__":
     unittest.main()

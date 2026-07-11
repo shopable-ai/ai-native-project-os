@@ -77,6 +77,15 @@ class CheckerGovernanceTests(unittest.TestCase):
         scanned = {path.relative_to(repo).as_posix() for path in checker.iter_repo_files(repo)}
         self.assertEqual(scanned, {"authority.yaml"})
 
+    def test_repository_root_may_itself_live_under_worktrees(self):
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        repo = Path(temp.name) / ".worktrees" / "feature"
+        repo.mkdir(parents=True)
+        (repo / "authority.yaml").write_text("schema_version: 1\n", encoding="utf-8")
+        scanned = {path.relative_to(repo).as_posix() for path in checker.iter_repo_files(repo)}
+        self.assertEqual(scanned, {"authority.yaml"})
+
 
 if __name__ == "__main__":
     unittest.main()
