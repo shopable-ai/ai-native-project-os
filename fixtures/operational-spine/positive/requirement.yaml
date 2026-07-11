@@ -1,0 +1,11 @@
+schema_version: 1
+requirement_id: REQ-FIX-001
+title: 匿名可恢复处理需求
+status: approved_fixture
+scope: operational_spine_fixture_only
+chain_refs: [CHAIN-FIX-001]
+acceptance_criterion_refs: [CRITERION-FIX-001]
+acceptance_criteria:
+  - criterion_id: CRITERION-FIX-001
+    requirement_ref: REQ-FIX-001
+    statement: 已批准输入经有界执行后必须产生可核验 Evidence，并能按失败目标恢复。

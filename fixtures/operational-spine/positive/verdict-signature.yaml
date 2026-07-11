@@ -1,0 +1,6 @@
+schema_version: 1
+signature_id: SIGNATURE-FIX-001
+signed_subject_ref: VERDICT-FIX-001
+signer: internal_separate_fixture_reviewer
+signature_kind: anonymous_fixture_attestation
+scope: operational_spine_fixture_only

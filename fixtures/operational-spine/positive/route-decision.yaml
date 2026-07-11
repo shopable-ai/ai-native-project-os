@@ -1,0 +1,46 @@
+schema_version: 1
+extends: controlled_object_base/v1
+route_decision_id: ROUTE-FIX-001
+version: 1
+project_type: greenfield
+route_inputs:
+  complexity: medium
+  uncertainty: low
+  data_sensitivity: low
+  external_side_effect: none
+  reversibility: full
+  regulatory_impact: low
+  availability_requirement: low
+  agent_collaboration_complexity: low
+  execution_topology: single_agent
+  production_tier: test
+route_input_contract_ref: project-governance-routing@1#route_input_required_fields
+route_input_contract_hash: 90e8246662fbee2fab83b1c24360d13dd5d236577b36412f14c610f62ea7c30e
+routing_policy_ref: project-governance-routing@1
+routing_policy_hash: 90e8246662fbee2fab83b1c24360d13dd5d236577b36412f14c610f62ea7c30e
+routing_reason: 匿名 fixture 采用 standard 基础治理且不启用 overlay。
+manual_override: null
+base_governance_profile: standard
+overlays:
+  multi_agent:
+    required: false
+    selected: false
+    enabled: false
+    implementation_status: not_started
+    verification_status: unverified
+    authorization_snapshot_ref: null
+    overlay_activation_verdict_ref: null
+  production:
+    required: false
+    selected: false
+    enabled: false
+    implementation_status: not_started
+    verification_status: unverified
+    authorization_snapshot_ref: null
+    overlay_activation_verdict_ref: null
+control_set_ref: CONTROL-FIX-001
+control_set_version: 1
+control_set_hash: 54c5c4dbf53d03579b1fffb142f48dc048d88c450bb267b1cf3afd7ebecde07c
+approved_by: internal_fixture_authorizer
+effective_at: "2026-07-11T00:00:00+00:00"
+unknowns: []

@@ -1,0 +1,21 @@
+schema_version: 1
+workflow_id: WF-FIX-001
+task_refs: [TASK-FIX-001]
+skill_refs: [SKILL-FIX-001]
+tool_refs: [TOOL-FIX-001]
+run_refs: [RUN-FIX-SUCCESS-001, RUN-FIX-FAILED-001, RUN-FIX-RESUMED-001, RUN-FIX-REVIEW-001, RUN-FIX-CONTROL-VERIFY-001]
+step_graph:
+  nodes: [prepare, execute, verify]
+  edges: [prepare_to_execute, execute_to_verify]
+io_contract_refs: []
+permissions: read_write_fixture_only
+budget: bounded_fixture
+timeout: bounded_fixture
+retry: bounded_fixture
+checkpoint: required
+cancel: supported
+compensation: fixture_rollback
+failure_routes: [RECOVERY-FIX-001]
+terminal_states: [succeeded, failed, cancelled]
+evidence_output: required
+claim_ceiling: fixture_runtime_proven

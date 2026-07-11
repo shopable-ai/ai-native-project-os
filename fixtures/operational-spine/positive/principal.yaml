@@ -1,0 +1,5 @@
+schema_version: 1
+principal_id: PRINCIPAL-FIX-001
+actor_id: ACTOR-FIX-REVIEWER-001
+principal_status: verified_fixture
+scope: operational_spine_fixture_only

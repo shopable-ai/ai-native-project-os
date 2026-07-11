@@ -201,12 +201,28 @@ class OperationalSpineDocsTests(unittest.TestCase):
         self.assertEqual(score["current_overall_score"], "not_evaluated")
         self.assertEqual(score["design_target_score"], 95.93)
         self.assertEqual(score["static_implementation_evidence"], "present_unscored")
-        self.assertEqual(score["fixture_proof"], "not_evaluated")
+        self.assertEqual(score["fixture_proof"], "fixture_runtime_proven")
+        self.assertEqual(score["fixture_proof_scope"], "operational_spine_fixture_only")
+        self.assertEqual(
+            score["fixture_proof_evidence_ref"],
+            "reviews/operational-spine-static-and-fixture-evidence.yaml",
+        )
         self.assertEqual(score["local_runtime_proof"], "not_evaluated")
         self.assertEqual(score["readonly_real_proof"], "not_evaluated")
         self.assertEqual(score["production_proof"], "not_evaluated")
         self.assertEqual(score["hard_gates"]["cross_project_isolation"], "unmet")
         self.assertEqual(score["hard_gates"]["second_heterogeneous_l2"], "unmet")
+        self.assertEqual(score["hard_gates"]["independent_adversarial_94_gate"], "unmet")
+        self.assertEqual(self.project_os["maturity"]["design_status"], "approved")
+        self.assertEqual(self.project_os["maturity"]["implementation_status"], "partial")
+        self.assertEqual(self.project_os["maturity"]["verification_status"], "unverified")
+        self.assertEqual(self.project_os["claim_limits"]["ceiling"], "fixture_runtime_proven")
+        self.assertEqual(self.project_os["claim_limits"]["scope"], "operational_spine_fixture_only")
+        self.assertEqual(self.project_os["claim_limits"]["current_claims"], [])
+        self.assertIn(
+            "reviews/operational-spine-static-and-fixture-evidence.yaml",
+            self.project_os["proof_evidence"],
+        )
         self.assertNotIn("phase2_l2_onboarding", self.project_os["scoring_evidence"])
 
         readme = read_text("README.zh-CN.md")
@@ -215,6 +231,50 @@ class OperationalSpineDocsTests(unittest.TestCase):
         self.assertIn("当前总体评分：`not_evaluated`", readme)
         self.assertIn("设计目标分：`95.93`", readme)
         self.assertIn("成熟度字段不能证明运行能力", readme)
+        self.assertIn("只覆盖匿名 fixture", readme)
+        self.assertIn("不能声明生产就绪、业务效果成功或通用 95+", readme)
+
+    def test_current_score_record_replaces_historical_84_entrypoint(self) -> None:
+        historical_path = "reviews/profile-taxonomy-alignment-score.yaml"
+        current_path = "reviews/current-score-status.yaml"
+        self.assertIn(historical_path, self.project_os["review_evidence"]["historical_invalidated"])
+        self.assertEqual(current_path, self.project_os["scoring_evidence"]["current"])
+        self.assertNotIn(historical_path, set(self.project_os["scoring_evidence"].values()))
+
+        current = yaml.safe_load(read_text(current_path))
+        score = self.project_os["score_summary"]
+        self.assertEqual("not_evaluated", current["current_overall_score"])
+        self.assertEqual(95.93, current["design_target_score"])
+        self.assertEqual(score["current_overall_score"], current["current_overall_score"])
+        self.assertEqual(score["design_target_score"], current["design_target_score"])
+        self.assertEqual("present_unscored", current["evidence_layers"]["static"])
+        self.assertEqual("fixture_runtime_proven", current["evidence_layers"]["fixture"])
+        self.assertEqual("operational_spine_fixture_only", current["fixture_proof_scope"])
+        for layer in ("local_runtime", "readonly_real", "production"):
+            self.assertEqual("not_evaluated", current["evidence_layers"][layer])
+        for gate in (
+            "cross_project_isolation",
+            "second_heterogeneous_l2",
+            "independent_adversarial_94_gate",
+        ):
+            self.assertEqual("unmet", current["hard_gates"][gate])
+            self.assertEqual(score["hard_gates"][gate], current["hard_gates"][gate])
+        self.assertFalse(current["numeric_score_recomputable"])
+        self.assertIn("complete_recomputable_dimensions", current["missing_numeric_inputs"])
+        self.assertIn("penalties", current["missing_numeric_inputs"])
+
+        readme = read_text("README.zh-CN.md")
+        self.assertIn("当前总体评分：`not_evaluated`", readme)
+        self.assertIn("设计目标分：`95.93`", readme)
+
+    def test_approved_design_status_is_consistent_across_project_readme_and_spec(self) -> None:
+        self.assertEqual("approved", self.project_os["maturity"]["design_status"])
+        self.assertIn("设计已批准", read_text("README.zh-CN.md"))
+        spec_opening = "\n".join(
+            read_text("docs/superpowers/specs/2026-07-11-项目推进骨架设计.md").splitlines()[:24]
+        )
+        self.assertNotIn("待用户复核书面规格", spec_opening)
+        self.assertRegex(spec_opening, r"(已批准书面规格|status:\s*approved)")
 
     def test_phase0_checker_evidence_is_historical_and_invalidated(self) -> None:
         evidence = yaml.safe_load(read_text("reviews/phase0-checker-evidence.yaml"))

@@ -1,0 +1,10 @@
+schema_version: 1
+recovery_id: RECOVERY-FIX-001
+failed_run_ref: RUN-FIX-FAILED-001
+failure_stage: S6
+failure_class: contract_failure
+reopen_target: S4
+checkpoint_ref: CHECKPOINT-FIX-001
+resumed_run_ref: RUN-FIX-RESUMED-001
+new_evidence_ref: EVIDENCE-FIX-RESUMED-001
+failed_run_mutation: forbidden

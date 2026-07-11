@@ -13,6 +13,7 @@
 | 授权引用怎样证明有效而非空壳 | 高风险动作或 overlay 激活前 | 主体绑定、Grant、Ticket、Lease、期限与验证 Evidence | authorization snapshot | `governance/authorization-snapshot-contract.yaml` | 固定一次有效且未撤销的授权快照 | 交给动作门禁或 overlay 激活裁决校验 |
 | selected overlay 怎样安全进入 enabled | 控制模块实现完成并在隔离环境验证后 | route v1、control set、授权快照与激活 Evidence | overlay activation verdict | `governance/overlay-activation-verdict-contract.yaml` | production overlay 在指定环境获接受裁决 | 由新 route 版本引用裁决并更新状态 |
 | 怎样签发验收裁决和受限完成声明 | 判据、Evidence、审核与授权均准备后 | 精确 subject、criteria、Evidence、route/control 绑定与审核结果 | Acceptance Verdict 或 Completion Claim | `governance/acceptance-verdict-claim-contract.yaml` | 对指定环境和输入类别签发受限 Claim | 持续检查期限、失效条件与禁止外推范围 |
+| Run 与 Evidence 怎样留下完整、不可改写且可复算的机器记录 | 执行、重试、恢复或独立采证时 | 路由、控制、指纹、attempt、判据和原始产物 | [Run/Evidence 机器记录](governance/run-evidence-contract.yaml) | `governance/run-evidence-contract.yaml` | 成功、失败、恢复和独立审核 Run 及其 Evidence | 按 [Run/Evidence 语义权威](../docs/governance/RUN_EVIDENCE_ACCEPTANCE.md) 进入审核与验收 |
 
 ## 目录边界
 

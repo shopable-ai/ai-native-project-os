@@ -1,0 +1,34 @@
+schema_version: 1
+extends: controlled_object_base/v1
+evidence_id: EVIDENCE-FIX-RESUMED-001
+project_id: PROJECT-FIX-001
+route_decision_ref: ROUTE-FIX-001
+control_set_hash: 54c5c4dbf53d03579b1fffb142f48dc048d88c450bb267b1cf3afd7ebecde07c
+subject_refs: [RUN-FIX-RESUMED-001]
+subject_hash: 972ca3ea2f0adc8ae2d725e4944d85838cd07630b9b8e50a3eeb03f0d244c6d5
+run_ref: RUN-FIX-RESUMED-001
+proof_level: fixture_runtime_proven
+criterion_results:
+  - criterion_ref: CRITERION-FIX-001
+    expected: 失败后创建新 Run 并从受控 checkpoint 恢复
+    observed: 新恢复 Run 保留失败 Run 引用并产生独立 Evidence
+    result: passed
+    verification_command: python3 -m unittest tests.test_operational_spine_e2e -v
+    raw_evidence_refs: [ATTEMPT-FIX-RESUMED-001]
+artifact_refs: [ATTEMPT-FIX-RESUMED-001]
+content_and_environment_fingerprints:
+  - 7a0a66cb2a9233048259831588cebfe2371bc495511135afdfb6554e63f518a6
+  - c96c6d5be8d08a12e7b5cdc1b207fa6b2430974c86803d8891675e76fd992c20
+collector: ACTOR-FIX-REVIEWER-001
+captured_at: "2026-07-11T10:25:00+00:00"
+expires_at: "2026-12-31T23:59:59+00:00"
+verification_status: verified
+stale_status: fresh
+uncovered_scope: []
+evidence_selection_policy: all_attempts_no_exclusion
+ai_review_verdict_ref: null
+included_attempt_refs: [ATTEMPT-FIX-RESUMED-001]
+excluded_attempts_and_reasons: []
+scope: operational_spine_fixture_only
+environment: anonymous_fixture
+verdict_refs: []

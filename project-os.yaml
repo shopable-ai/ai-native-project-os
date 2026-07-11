@@ -39,8 +39,8 @@ project_governance_catalog:
 
 # 当前仓库成熟度。选择、实现和验证是不同事实。
 maturity:
-  design_status: review_required
-  implementation_status: not_started
+  design_status: approved
+  implementation_status: partial
   verification_status: unverified
   proof_boundary: maturity_fields_do_not_prove_runtime # 成熟度坐标不能替代任何运行 Evidence/Verdict
 
@@ -49,13 +49,16 @@ score_summary:
   current_overall_score: not_evaluated # 缺完整可重算评分输入，不沿用历史数字
   design_target_score: 95.93            # 仅描述目标方案形态，不表示已经达到
   static_implementation_evidence: present_unscored # 有静态资产/检查，但尚未形成当前总评分
-  fixture_proof: not_evaluated          # 受控样例证明尚未在本阶段收口
+  fixture_proof: fixture_runtime_proven  # 仅匿名 operational-spine fixture 已结构闭合并可重放
+  fixture_proof_scope: operational_spine_fixture_only # 不得外推到本地真实、只读真实或生产
+  fixture_proof_evidence_ref: reviews/operational-spine-static-and-fixture-evidence.yaml
   local_runtime_proof: not_evaluated    # 没有非 fixture 本地真实运行证明
   readonly_real_proof: not_evaluated    # 没有真实目标环境只读预检证明
   production_proof: not_evaluated       # 没有经批准生产 Run/Evidence/Verdict
   hard_gates:
     cross_project_isolation: unmet      # 跨项目隔离与安全验证尚未成立
     second_heterogeneous_l2: unmet      # 第二个异构 L2 真实验证尚未成立
+    independent_adversarial_94_gate: unmet # 当前快照尚未通过独立反方 94 分门禁
 
 # 架构风格和薄内核原语
 architecture:
@@ -96,6 +99,7 @@ authority:
   overlay_activation_verdict_contract: contracts/governance/overlay-activation-verdict-contract.yaml # 叠加能力激活裁决契约
   authorization_snapshot_contract: contracts/governance/authorization-snapshot-contract.yaml # 授权快照有效性契约
   acceptance_verdict_claim_contract: contracts/governance/acceptance-verdict-claim-contract.yaml # 业务验收裁决与声明契约
+  run_evidence_contract: contracts/governance/run-evidence-contract.yaml                # Run 与 Evidence 最小机器结构契约
   chain_package_contract: contracts/artifacts/chain-package-contract.yaml       # 业务链包模板机器契约
   spec_package_contract: contracts/artifacts/spec-package-contract.yaml         # Spec 五件套模板机器契约
   io_contract: contracts/io/io-contract.yaml                                    # 跨组件 I/O 模板机器契约
@@ -158,11 +162,16 @@ review_evidence:
     - reviews/human-governed-ai-review-adversarial.yaml
   historical_invalidated:
     - reviews/phase0-checker-evidence.yaml # 旧检查快照已失效，只保留历史审计
+    - reviews/profile-taxonomy-alignment-score.yaml # 旧 84 分封顶记录仅保留历史审计，不再作为 current
 
 scoring_evidence:
   historical_p0_design_revision: reviews/p0-design-revision-score.yaml
-  current: reviews/profile-taxonomy-alignment-score.yaml
+  current: reviews/current-score-status.yaml
   human_governed_ai_review: reviews/human-governed-ai-review-score.yaml
+
+# 当前证明快照。它只证明各自声明的 scope，不自动成为当前总评分。
+proof_evidence:
+  - reviews/operational-spine-static-and-fixture-evidence.yaml
 
 # 第三方依赖策略
 dependencies:
@@ -172,7 +181,8 @@ dependencies:
 # 当前完成声明上限
 claim_limits:
   current_claims: []               # 当前没有运行或生产完成声明
-  ceiling: design_only             # 只能描述设计状态，不能外推实现或运行能力
+  ceiling: fixture_runtime_proven  # 只允许描述匿名 operational-spine fixture 的结构与重放证明
+  scope: operational_spine_fixture_only
   forbidden:
     - runtime_ready                         # 禁止声明：运行时已就绪
     - production_ready                      # 禁止声明：生产已就绪

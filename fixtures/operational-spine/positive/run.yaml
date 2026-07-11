@@ -1,0 +1,55 @@
+schema_version: 1
+extends: controlled_object_base/v1
+run_id: RUN-FIX-SUCCESS-001
+project_id: PROJECT-FIX-001
+route_decision_ref: ROUTE-FIX-001
+control_set_ref: CONTROL-FIX-001
+control_set_hash: 54c5c4dbf53d03579b1fffb142f48dc048d88c450bb267b1cf3afd7ebecde07c
+workflow_ref: WF-FIX-001
+workflow_version: 1
+spec_and_task_refs: [SPEC-FIX-001, TASK-FIX-001]
+input_fingerprints: [c96c6d5be8d08a12e7b5cdc1b207fa6b2430974c86803d8891675e76fd992c20]
+code_fingerprint: 5694d08a2e53ffcae0c3103e5ad6f6076abd960eb1f8a56577040bc1028f702b
+dependency_fingerprint: f26350dafe3f19aabfd69ac463fb5daf76015c9a2763e76e2ad32fc0fcfedf31
+config_fingerprint: b79606fb3afea5bd1609ed40b622142f1c98125abcfe89a76a661b0e8e343910
+model_fingerprints: [dfc3840445271da231e6b63d9b04bc31efe89a2426f76fdea55b6fd8445bae94]
+prompt_fingerprints: [1d869284b5676e8f74e969066f0a2fd68e78624ed70068454d72c3958fa32d21]
+context_fingerprints: [8f23eec288998f1d9b87b61f2e3b65cb28e561e6bdcb0a422efede4536babaa8]
+tool_fingerprints: [7c9bbe5ec9b3fb774e8fa0f54247e93c34ddf8e5d16fe3073420de0ae81a262d]
+policy_fingerprints: [823412d1eacb67956220e532959f0104603057c88704863ca38e7cd188fda812]
+governance_rule_set_refs: [RULE-SET-FIX-001]
+review_mode: not_applicable
+executor: ACTOR-FIX-GENERATOR-001
+environment: anonymous_fixture
+started_at: "2026-07-11T11:30:00+00:00"
+finished_at: "2026-07-11T11:45:00+00:00"
+exit_code: 0
+execution_outcome: success
+semantic_result: passed
+checkpoint: null
+approval_and_permission_refs: [AUTH-FIX-001]
+attempt_manifest:
+  - attempt_id: ATTEMPT-FIX-SUCCESS-001
+    attempt_kind: generation
+    execution_node_ref: NODE-FIX-GENERATOR-001
+    model_fingerprint: dfc3840445271da231e6b63d9b04bc31efe89a2426f76fdea55b6fd8445bae94
+    tool_fingerprints: [7c9bbe5ec9b3fb774e8fa0f54247e93c34ddf8e5d16fe3073420de0ae81a262d]
+    retry_index: 0
+    timeout_status: not_timed_out
+    output_status: accepted
+    output_fingerprint: aaa3ca335816d4e85180a2839adb12f0e0d96f15eec5817f81eba6bc58752e3a
+fallback_events: []
+evidence_refs: [EVIDENCE-FIX-SUCCESS-001]
+uncovered_scope: []
+known_failures: []
+status: succeeded
+immutable: true
+input_class: anonymous_fixture
+scope: operational_spine_fixture_only
+execution_node_ref: NODE-FIX-GENERATOR-001
+prompt_context:
+  role: generator
+  attempt: 1
+  prompt_fingerprint: generator-prompt-fixture-v1
+  context_fingerprint: generator-context-fixture-v1
+proof_level: fixture_runtime_proven

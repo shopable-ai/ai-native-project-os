@@ -1,0 +1,8 @@
+schema_version: 1
+spec_id: SPEC-FIX-001
+title: 匿名处理规格
+status: approved_fixture
+requirement_refs: [REQ-FIX-001]
+chain_ref: CHAIN-FIX-001
+task_refs: [TASK-FIX-001]
+acceptance_criterion_refs: [CRITERION-FIX-001]

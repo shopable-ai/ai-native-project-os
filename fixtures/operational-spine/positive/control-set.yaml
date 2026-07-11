@@ -1,0 +1,36 @@
+schema_version: 1
+extends: controlled_object_base/v1
+control_set_id: CONTROL-FIX-001
+version: 1
+content_hash: 54c5c4dbf53d03579b1fffb142f48dc048d88c450bb267b1cf3afd7ebecde07c
+base_governance_profile: standard
+base_control_refs_by_category:
+  objective_scope: [project-instance-contract@1]
+  source_fact_requirement_governance: [governance-rule-set-contract@1]
+  lifecycle_state_invalidation: [stage-exit-gates-contract@1]
+  typed_traceability: [chain-package-contract@1]
+  research_and_architecture_decision: [spec-package-contract@1]
+  io_and_failure_contracts: [io-contract@1]
+  workflow_recovery: [workflow-contract@1]
+  authorization_and_project_isolation: [authorization-snapshot-contract@1]
+  run_evidence_acceptance_claim: [acceptance-verdict-claim-contract@1]
+  scoring_and_claim_ceiling: [route-decision-contract@1]
+  human_rule_governance: [control-set-contract@1]
+  ai_automated_review: [ai-review-verdict-contract@1]
+overlay_modules:
+  multi_agent:
+    included: false
+    implementation_status: not_started
+    control_refs_by_category: {}
+    implementation_evidence_refs: []
+  production:
+    included: false
+    implementation_status: not_started
+    control_refs_by_category: {}
+    implementation_evidence_refs: []
+base_profile_implementation_status: implemented
+base_profile_implementation_evidence_refs: [EVIDENCE-FIX-CONTROL-001]
+compatibility:
+  framework_editions: [standard]
+  project_types: [greenfield]
+  environments: [anonymous_fixture]

@@ -1,0 +1,12 @@
+schema_version: 1
+overlay_status_snapshot_id: OVERLAY-FIX-001
+route_decision_ref: ROUTE-FIX-001
+route_decision_hash: 241583a217944bdc52f9c838fd8959d0087c559f36b6e5c20176b42871ca39ba
+control_set_ref: CONTROL-FIX-001
+control_set_hash: 54c5c4dbf53d03579b1fffb142f48dc048d88c450bb267b1cf3afd7ebecde07c
+overlays:
+  multi_agent: disabled
+  production: disabled
+scope: operational_spine_fixture_only
+proof_level: fixture_runtime_proven
+content_hash: 16278823ffad9460e4fc24c7717c306201b397a8ef436a71d281a312fbe79b31

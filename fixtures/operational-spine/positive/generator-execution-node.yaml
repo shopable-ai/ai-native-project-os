@@ -1,0 +1,4 @@
+schema_version: 1
+execution_node_id: NODE-FIX-GENERATOR-001
+role: fixture_generator
+scope: operational_spine_fixture_only

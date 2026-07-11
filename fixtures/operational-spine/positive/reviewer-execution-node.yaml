@@ -1,0 +1,4 @@
+schema_version: 1
+execution_node_id: NODE-FIX-REVIEWER-001
+role: independent_fixture_reviewer
+scope: operational_spine_fixture_only

@@ -1,0 +1,8 @@
+schema_version: 1
+tasks:
+  - task_id: TASK-FIX-001
+    title: 执行匿名处理并保留证据
+    status: implemented_fixture
+    spec_ref: SPEC-FIX-001
+    acceptance_criterion_refs: [CRITERION-FIX-001]
+    workflow_ref: WF-FIX-001

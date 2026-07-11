@@ -1,0 +1,11 @@
+schema_version: 1
+rule_set_id: RULE-SET-FIX-001
+status: active
+freshness: fresh
+scope: operational_spine_fixture_only
+proof_level: fixture_runtime_proven
+rules:
+  - rule_id: RULE-FIX-001
+    severity: blocking
+    statement: 匿名 fixture 的 criterion、证据绑定和声明范围必须闭合。
+content_hash: eec953322ecd9a884d884708afc2a7846f7c97fb5721019a37c920cce1d9dc32

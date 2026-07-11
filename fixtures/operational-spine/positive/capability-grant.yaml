@@ -1,0 +1,13 @@
+schema_version: 1
+capability_grant_id: GRANT-FIX-001
+project_id: PROJECT-FIX-001
+route_decision_ref: ROUTE-FIX-001
+control_set_ref: CONTROL-FIX-001
+principal_ref: PRINCIPAL-FIX-001
+capabilities: [read_anonymous_fixture, write_anonymous_fixture]
+status: active
+valid_from: "2026-07-11T00:00:00+00:00"
+expires_at: "2026-12-31T23:59:59+00:00"
+scope: operational_spine_fixture_only
+proof_level: fixture_runtime_proven
+content_hash: a6c5f42902433c66c93be863e438975e4c880c9548d3ef69d3937e5d97fbc673

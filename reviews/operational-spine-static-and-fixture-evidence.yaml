@@ -1,0 +1,112 @@
+# 匿名 operational-spine 的静态与 fixture 证据快照。
+# 本文件不证明本地真实、只读真实、生产运行或通用 95+。
+schema_version: 1
+evidence_id: EVIDENCE-OPERATIONAL-SPINE-FIXTURE-20260712
+baseline_revision: a7378fe
+captured_at: "2026-07-12T02:48:57+08:00"
+scope:
+  - tests/test_operational_spine_e2e.py
+  - fixtures/operational-spine/positive
+  - fixtures/operational-spine/negative/missing-reopen-target
+  - contracts/governance/run-evidence-contract.yaml
+  - reviews/current-score-status.yaml
+  - project-os.yaml
+  - README.zh-CN.md
+  - tests/test_operational_spine_docs.py
+commands:
+  e2e: python3 -m unittest tests.test_operational_spine_e2e -v
+  full: python3 -m unittest discover -s tests -v
+  checker: python3 linters/check_controlled_objects.py . --report
+  yaml: all YAML except the three intentional checker invalid-YAML fixtures parsed with yaml.safe_load
+  markdown_links: python3 -m unittest tests.test_operational_spine_docs -v
+  pycompile: python3 -m py_compile linters/check_controlled_objects.py tests/test_operational_spine_e2e.py tests/test_operational_spine_docs.py
+  diff_check: git diff --check -- . ':!.shopme'
+content_integrity:
+  algorithm: sha256
+  fixture_tree_manifest_sha256: fc0a015ebf1da6b7028c937ddcc361b8a4dfd7f3c302e1923d615f1f151b7f0b
+  files:
+    fixtures/operational-spine/negative/missing-reopen-target/recovery.yaml: 6287c1fac4bdc7fbd034ee069befd05e22aaa8c611e0b1ab68afa3f6a0cfeb5c
+    fixtures/operational-spine/positive/ai-review-verdict.yaml: 2136ff788aa54b3a748fd4a743ea4bfc79bf73e15d2c0a23d194038f1e5b4a48
+    fixtures/operational-spine/positive/authorization-signature.yaml: 7bffbaf8a52fa5a466fe27799bcd3051a18830016079556fe514ba797410b660
+    fixtures/operational-spine/positive/authorization-snapshot.yaml: b03ac4efd273a9451ca841ae545194636adf246db17504809dc1de85b319a9a4
+    fixtures/operational-spine/positive/baseline.yaml: bffab8199387cb7b113d2ad040df4fc750e962dd1203de3abb739500899f4584
+    fixtures/operational-spine/positive/capability-grant.yaml: f03bf061de08fe2fb5ad1deefd1231fb55871685e3fbc4801ba502f22598f554
+    fixtures/operational-spine/positive/chain/chain.yaml: 8a1be5e6a63823f7f0241537370e85ea319aaac694b9079592572d2ad23f766c
+    fixtures/operational-spine/positive/chain/diagrams/flowchart.md: 6157fae02ad7e629220585611bc0fff70879bf608d2c314a9b262117c65ab1d3
+    fixtures/operational-spine/positive/claim.yaml: c33000c746f2ebbd58ebe45ee5edb09e542e97e6c38b947b56335c6fdbbdd838
+    fixtures/operational-spine/positive/control-criterion.yaml: 5b58da5dd7e9a435caa75c34da0396420aaffe9696436c36fec3f1b77f0631f5
+    fixtures/operational-spine/positive/control-implementation-evidence.yaml: d5beeb87395d33aba5a91a5810b7e6d215de31eb427e21851acf3140f79d2d16
+    fixtures/operational-spine/positive/control-set.yaml: 8c5f497c9486236baf8df6bd44aa37ab1257be477d475baa1ab20c17146f5aec
+    fixtures/operational-spine/positive/control-verification-run.yaml: 43da8fc45f6ad99063a79aa101c6fc5b164d21a23ae95a110beac1fd1f64c28f
+    fixtures/operational-spine/positive/failed-run.yaml: ee1fccbb6d2e094d07a3ae4b0f6ba0c89e4ff3d776b2d6a72181303c47bf23fc
+    fixtures/operational-spine/positive/generator-execution-node.yaml: 701081cbd5b877723294edc1ce7a7dc9a053aca2bacbfdc9bfac050666c5ce7d
+    fixtures/operational-spine/positive/overlay-status-snapshot.yaml: eccb47badf980a5704cf8ed78502b42a1d9b22896fcaecc42505fd7fb538350d
+    fixtures/operational-spine/positive/principal.yaml: 4044062c1c5d075b1dd2312f4362725542fbdab8d247e8c63e0708710ec55b85
+    fixtures/operational-spine/positive/recovery.yaml: 6ffaf363f03c90d3d8510a1c7ecd810cdafcff721c4b685f949cf82ca5632ea4
+    fixtures/operational-spine/positive/requirement.yaml: cf3c89452ae6f1751c6998d854caf4e14974e9a52d5701e8474dd5205e66c763
+    fixtures/operational-spine/positive/resumed-evidence.yaml: 342fb64228c99951736df9f14b5fb916ba09304b145e40ab2812534961932718
+    fixtures/operational-spine/positive/resumed-run.yaml: 972ca3ea2f0adc8ae2d725e4944d85838cd07630b9b8e50a3eeb03f0d244c6d5
+    fixtures/operational-spine/positive/review-run.yaml: e30242ebe3e5aa1d7dc1fa7dcc2cb845dfedeb63f2035405300bb1d34f1baa37
+    fixtures/operational-spine/positive/reviewer-execution-node.yaml: 2343b73d54696c754d5e5213b106f6899c3f7069a65b6124399c9ee1fa937d04
+    fixtures/operational-spine/positive/route-decision.yaml: 241583a217944bdc52f9c838fd8959d0087c559f36b6e5c20176b42871ca39ba
+    fixtures/operational-spine/positive/rule-set.yaml: 375723e2b46d7926de49c8c187bf97aaf1bf2899ac701ac39943b1288d9595a0
+    fixtures/operational-spine/positive/run.yaml: 638b8529f1b5e79f4da9ed39692da1edce4ba66e2c302862ab1bce951018e9db
+    fixtures/operational-spine/positive/skill.yaml: e34314be40165a8faad83e6d8f597bec973721a826aa67f25007b7b0c8118a62
+    fixtures/operational-spine/positive/spec/spec.yaml: 5f9c1cd8b1528361a4057af324d02172c0200a41e5a9185ec8eb31302885552e
+    fixtures/operational-spine/positive/spec/tasks.yaml: 4c4425f4934a66a68b04fc12ff09bcb37a7488dd8bd51e63f9dc03874ea578bf
+    fixtures/operational-spine/positive/success-evidence.yaml: e63da1ac8e955987afac33141cbe4ad29aafb2b96bbe4d2e7094ce912b5cf6e7
+    fixtures/operational-spine/positive/tool.yaml: 9c27e65df4bedb106af56f88a6f41ca5c3ac183dc108da6d2698e265d71e63dd
+    fixtures/operational-spine/positive/verdict-signature.yaml: 0c7e584b89fe8fc1d50c4149fc26bd5c4bcbc72272b9141ad6136278092d118a
+    fixtures/operational-spine/positive/verdict.yaml: d85d2101e75973a1a05eeb99a88b7fba35a2fcf46370bfcd6f9deb4940a611a6
+    fixtures/operational-spine/positive/workflow.yaml: c342b409d20ada2d0b8f4247a6118f86043cb601c30a10604aa1fde749dbc844
+results:
+  e2e:
+    status: passed
+    tests_run: 16
+    failures: 0
+    errors: 0
+  full:
+    status: passed
+    tests_run: 115
+    failures: 0
+    errors: 0
+  checker:
+    status: passed
+    version: 0.4.0
+    files_scanned: 168
+    p0_count: 0
+    p1_count: 0
+  yaml:
+    status: passed
+    intentional_invalid_checker_fixtures_excluded: 3
+  markdown_links:
+    status: passed
+    operational_docs_tests_run: 14
+  pycompile:
+    status: passed
+  diff_check:
+    status: passed
+current_overall_score: not_evaluated
+proof_level_ceiling: fixture_runtime_proven
+proof_scope: anonymous_operational_spine_fixture_only
+reviewer_independence: internal_separate_agent_not_external
+evidence_layers:
+  static: present_unscored
+  fixture: fixture_runtime_proven
+  local_runtime: not_evaluated
+  readonly_real: not_evaluated
+  production: not_evaluated
+hard_gates:
+  cross_project_isolation: unmet
+  second_heterogeneous_l2: unmet
+  independent_adversarial_94_gate: unmet
+claims_allowed:
+  anonymous_fixture_structure_and_replay: true
+  local_runtime_ready: false
+  readonly_real_ready: false
+  production_ready: false
+  general_95_plus: false
+known_limits:
+  - fixture 证明只覆盖匿名受控样例，不是任何真实 L2 或生产证明。
+  - 跨项目隔离与第二个异构 L2 两项硬门禁未满足。
+  - 独立反方 94 分门禁未解除，当前总体评分保持 not_evaluated。

@@ -1,0 +1,26 @@
+schema_version: 1
+extends: controlled_object_base/v1
+authorization_snapshot_id: AUTH-FIX-001
+version: 1
+project_id: PROJECT-FIX-001
+route_decision_ref: ROUTE-FIX-001
+route_decision_hash: 241583a217944bdc52f9c838fd8959d0087c559f36b6e5c20176b42871ca39ba
+control_set_ref: CONTROL-FIX-001
+control_set_hash: 54c5c4dbf53d03579b1fffb142f48dc048d88c450bb267b1cf3afd7ebecde07c
+actor_bindings:
+  - actor_id: ACTOR-FIX-REVIEWER-001
+    principal_ref: PRINCIPAL-FIX-001
+capability_grant_refs: [GRANT-FIX-001]
+capability_grant_hashes: [a6c5f42902433c66c93be863e438975e4c880c9548d3ef69d3937e5d97fbc673]
+approval_ticket_refs: []
+secret_lease_refs: []
+separation_of_duties_result: passed
+verification_status: verified
+verification_refs: [EVIDENCE-FIX-SUCCESS-001]
+valid_from: "2026-07-11T00:00:00+00:00"
+expires_at: "2026-12-31T23:59:59+00:00"
+revocation_status: active
+content_hash: 9b159a31f9d426fd755e70e0866bf1868de158b92c8ef74068d9b51071984ab8
+created_by: internal_fixture_authorizer
+created_at: "2026-07-11T11:50:00+00:00"
+signature_ref: AUTH-SIGNATURE-FIX-001

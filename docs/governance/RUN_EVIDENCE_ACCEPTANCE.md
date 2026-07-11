@@ -1,6 +1,6 @@
 # Run、Evidence、验收裁决与完成声明
 
-本文件是 Run、Evidence、Acceptance Verdict 和 Completion Claim 最小语义的唯一权威源；Acceptance Verdict 与 Completion Claim 的机器字段和不变量由 `contracts/governance/acceptance-verdict-claim-contract.yaml` 固定。
+本文件是 Run、Evidence、Acceptance Verdict 和 Completion Claim 最小语义的唯一权威源；Run 与 Evidence 的机器字段由 [run-evidence-contract](../../contracts/governance/run-evidence-contract.yaml) 固定，Acceptance Verdict 与 Completion Claim 的机器字段和不变量由 [acceptance-verdict-claim-contract](../../contracts/governance/acceptance-verdict-claim-contract.yaml) 固定。
 
 ## 1. 固定顺序
 

@@ -19,6 +19,7 @@ MOVED_CONTRACTS = {
 }
 GOVERNANCE_CONTRACTS = MOVED_CONTRACTS | {
     "project-instance-contract.yaml",
+    "run-evidence-contract.yaml",
     "stage-exit-gates-contract.yaml",
 }
 STAGES = ["R0", "S0", "S1", "S2", "S3", "S4", "S5", "S6", "S7"]
@@ -115,6 +116,11 @@ class ContractPolicyBoundaryTests(unittest.TestCase):
             "contracts/governance/stage-exit-gates-contract.yaml",
         )
         self.assertTrue((ROOT / authority["stage_exit_gates_contract"]).is_file())
+        self.assertEqual(
+            authority["run_evidence_contract"],
+            "contracts/governance/run-evidence-contract.yaml",
+        )
+        self.assertTrue((ROOT / authority["run_evidence_contract"]).is_file())
 
     def test_governance_contract_ids_are_unique_and_only_declared_by_authority_targets(self):
         project_os = load_yaml(ROOT / "project-os.yaml")

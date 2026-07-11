@@ -1,0 +1,140 @@
+# Run 与 Evidence 的最小机器结构契约；语义说明由 RUN_EVIDENCE_ACCEPTANCE.md 权威维护。
+schema_version: 1
+contract_id: run-evidence-contract
+contract_version: 1
+
+run:
+  required_fields:
+    - extends
+    - run_id
+    - project_id
+    - route_decision_ref
+    - control_set_ref
+    - control_set_hash
+    - workflow_ref
+    - workflow_version
+    - spec_and_task_refs
+    - input_fingerprints
+    - code_fingerprint
+    - dependency_fingerprint
+    - config_fingerprint
+    - model_fingerprints
+    - prompt_fingerprints
+    - context_fingerprints
+    - tool_fingerprints
+    - policy_fingerprints
+    - governance_rule_set_refs
+    - review_mode
+    - executor
+    - environment
+    - started_at
+    - finished_at
+    - exit_code
+    - execution_outcome
+    - semantic_result
+    - checkpoint
+    - approval_and_permission_refs
+    - attempt_manifest
+    - fallback_events
+    - evidence_refs
+    - uncovered_scope
+    - known_failures
+    - immutable
+  enums:
+    execution_outcome: [success, failure, partial, unknown]
+    semantic_result: [passed, failed, partial, unknown, not_evaluated]
+    review_mode: [not_applicable, independent_ai_review]
+  attempt_required_fields:
+    - attempt_id
+    - attempt_kind
+    - execution_node_ref
+    - model_fingerprint
+    - tool_fingerprints
+    - retry_index
+    - timeout_status
+    - output_status
+    - output_fingerprint
+  attempt_enums:
+    timeout_status: [not_timed_out, timed_out]
+    output_status: [accepted, rejected, failed]
+  checkpoint_required_fields:
+    - checkpoint_id
+    - run_ref
+    - workflow_ref
+    - workflow_version
+    - step_cursor
+    - status
+    - input_fingerprints
+    - completed_side_effects
+    - pending_side_effects
+    - approval_and_permission_refs
+    - external_receipts
+    - captured_at
+    - content_hash
+    - resume_compatibility_scope
+    - consumed_by_run
+  invariants:
+    - every_required_fingerprint_is_non_empty
+    - route_control_workflow_and_checkpoint_hashes_are_verified
+    - attempt_manifest_is_non_empty_complete_unique_and_immutable
+    - every_attempt_id_is_resolvable
+    - every_retry_timeout_and_rejected_output_is_preserved
+    - finished_at_is_not_before_started_at
+    - exit_code_zero_does_not_imply_semantic_pass_or_acceptance
+    - completed_run_is_immutable
+    - failed_run_history_cannot_be_rewritten
+    - retry_or_resume_creates_new_run
+    - resumed_run_references_failed_run_and_checkpoint
+    - unknown_fallback_path_reduces_claim_ceiling
+
+evidence:
+  required_fields:
+    - extends
+    - evidence_id
+    - project_id
+    - route_decision_ref
+    - control_set_hash
+    - subject_refs
+    - subject_hash
+    - run_ref
+    - proof_level
+    - criterion_results
+    - artifact_refs
+    - content_and_environment_fingerprints
+    - collector
+    - captured_at
+    - expires_at
+    - verification_status
+    - stale_status
+    - uncovered_scope
+    - evidence_selection_policy
+    - ai_review_verdict_ref
+    - included_attempt_refs
+    - excluded_attempts_and_reasons
+    - scope
+    - environment
+  criterion_result_required_fields:
+    - criterion_ref
+    - expected
+    - observed
+    - result
+    - verification_command
+    - raw_evidence_refs
+  enums:
+    verification_status: [captured, verified, rejected]
+    stale_status: [fresh, stale, expired, invalidated]
+    criterion_result: [passed, failed]
+  invariants:
+    - evidence_is_distinct_from_run_and_subject
+    - subject_ref_and_hash_exactly_bind_observed_object
+    - run_ref_resolves_to_the_observed_run
+    - control_set_hash_matches_run_and_route
+    - content_and_environment_fingerprints_are_non_empty
+    - included_attempt_refs_are_resolvable_and_complete
+    - every_excluded_attempt_has_a_reason
+    - verified_evidence_requires_fresh_stale_status
+    - verified_critical_path_evidence_requires_non_empty_criterion_results
+    - captured_at_and_expires_at_are_timezone_aware
+    - expired_or_invalidated_evidence_blocks_acceptance
+    - raw_outputs_are_hash_bound_and_append_only
+    - proof_level_participates_in_critical_path_claim_ceiling

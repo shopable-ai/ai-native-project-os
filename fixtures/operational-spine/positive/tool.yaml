@@ -1,0 +1,7 @@
+schema_version: 1
+tool_id: TOOL-FIX-001
+workflow_refs: [WF-FIX-001]
+responsibility: deterministic_fixture_transform
+permissions: fixture_only
+side_effect_scope: fixture_directory_only
+failure_semantics: fail_closed

@@ -1,0 +1,15 @@
+schema_version: 1
+stable_id: CHAIN-FIX-001
+object_type: business_chain
+priority: p1
+cross_node: false
+multi_state: false
+authorization_or_data_boundary: false
+status: approved_fixture
+requirement_refs: [REQ-FIX-001]
+spec_refs: [SPEC-FIX-001]
+diagram_refs: [DIAGRAM-FIX-FLOW-001]
+diagrams:
+  - diagram_id: DIAGRAM-FIX-FLOW-001
+    type: flowchart
+    path: diagrams/flowchart.md

@@ -1,0 +1,11 @@
+schema_version: 1
+criterion_id: CONTROL-CRITERION-FIX-001
+subject_ref: CONTROL-FIX-001
+scope: operational_spine_fixture_only
+statement: 匿名 fixture 的 standard control set 必须精确覆盖 12 个必需类别、引用真实 authority、通过 canonical hash 校验并具有 implemented Evidence 结构。
+expected_checks:
+  required_category_count: 12
+  authority_refs_are_repository_contracts_or_policies: true
+  canonical_hash_matches: true
+  base_profile_implementation_status: implemented
+  implementation_evidence_refs_non_empty: true

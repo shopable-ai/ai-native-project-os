@@ -1,0 +1,24 @@
+# 当前评分入口；不复写历史评分，只陈述现有证据边界与缺口。
+schema_version: 1
+score_record_id: SCORE-CURRENT-STATUS-20260712
+current_overall_score: not_evaluated
+design_target_score: 95.93
+numeric_score_recomputable: false
+evidence_layers:
+  static: present_unscored
+  fixture: fixture_runtime_proven
+  local_runtime: not_evaluated
+  readonly_real: not_evaluated
+  production: not_evaluated
+fixture_proof_scope: operational_spine_fixture_only
+hard_gates:
+  cross_project_isolation: unmet
+  second_heterogeneous_l2: unmet
+  independent_adversarial_94_gate: unmet
+missing_numeric_inputs:
+  - complete_recomputable_dimensions
+  - penalties
+  - independent_current_snapshot_review
+claim_limits:
+  - 匿名 fixture 只证明受控结构和重放，不证明本地真实、只读真实或生产运行。
+  - 设计目标 95.93 不是当前得分，也不能用于解除任何硬门禁。

@@ -1,0 +1,27 @@
+schema_version: 1
+extends: controlled_object_base/v1
+review_verdict_id: AI-REVIEW-FIX-001
+project_id: PROJECT-FIX-001
+subject_ref: RUN-FIX-SUCCESS-001
+subject_hash: 638b8529f1b5e79f4da9ed39692da1edce4ba66e2c302862ab1bce951018e9db
+generator_run_ref: RUN-FIX-SUCCESS-001
+review_run_ref: RUN-FIX-REVIEW-001
+reviewer_actor_id: ACTOR-FIX-REVIEWER-001
+generator_execution_node_ref: NODE-FIX-GENERATOR-001
+reviewer_execution_node_ref: NODE-FIX-REVIEWER-001
+reviewer_model_fingerprint: anonymous-reviewer-model-fixture-v1
+rule_set_ref: RULE-SET-FIX-001
+rule_set_hash: eec953322ecd9a884d884708afc2a7846f7c97fb5721019a37c920cce1d9dc32
+rule_results:
+  - rule_ref: RULE-FIX-001
+    result: passed
+    evidence_refs: [EVIDENCE-FIX-SUCCESS-001]
+finding_refs: []
+evidence_refs: [EVIDENCE-FIX-SUCCESS-001]
+evidence_hashes: [e63da1ac8e955987afac33141cbe4ad29aafb2b96bbe4d2e7094ce912b5cf6e7]
+decision: allow
+rewrite_attempt: 0
+max_rewrite_attempts: 2
+claim_ceiling: fixture_runtime_proven
+decided_at: "2026-07-11T11:58:00+00:00"
+content_hash: 94bb5deda8e4d9a4ffcf89cefcedd151ad4ca6152f4c5723fa6d901d584d76b6

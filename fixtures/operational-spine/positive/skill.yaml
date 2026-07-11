@@ -1,0 +1,14 @@
+schema_version: 1
+skill_id: SKILL-FIX-001
+workflow_refs: [WF-FIX-001]
+consumers: [WF-FIX-001]
+local_responsibility: transform_fixture_input
+io_contract_refs: []
+model_code_boundary: deterministic_fixture
+permissions: fixture_only
+failure_semantics: fail_closed
+evaluation: evidence_required
+version: 1
+compatibility: project_os_schema_v3
+workflow_scope: single_stage_only
+cross_stage_workflow: forbidden

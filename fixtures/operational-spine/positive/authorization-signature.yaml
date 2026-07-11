@@ -1,0 +1,6 @@
+schema_version: 1
+signature_id: AUTH-SIGNATURE-FIX-001
+signed_subject_ref: AUTH-FIX-001
+signer: internal_fixture_authorizer
+signature_kind: anonymous_fixture_attestation
+scope: operational_spine_fixture_only
