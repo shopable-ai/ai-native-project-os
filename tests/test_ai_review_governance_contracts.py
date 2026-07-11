@@ -45,6 +45,46 @@ class GovernanceContractsTests(unittest.TestCase):
         self.assertIn("普通内容审核不得进入 `waiting_approval`", native)
         self.assertIn("内容审核通过不授予动作权限", authorization)
 
+    def test_machine_authority_policies_and_template_are_aligned(self):
+        project_os = yaml.safe_load((ROOT / "project-os.yaml").read_text(encoding="utf-8"))
+        self.assertEqual(
+            project_os["authority"]["governance_rule_set_contract"],
+            "policies/governance-rule-set-contract.yaml",
+        )
+        self.assertEqual(
+            project_os["authority"]["ai_review_verdict_contract"],
+            "policies/ai-review-verdict-contract.yaml",
+        )
+
+        control_set = load_policy("control-set-contract.yaml")
+        standard_categories = control_set["base_profile_contracts"]["standard"][
+            "required_control_categories"
+        ]
+        self.assertIn("human_rule_governance", standard_categories)
+        self.assertIn("ai_automated_review", standard_categories)
+
+        routing = load_policy("project-governance-routing.yaml")
+        self.assertEqual(routing["review_governance"]["routine_content_review"], "ai_automated")
+
+        authorization = load_policy("authorization-snapshot-contract.yaml")
+        self.assertIn(
+            "approval_ticket_authorizes_action_not_content_quality",
+            authorization["validity_invariants"],
+        )
+
+        acceptance = load_policy("acceptance-verdict-claim-contract.yaml")
+        self.assertIn("ai_review_verdict_refs", acceptance["acceptance_verdict_required_fields"])
+        self.assertIn(
+            "review_governed_subject_requires_allow_ai_review_verdict",
+            acceptance["verdict_invariants"],
+        )
+
+        template = (
+            ROOT / "templates/standard-project/governance/rules/README.md"
+        ).read_text(encoding="utf-8")
+        for marker in ("rule_set_id", "rule_id", "approved_by", "canonical_path"):
+            self.assertIn(marker, template)
+
 
 if __name__ == "__main__":
     unittest.main()

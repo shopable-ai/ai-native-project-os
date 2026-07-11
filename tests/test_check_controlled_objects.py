@@ -12,6 +12,9 @@ SPEC.loader.exec_module(checker)
 
 
 class CheckerExitCodeTests(unittest.TestCase):
+    def test_checker_version_marks_ai_review_rules(self):
+        self.assertEqual(checker.CHECKER_VERSION, "0.2.0")
+
     def test_p1_finding_fails_gate(self):
         findings = [checker.Finding("C4", "P1", "project-os.yaml", 1, "drift")]
         self.assertEqual(checker.exit_code_for_findings(findings), 1)

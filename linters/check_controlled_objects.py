@@ -26,6 +26,7 @@ from pathlib import Path
 
 # ── 常量 ──────────────────────────────────────────────────────────────────────
 
+CHECKER_VERSION = "0.2.0"
 PROOF_LEVEL_AUTHORITY = "docs/governance/GATES_PROOF_SCORING.md"
 PROOF_LEVEL_ENUM = [
     "control_package",
@@ -434,7 +435,7 @@ def main() -> int:
     # 输出机器可读 JSON（供保存为 Evidence）
     report = {
         "checker": "check_controlled_objects",
-        "version": "0.1.0",
+        "version": CHECKER_VERSION,
         "repo": str(repo),
         "files_scanned": len(files),
         "p0_count": len(p0),

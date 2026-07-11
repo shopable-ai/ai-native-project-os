@@ -69,6 +69,8 @@ authority:
   overlay_activation_verdict_contract: policies/overlay-activation-verdict-contract.yaml # 叠加能力激活裁决契约
   authorization_snapshot_contract: policies/authorization-snapshot-contract.yaml # 授权快照有效性契约
   acceptance_verdict_claim_contract: policies/acceptance-verdict-claim-contract.yaml # 业务验收裁决与声明契约
+  governance_rule_set_contract: policies/governance-rule-set-contract.yaml       # 人工批准 Markdown 规则集契约
+  ai_review_verdict_contract: policies/ai-review-verdict-contract.yaml           # AI 自动审核裁决契约
   architect_workflows: docs/workflows/ARCHITECT_WORKFLOWS.md             # 架构师工作流
   artifact_model: docs/governance/ARTIFACTS_AND_TRACEABILITY.md          # 产物与追溯关系
   controlled_object_model: docs/governance/CONTROLLED_OBJECT_MODEL.md    # 受控对象字段、类型与关系
@@ -92,6 +94,14 @@ review_evidence:
 scoring_evidence:
   historical_p0_design_revision: reviews/p0-design-revision-score.yaml
   current: reviews/profile-taxonomy-alignment-score.yaml
+  phase0_checker: reviews/phase0-checker-evidence.yaml
+
+# L2 证据由对应 L2 仓库持有；L1 只登记要求，不反向引用具体仓库路径。
+external_evidence_requirements:
+  phase2_l2_onboarding:
+    producer_scope: l2
+    evidence_id: phase2-l2-onboarding-evidence
+    status: not_available
 
 # 第三方依赖策略
 dependencies:

@@ -20,6 +20,8 @@ acceptance_verdict_required_fields:
   - criteria_refs
   - evidence_refs
   - evidence_hashes
+  - ai_review_verdict_refs
+  - ai_review_verdict_hashes
   - environment_and_input_class
   - approval_and_permission_snapshot_refs
   - approval_and_permission_snapshot_hashes
@@ -60,6 +62,10 @@ enums:
   claim_status: [draft, issued, expired, withdrawn]
 
 verdict_invariants:
+  - review_governed_subject_requires_allow_ai_review_verdict
+  - ai_review_verdict_refs_and_hashes_have_same_cardinality
+  - blocked_or_rule_gap_ai_review_blocks_acceptance
+  - human_authorization_cannot_override_ai_review_decision
   - accepted_requires_non_empty_subject_criteria_evidence_and_evidence_hashes
   - accepted_requires_evidence_refs_and_hashes_same_cardinality
   - accepted_requires_non_empty_permission_snapshot_refs_and_hashes

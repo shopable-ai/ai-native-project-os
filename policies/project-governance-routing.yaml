@@ -41,7 +41,7 @@ route_input_schema:
 base_profile:
   default: standard
   lite:
-    requires_human_approval: true
+    requires_human_rule_approval: true
     requires_all:
       complexity: [low]
       uncertainty: [low]
@@ -69,6 +69,14 @@ required_overlays:
       production_tier: [production]
     unknown_when_any:
       production_tier: [unknown]
+
+review_governance:
+  rule_authority: human_approved_versioned_markdown
+  routine_content_review: ai_automated
+  routine_review_human_wait: forbidden
+  failure_routes: [rewrite_required, blocked, rule_gap]
+  irreversible_action_authorization: human_approval_ticket
+  missing_or_stale_rule_set: fail_closed
 
 activation_gate:
   evaluation_subject: route_decision.overlays.{overlay_id}

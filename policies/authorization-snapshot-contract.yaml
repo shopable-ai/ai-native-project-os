@@ -61,6 +61,8 @@ manifest_example:
   signature_ref: signature-id
 
 validity_invariants:
+  - approval_ticket_authorizes_action_not_content_quality
+  - authorization_snapshot_cannot_override_blocked_or_rule_gap_ai_review
   - verified_requires_non_empty_actor_bindings
   - verified_requires_non_empty_capability_grant_refs_and_hashes
   - capability_grant_refs_and_hashes_have_same_cardinality

@@ -27,6 +27,8 @@ manifest_example:
   base_control_refs_by_category:
     objective_scope: [contract-id]
     source_fact_requirement_governance: [policy-id]
+    human_rule_governance: [governance-rule-set-contract@1]
+    ai_automated_review: [ai-review-verdict-contract@1]
     lifecycle_state_invalidation: [contract-id]
     typed_traceability: [contract-id]
     research_and_architecture_decision: [policy-id]
@@ -76,11 +78,14 @@ base_profile_contracts:
       - approved_requirements
       - typed_traceability
       - acceptance_evidence
-      - human_approval
+      - human_rule_governance
+      - ai_automated_review
   standard:
     required_control_categories:
       - objective_scope
       - source_fact_requirement_governance
+      - human_rule_governance
+      - ai_automated_review
       - lifecycle_state_invalidation
       - typed_traceability
       - research_and_architecture_decision

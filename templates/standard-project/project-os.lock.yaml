@@ -1,0 +1,31 @@
+# project-os.lock 模板（L2 消费 L1 的版本锁定记录）
+#
+# 复制到你的 L2 业务仓库根目录，命名为 project-os.lock.yaml
+# 字段语义见 docs/architecture/REPOSITORY_AND_LAYER_CONTRACT.md § 3
+# {{ }} 占位字段必须填写；填写后删除所有注释
+
+schema_version: 3
+system_id: ai-project-os
+version: 0.1.0-design                  # 当前 L1 版本，见 project-os.yaml
+compatibility_range: ">=0.1.0-design,<0.2.0"
+supported_framework_editions:
+  - standard                           # 本 L2 项目采用 standard 框架等级
+adapters: []                           # 当前无外部适配器依赖
+
+protocol_locks:
+  controlled_object_schema: "0.1.0-design"   # 与 L1 CONTROLLED_OBJECT_MODEL.md 版本对齐
+  proof_level_enum: "0.1.0-design"            # 与 GATES_PROOF_SCORING.md 版本对齐
+  io_contracts: []
+  workflows: []
+  skills: []
+  tools: []
+  policies: []
+
+# L3 项目实例需额外提供的字段（L2 本体不需要）
+# project_namespace: projects/{{ project_id }}
+# route_decision_ref: {{ route-id }}
+# control_set_ref: {{ control-set-id }}
+# control_set_hash: {{ sha256 }}
+
+locked_at: "{{ YYYY-MM-DDTHH:MM:SSZ }}"   # 填写实际锁定时间（ISO 8601）
+locked_by: "{{ owner-role-or-human-id }}"
