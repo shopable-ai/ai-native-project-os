@@ -32,6 +32,16 @@ class CheckerExitCodeTests(unittest.TestCase):
 
         self.assertEqual(scanned, {"project-os.yaml"})
 
+    def test_repository_root_inside_worktrees_is_still_scanned(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = Path(temp_dir) / ".worktrees" / "feature"
+            repo.mkdir(parents=True)
+            (repo / "project-os.yaml").write_text("schema_version: 1\n", encoding="utf-8")
+
+            scanned = {path.relative_to(repo).as_posix() for path in checker.iter_repo_files(repo)}
+
+        self.assertEqual(scanned, {"project-os.yaml"})
+
 
 class CheckerGovernanceTests(unittest.TestCase):
     def make_repo(self, files):

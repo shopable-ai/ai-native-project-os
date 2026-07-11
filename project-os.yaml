@@ -68,6 +68,7 @@ authority:
   control_set_contract: policies/control-set-contract.yaml              # 控制集合机器契约
   governance_rule_set_contract: policies/governance-rule-set-contract.yaml # 人工治理 Markdown 规则集契约
   ai_review_verdict_contract: policies/ai-review-verdict-contract.yaml  # 独立 AI 自动审核裁决契约
+  rule_gap_case_contract: policies/rule-gap-case-contract.yaml          # 规则缺口异步治理契约
   overlay_activation_verdict_contract: policies/overlay-activation-verdict-contract.yaml # 叠加能力激活裁决契约
   authorization_snapshot_contract: policies/authorization-snapshot-contract.yaml # 授权快照有效性契约
   acceptance_verdict_claim_contract: policies/acceptance-verdict-claim-contract.yaml # 业务验收裁决与声明契约

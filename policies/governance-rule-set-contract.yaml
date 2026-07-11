@@ -16,7 +16,9 @@ required_fields:
   - scope
   - rule_refs
   - rule_hashes
+  - conflict_resolution
   - status
+  - owner
   - approved_by
   - approved_at
   - effective_from
@@ -25,6 +27,16 @@ required_fields:
 
 enums:
   status: [draft, approved, active, superseded, revoked]
+  conflict_resolution: [explicit_priority_then_fail_closed]
+
+rule_required_fields:
+  - rule_id
+  - priority
+  - severity
+  - applies_to
+  - required_evidence
+  - allowed_outcomes
+  - failure_action
 
 manifest_example:
   extends: controlled_object_base/v1
@@ -38,7 +50,9 @@ manifest_example:
     project_id: project-id
   rule_refs: [governance/rules/content-and-evidence.md#rule-id]
   rule_hashes: [sha256]
+  conflict_resolution: explicit_priority_then_fail_closed
   status: draft
+  owner: human-governance-role
   approved_by: null
   approved_at: null
   effective_from: null
@@ -58,6 +72,9 @@ invariants:
   - rule_refs_and_hashes_have_same_cardinality
   - canonical_path_and_rule_refs_must_reference_markdown
   - every_rule_ref_resolves_to_exact_rule_id_and_content_hash
+  - every_rule_has_all_rule_required_fields
+  - rule_priority_must_be_unique_within_scope
+  - unresolved_rule_conflict_blocks_activation
   - scope_must_use_structured_fields_not_natural_language_keyword_matching
   - rule_priority_conflict_without_resolution_requires_rule_gap
   - expired_superseded_or_revoked_rule_set_cannot_drive_review

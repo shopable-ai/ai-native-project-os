@@ -114,7 +114,7 @@ claim_ceiling: control_package
 decided_at: null
 ```
 
-`allow` 需要非空规则覆盖和审核 Evidence；`rewrite_required` 创建新 attempt/Run 并重新审核；`blocked` 阻止发布和副作用；`rule_gap` 创建规则缺口记录并阻断当前对象。普通内容审核不得转 `waiting_approval`。人工授权不能覆盖 `blocked/rule_gap`，审核通过也不能替代动作授权。
+`allow` 需要非空规则覆盖和审核 Evidence；`rewrite_required` 创建新 attempt/Run 并重新审核；`blocked` 阻止发布和副作用；`rule_gap` 按 `policies/rule-gap-case-contract.yaml` 创建规则缺口记录并阻断当前对象。普通内容审核不得转 `waiting_approval`。人工授权不能覆盖 `blocked/rule_gap`，审核通过也不能替代动作授权。
 
 ## 5. Overlay Activation Verdict
 

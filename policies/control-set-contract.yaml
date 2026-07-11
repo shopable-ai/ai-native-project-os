@@ -36,7 +36,7 @@ manifest_example:
     run_evidence_acceptance_claim: [contract-id]
     scoring_and_claim_ceiling: [policy-id]
     human_rule_governance: [governance-rule-set-contract]
-    ai_automated_review: [ai-review-verdict-contract]
+    ai_automated_review: [ai-review-verdict-contract, rule-gap-case-contract]
   base_profile_implementation_status: not_started
   base_profile_implementation_evidence_refs: []
   overlay_modules:
