@@ -11,9 +11,15 @@ def load_policy(name: str) -> dict:
     return yaml.safe_load((ROOT / "policies" / name).read_text(encoding="utf-8"))
 
 
+def load_contract(name: str) -> dict:
+    return yaml.safe_load(
+        (ROOT / "contracts" / "governance" / name).read_text(encoding="utf-8")
+    )
+
+
 class GovernanceContractsTests(unittest.TestCase):
     def test_rule_set_contract_requires_human_approved_markdown_members(self):
-        contract = load_policy("governance-rule-set-contract.yaml")
+        contract = load_contract("governance-rule-set-contract.yaml")
 
         self.assertEqual(contract["object_type"], "governance_rule_set")
         self.assertIn("approved_by", contract["required_fields"])
@@ -24,7 +30,7 @@ class GovernanceContractsTests(unittest.TestCase):
         self.assertIn("rule_refs_and_hashes_have_same_cardinality", contract["invariants"])
 
     def test_rule_set_conflicts_fail_closed_by_explicit_priority(self):
-        contract = load_policy("governance-rule-set-contract.yaml")
+        contract = load_contract("governance-rule-set-contract.yaml")
 
         self.assertIn("conflict_resolution", contract["required_fields"])
         self.assertEqual(
@@ -36,7 +42,7 @@ class GovernanceContractsTests(unittest.TestCase):
         self.assertIn("unresolved_rule_conflict_blocks_activation", contract["invariants"])
 
     def test_ai_review_contract_has_closed_routes_and_rule_citations(self):
-        contract = load_policy("ai-review-verdict-contract.yaml")
+        contract = load_contract("ai-review-verdict-contract.yaml")
 
         self.assertEqual(
             contract["enums"]["decision"],
@@ -48,9 +54,9 @@ class GovernanceContractsTests(unittest.TestCase):
         self.assertIn("reviewer_must_be_independent_from_generator", contract["invariants"])
 
     def test_rule_gap_contract_keeps_human_maintenance_asynchronous(self):
-        contract = load_policy("rule-gap-case-contract.yaml")
+        contract = load_contract("rule-gap-case-contract.yaml")
         project_os = yaml.safe_load((ROOT / "project-os.yaml").read_text(encoding="utf-8"))
-        control_set = load_policy("control-set-contract.yaml")
+        control_set = load_contract("control-set-contract.yaml")
 
         self.assertEqual(contract["object_type"], "rule_gap_case")
         self.assertIn("current_subject_disposition", contract["required_fields"])
@@ -59,7 +65,7 @@ class GovernanceContractsTests(unittest.TestCase):
         self.assertIn("case_must_not_become_per_item_human_review", contract["invariants"])
         self.assertEqual(
             project_os["authority"]["rule_gap_case_contract"],
-            "policies/rule-gap-case-contract.yaml",
+            "contracts/governance/rule-gap-case-contract.yaml",
         )
         self.assertIn(
             "rule-gap-case-contract",
@@ -96,18 +102,18 @@ class GovernanceContractsTests(unittest.TestCase):
 
     def test_machine_authority_policies_and_chinese_rule_templates_align(self):
         project_os = yaml.safe_load((ROOT / "project-os.yaml").read_text(encoding="utf-8"))
-        control_set = load_policy("control-set-contract.yaml")
+        control_set = load_contract("control-set-contract.yaml")
         routing = load_policy("project-governance-routing.yaml")
-        authorization = load_policy("authorization-snapshot-contract.yaml")
-        acceptance = load_policy("acceptance-verdict-claim-contract.yaml")
+        authorization = load_contract("authorization-snapshot-contract.yaml")
+        acceptance = load_contract("acceptance-verdict-claim-contract.yaml")
 
         self.assertEqual(
             project_os["authority"]["governance_rule_set_contract"],
-            "policies/governance-rule-set-contract.yaml",
+            "contracts/governance/governance-rule-set-contract.yaml",
         )
         self.assertEqual(
             project_os["authority"]["ai_review_verdict_contract"],
-            "policies/ai-review-verdict-contract.yaml",
+            "contracts/governance/ai-review-verdict-contract.yaml",
         )
         required = control_set["base_profile_contracts"]["standard"][
             "required_control_categories"

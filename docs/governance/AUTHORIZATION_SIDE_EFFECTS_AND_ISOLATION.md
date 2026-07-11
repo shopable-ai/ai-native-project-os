@@ -59,7 +59,7 @@ revocation_ref: null
 
 每份 Capability Grant、秘密 lease、审批票据和副作用 Operation 必须绑定当前 `route_decision_ref`、`control_set_ref` 与 `control_set_hash`。治理路由或控制集变化时，旧授权先进入待复核或撤销，不能因基础配置名称相同而继续复用。
 
-激活门禁使用的 `authorization_snapshot_ref` 不能是任意字符串或单份 Grant 的别名。授权快照必须按 `policies/authorization-snapshot-contract.yaml` 聚合并锁定主体绑定、Grant、审批票据、秘密 lease、职责分离结果、路由/control set、有效期、撤销状态、验证 Evidence 和签名；只有 `verified + fresh + active + unexpired` 的快照有效。
+激活门禁使用的 `authorization_snapshot_ref` 不能是任意字符串或单份 Grant 的别名。授权快照必须按 `contracts/governance/authorization-snapshot-contract.yaml` 聚合并锁定主体绑定、Grant、审批票据、秘密 lease、职责分离结果、路由/control set、有效期、撤销状态、验证 Evidence 和签名；只有 `verified + fresh + active + unexpired` 的快照有效。
 
 网络权限固定 scheme、host、port、动作、TLS 身份、重定向和解析后地址范围；默认拒绝未授权私网与 metadata endpoint。声明为读取的外部动作必须由契约证明无副作用，未知语义按写操作治理。
 

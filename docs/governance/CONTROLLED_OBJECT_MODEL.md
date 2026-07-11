@@ -50,7 +50,7 @@ stale_status: fresh
 supersedes: null
 ```
 
-`governance_scope` 使用 `l1/l2/l3`。仅 L3 执行和验收对象强制绑定项目路由；L1/L2 通用对象使用 null，靠自身版本、消费者和兼容契约治理。`route_decision` 自身不得引用自己，必须引用 routing policy、control set 和前一版本。
+`governance_scope` 使用小写机器枚举 `l1/l2/l3`。其中文显示以及与大写仓库层级的消歧只引用[术语权威](TERMINOLOGY.md#治理范围)。仅 L3 执行和验收对象强制绑定项目路由；L1/L2 通用对象使用 null，靠自身版本、消费者和兼容契约治理。`route_decision` 自身不得引用自己，必须引用 routing policy、control set 和前一版本。
 
 `lifecycle_stage`、`work_status`、`approval_status`、`implementation_status` 和 `stale_status` 的枚举与迁移只引用状态权威，不在本文件复制。实现状态不得由阶段、批准状态或 proof level 推导。普通对象只保存 `proof_refs`，有效 proof level 由 Evidence、Verdict 和 Claim 计算，禁止对象自证。
 
