@@ -1,0 +1,61 @@
+# 人工治理规则集机器契约
+# 规则正文使用 Markdown；只有经过人类 principal 批准的 active 版本可驱动运行审核。
+
+schema_version: 1
+contract_id: governance-rule-set-contract
+contract_version: 1
+object_type: governance_rule_set
+
+required_fields:
+  - extends
+  - rule_set_id
+  - version
+  - canonical_path
+  - content_hash
+  - governance_scope
+  - scope
+  - rule_ids
+  - status
+  - owner
+  - approved_by
+  - approved_at
+  - effective_from
+  - expires_at
+  - supersedes
+
+enums:
+  status: [draft, approved, active, superseded, revoked]
+
+manifest_example:
+  extends: controlled_object_base/v1
+  rule_set_id: rule-set-id
+  version: 1
+  canonical_path: governance/rules/content-review.md
+  content_hash: sha256
+  governance_scope: l3
+  scope:
+    artifact_classes: [content, evidence]
+    project_ids: [project-id]
+    locales: [all]
+  rule_ids: [rule-id]
+  status: draft
+  owner: human-role-id
+  approved_by: null
+  approved_at: null
+  effective_from: null
+  expires_at: null
+  supersedes: null
+
+invariants:
+  - canonical_path_must_reference_markdown
+  - active_requires_verified_human_principal
+  - active_requires_non_empty_rule_ids
+  - active_requires_non_empty_scope
+  - active_requires_content_hash_matching_markdown
+  - active_requires_approved_at_and_effective_from
+  - expires_at_when_present_must_be_after_effective_from
+  - superseded_requires_resolvable_active_successor
+  - revoked_or_expired_rule_set_cannot_drive_review
+  - ai_may_propose_but_cannot_approve_activate_revoke_or_overwrite_rule_set
+  - localized_views_must_be_generated_from_same_version_and_hash
+  - unknown_or_missing_field_fails_closed
