@@ -8,6 +8,8 @@
   C3  p0/p1 优先级需求必须有对应 spec + traceability 文件出口
   C4  L1 文件不得反向引用 L2/L3 具体仓库路径（单向依赖强制）
   C5  proof_level 枚举只在 GATES_PROOF_SCORING.md 一处定义
+  C6  AI 自动审核不得降级为逐条等待人工批准
+  C7  AI 审核裁决必须绑定规则、独立 Run、Evidence 和有界改写
 
 退出码 0 = 无 P0/P1 发现；1 = 有发现（CI 可拦）。只读，不改任何文件。
 
@@ -23,6 +25,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from typing import Optional
 
 # ── 常量 ──────────────────────────────────────────────────────────────────────
 
@@ -277,6 +280,95 @@ def check_c5_proof_level_single_authority(repo: Path, files: list[Path]) -> list
     return findings
 
 
+def check_c6_ai_review_no_routine_human_wait(
+    repo: Path, files: list[Path]
+) -> list[Finding]:
+    """C6: 结构化声明为 AI 自动审核的节点不得等待人工逐条批准。"""
+    findings: list[Finding] = []
+    for p in files:
+        if p.suffix not in {".yaml", ".yml", ".json"}:
+            continue
+        text = read_text(p)
+        if not re.search(r"^\s*review_mode\s*:\s*ai_automated\s*$", text, re.M):
+            continue
+        wait_match = re.search(r"^\s*(?:work_status|next_state)\s*:\s*waiting_approval\s*$", text, re.M)
+        if wait_match:
+            line = text[:wait_match.start()].count("\n") + 1
+            findings.append(Finding(
+                "C6", "P0", rel(repo, p), line,
+                "AI 自动审核节点不得进入 waiting_approval；应自动改写、重新审核、"
+                "安全阻断或登记规则缺口",
+            ))
+    return findings
+
+
+def _manifest_scalar(text: str, field: str) -> Optional[str]:
+    match = re.search(
+        rf"^\s*{re.escape(field)}\s*:\s*([^#\n]+?)\s*$",
+        text,
+        re.M,
+    )
+    if not match:
+        return None
+    value = match.group(1).strip().strip("'\"")
+    return value or None
+
+
+def check_c7_ai_review_manifest(repo: Path, files: list[Path]) -> list[Finding]:
+    """C7: 校验 AI Review Verdict 实例的最小静态绑定。"""
+    findings: list[Finding] = []
+    required = [
+        "subject_ref",
+        "subject_hash",
+        "generator_run_ref",
+        "review_run_ref",
+        "reviewer_actor_id",
+        "reviewer_execution_node_ref",
+        "rule_set_ref",
+        "rule_set_hash",
+        "evidence_refs",
+        "decision",
+        "max_rewrite_attempts",
+    ]
+    for p in files:
+        if p.suffix not in {".yaml", ".yml", ".json"}:
+            continue
+        text = read_text(p)
+        if _manifest_scalar(text, "object_type") != "ai_review_verdict":
+            continue
+        if _manifest_scalar(text, "contract_id"):
+            continue
+
+        missing = [field for field in required if _manifest_scalar(text, field) is None]
+        if missing:
+            findings.append(Finding(
+                "C7", "P0", rel(repo, p), 0,
+                "AI 审核裁决缺少必填绑定: " + ", ".join(missing),
+            ))
+
+        generator_run = _manifest_scalar(text, "generator_run_ref")
+        review_run = _manifest_scalar(text, "review_run_ref")
+        if generator_run and review_run and generator_run == review_run:
+            findings.append(Finding(
+                "C7", "P0", rel(repo, p), 0,
+                "generator_run_ref 与 review_run_ref 必须独立",
+            ))
+
+        decision = _manifest_scalar(text, "decision")
+        rewrite_limit = _manifest_scalar(text, "max_rewrite_attempts")
+        if decision == "rewrite_required":
+            try:
+                valid_limit = int(rewrite_limit or "0") > 0
+            except ValueError:
+                valid_limit = False
+            if not valid_limit:
+                findings.append(Finding(
+                    "C7", "P0", rel(repo, p), 0,
+                    "rewrite_required 必须声明正整数 max_rewrite_attempts",
+                ))
+    return findings
+
+
 def check_l2_mode(repo: Path) -> list[Finding]:
     """L2 模式：额外检查 project-os.lock 是否存在。"""
     findings: list[Finding] = []
@@ -321,6 +413,8 @@ def main() -> int:
     if not l2_mode:
         all_findings += check_c4_l1_no_l2_refs(repo, files)
     all_findings += check_c5_proof_level_single_authority(repo, files)
+    all_findings += check_c6_ai_review_no_routine_human_wait(repo, files)
+    all_findings += check_c7_ai_review_manifest(repo, files)
     if l2_mode:
         all_findings += check_l2_mode(repo)
 
@@ -357,7 +451,7 @@ def main() -> int:
     # 输出机器可读 JSON（供保存为 Evidence）
     report = {
         "checker": "check_controlled_objects",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "repo": str(repo),
         "files_scanned": len(files),
         "p0_count": len(p0),

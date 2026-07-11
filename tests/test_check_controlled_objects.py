@@ -33,5 +33,70 @@ class CheckerExitCodeTests(unittest.TestCase):
         self.assertEqual(scanned, {"project-os.yaml"})
 
 
+class CheckerGovernanceTests(unittest.TestCase):
+    def make_repo(self, files):
+        temp_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(temp_dir.cleanup)
+        repo = Path(temp_dir.name)
+        for relative_path, content in files.items():
+            target = repo / relative_path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(content, encoding="utf-8")
+        return repo
+
+    def test_ai_review_workflow_cannot_wait_for_human_approval(self):
+        repo = self.make_repo({
+            "workflows/review.yaml": (
+                "review_mode: ai_automated\n"
+                "work_status: waiting_approval\n"
+            )
+        })
+
+        findings = checker.check_c6_ai_review_no_routine_human_wait(
+            repo, checker.iter_repo_files(repo)
+        )
+
+        self.assertEqual([finding.rule for finding in findings], ["C6"])
+
+    def test_review_verdict_requires_rule_binding_and_bounded_rewrite(self):
+        repo = self.make_repo({
+            "artifacts/review-verdict.yaml": (
+                "object_type: ai_review_verdict\n"
+                "decision: rewrite_required\n"
+                "max_rewrite_attempts: 0\n"
+            )
+        })
+
+        findings = checker.check_c7_ai_review_manifest(
+            repo, checker.iter_repo_files(repo)
+        )
+
+        self.assertEqual({finding.rule for finding in findings}, {"C7"})
+
+    def test_complete_pending_review_manifest_is_structurally_valid(self):
+        repo = self.make_repo({
+            "artifacts/review-verdict.yaml": (
+                "object_type: ai_review_verdict\n"
+                "subject_ref: subject/version\n"
+                "subject_hash: sha256\n"
+                "generator_run_ref: run-generator\n"
+                "review_run_ref: run-reviewer\n"
+                "reviewer_actor_id: reviewer\n"
+                "reviewer_execution_node_ref: reviewer-node/version\n"
+                "rule_set_ref: rules/version\n"
+                "rule_set_hash: sha256\n"
+                "evidence_refs: []\n"
+                "decision: pending\n"
+                "max_rewrite_attempts: 2\n"
+            )
+        })
+
+        findings = checker.check_c7_ai_review_manifest(
+            repo, checker.iter_repo_files(repo)
+        )
+
+        self.assertEqual(findings, [])
+
+
 if __name__ == "__main__":
     unittest.main()
