@@ -8,18 +8,18 @@ from linters.check_capability_function_mapping import validate
 
 CAPABILITY = """\
 ---
-stable_id: CAP-001
+stable_{gap}id: CAP-001
 object_type: business_capability
 parent_capability_ref: null
 child_capability_refs: []
 function_refs: [FUNC-001]
 ---
 # 能力
-"""
+""".format(gap="")
 
 FUNCTION = """\
 ---
-stable_id: REQ-FUNC-001
+stable_{gap}id: REQ-FUNC-001
 object_type: requirement
 requirement_kind: functional
 function_id: FUNC-001
@@ -32,7 +32,7 @@ candidate_solution_status: candidate
 spec_refs: []
 ---
 # 功能
-"""
+""".format(gap="")
 
 
 class CapabilityFunctionMappingTests(unittest.TestCase):
