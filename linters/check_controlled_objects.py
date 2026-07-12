@@ -159,7 +159,8 @@ def check_c1_stable_id_unique(repo: Path, files: list[Path]) -> list[Finding]:
                 in_code_block = not in_code_block
             if in_code_block:
                 continue
-            m = re.search(r"stable_id\s*:\s*['\"]?([a-zA-Z0-9_\-\.]+)['\"]?", line)
+            # 只有顶层 stable_id 定义对象；baseline/manifest 内缩进的 stable_id 是引用。
+            m = re.match(r"^stable_id\s*:\s*['\"]?([a-zA-Z0-9_\-\.]+)['\"]?", line)
             if not m:
                 continue
             sid = m.group(1)
@@ -235,6 +236,21 @@ def check_c3_p0p1_has_spec_traceability(repo: Path, files: list[Path]) -> list[F
     for p in files:
         text = read_text(p)
         if not re.search(r"(priority|weight)\s*:\s*['\"]?(p0|p1)['\"]?", text, re.IGNORECASE):
+            continue
+        object_type_match = re.search(
+            r"^object_type\s*:\s*['\"]?([a-zA-Z0-9_\-]+)['\"]?",
+            text,
+            re.MULTILINE,
+        )
+        if object_type_match and object_type_match.group(1) != "requirement":
+            continue
+        requirement_kind_match = re.search(
+            r"^requirement_kind\s*:\s*['\"]?([a-zA-Z0-9_\-]+)['\"]?",
+            text,
+            re.MULTILINE,
+        )
+        # 业务/目标/质量/约束需求先由功能需求承接，不直接要求同名 Spec。
+        if requirement_kind_match and requirement_kind_match.group(1) != "functional":
             continue
         rp = rel(repo, p)
         # 检查是否有对应的 spec 目录（简单启发：spec_id 字段）
@@ -495,6 +511,26 @@ def _markdown_has_section(text: str, section: str) -> bool:
     )
 
 
+def _load_markdown_frontmatter_for_c9(
+    repo: Path, path: Path
+) -> tuple[dict | None, list[Finding]]:
+    if not path.is_file():
+        return None, []
+    text = read_text(path)
+    if not text.startswith("---\n"):
+        return None, [Finding("C9", "P0", rel(repo, path), 0, "Markdown 缺少 YAML frontmatter")]
+    end = text.find("\n---", 4)
+    if end < 0:
+        return None, [Finding("C9", "P0", rel(repo, path), 0, "Markdown frontmatter 未闭合")]
+    try:
+        document = yaml.safe_load(text[4:end])
+    except yaml.YAMLError as exc:
+        return None, [Finding("C9", "P0", rel(repo, path), 0, f"Markdown frontmatter 无法解析: {exc}")]
+    if not isinstance(document, dict):
+        return None, [Finding("C9", "P0", rel(repo, path), 0, "Markdown frontmatter 顶层必须是 mapping")]
+    return document, []
+
+
 def check_c9_template_packages(repo: Path, files: list[Path]) -> list[Finding]:
     """C9: template_root 契约声明的包必须满足全部机器约束。"""
     findings: list[Finding] = []
@@ -524,7 +560,13 @@ def check_c9_template_packages(repo: Path, files: list[Path]) -> list[Finding]:
                 findings.append(Finding("C9", "P0", rel(repo, target), 0, f"模板缺少 required_file: {required_file}"))
 
         mapping_fields: dict[str, dict] = {}
-        for field_name in ("required_fields", "required_values", "required_sections"):
+        for field_name in (
+            "required_fields",
+            "required_values",
+            "required_frontmatter_fields",
+            "required_frontmatter_values",
+            "required_sections",
+        ):
             field_value = contract.get(field_name)
             if field_value is None:
                 mapping_fields[field_name] = {}
@@ -578,6 +620,49 @@ def check_c9_template_packages(repo: Path, files: list[Path]) -> list[Finding]:
                 exists, actual = _dotted_value(content, field)
                 if not exists or actual != expected:
                     findings.append(Finding("C9", "P0", rel(repo, target), 0, f"required_value 不匹配: {field}"))
+
+        frontmatter_cache: dict[str, dict | None] = {}
+        for filename, required_fields in mapping_fields["required_frontmatter_fields"].items():
+            joined = str(Path(template_root_value) / filename) if isinstance(filename, str) else filename
+            target, errors = resolve_repo_path(repo, joined, "C9", f"required_frontmatter_fields filename {filename!r}")
+            findings.extend(errors)
+            if errors or target is None:
+                continue
+            if not isinstance(required_fields, list) or any(not isinstance(field, str) for field in required_fields):
+                findings.append(Finding("C9", "P0", rel(repo, contract_path), 0, f"required_frontmatter_fields[{filename}] 必须是 list[str]"))
+                continue
+            content, errors = _load_markdown_frontmatter_for_c9(repo, target)
+            findings.extend(errors)
+            frontmatter_cache[filename] = content
+            if errors or content is None:
+                continue
+            for field in required_fields:
+                exists, _ = _dotted_value(content, field)
+                if not exists:
+                    findings.append(Finding("C9", "P0", rel(repo, target), 0, f"缺少 required_frontmatter_field: {field}"))
+
+        for filename, expected_values in mapping_fields["required_frontmatter_values"].items():
+            joined = str(Path(template_root_value) / filename) if isinstance(filename, str) else filename
+            target, errors = resolve_repo_path(repo, joined, "C9", f"required_frontmatter_values filename {filename!r}")
+            findings.extend(errors)
+            if errors or target is None:
+                continue
+            if not isinstance(expected_values, dict):
+                findings.append(Finding("C9", "P0", rel(repo, contract_path), 0, f"required_frontmatter_values[{filename}] 必须是 mapping"))
+                continue
+            if any(not isinstance(field, str) for field in expected_values):
+                findings.append(Finding("C9", "P0", rel(repo, contract_path), 0, f"required_frontmatter_values[{filename}] field keys 必须是 string"))
+                continue
+            content = frontmatter_cache.get(filename)
+            if filename not in frontmatter_cache:
+                content, errors = _load_markdown_frontmatter_for_c9(repo, target)
+                findings.extend(errors)
+            if content is None:
+                continue
+            for field, expected in expected_values.items():
+                exists, actual = _dotted_value(content, field)
+                if not exists or actual != expected:
+                    findings.append(Finding("C9", "P0", rel(repo, target), 0, f"required_frontmatter_value 不匹配: {field}"))
 
         for filename, sections in mapping_fields["required_sections"].items():
             joined = str(Path(template_root_value) / filename) if isinstance(filename, str) else filename
@@ -955,10 +1040,13 @@ def main() -> int:
     all_findings += check_c5_proof_level_single_authority(repo, files)
     all_findings += check_c6_ai_review_no_routine_human_wait(repo, files)
     all_findings += check_c7_ai_review_manifest(repo, files)
-    all_findings += check_c8_stage_gate_contract(repo, files)
-    all_findings += check_c9_template_packages(repo, files)
-    all_findings += check_c10_terminology_authority(repo, files)
-    all_findings += check_c11_authority_and_contract_references(repo, files)
+    # C8-C11 校验 L1 自身的契约、模板注册和机器权威；L2 只消费锁定后的协议，
+    # 不复制 project-os.yaml、L1 contracts 或 L1 术语清单。
+    if not l2_mode:
+        all_findings += check_c8_stage_gate_contract(repo, files)
+        all_findings += check_c9_template_packages(repo, files)
+        all_findings += check_c10_terminology_authority(repo, files)
+        all_findings += check_c11_authority_and_contract_references(repo, files)
     all_findings += check_c12_diagram_coverage(repo, files)
     if l2_mode:
         all_findings += check_l2_mode(repo)

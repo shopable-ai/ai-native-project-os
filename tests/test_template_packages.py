@@ -18,6 +18,10 @@ PACKAGE_CONTRACTS = {
         "contracts/artifacts/spec-package-contract.yaml",
         "templates/spec-package",
     ),
+    "requirement-design-package-contract": (
+        "contracts/artifacts/requirement-design-package-contract.yaml",
+        "templates/standard-project/requirements",
+    ),
     "io-contract": (
         "contracts/io/io-contract.yaml",
         "templates/io-contract",
@@ -39,6 +43,7 @@ PACKAGE_CONTRACTS = {
 PACKAGE_AUTHORITY = {
     "chain-package-contract": "chain_package_contract",
     "spec-package-contract": "spec_package_contract",
+    "requirement-design-package-contract": "requirement_design_package_contract",
     "io-contract": "io_contract",
     "workflow-contract": "workflow_contract",
     "skill-contract": "skill_contract",
@@ -52,6 +57,28 @@ RUNTIME_DIRS = {"Run", "Evidence", "Verdict", "Claim", "artifacts"}
 
 def load_yaml(path: Path):
     return yaml.safe_load(path.read_text(encoding="utf-8"))
+
+
+def load_frontmatter(path: Path):
+    text = path.read_text(encoding="utf-8")
+    if not text.startswith("---\n"):
+        raise yaml.YAMLError("missing frontmatter")
+    end = text.find("\n---", 4)
+    if end < 0:
+        raise yaml.YAMLError("unclosed frontmatter")
+    return yaml.safe_load(text[4:end])
+
+
+def write_frontmatter(path: Path, document: dict):
+    text = path.read_text(encoding="utf-8")
+    end = text.find("\n---", 4)
+    path.write_text(
+        "---\n"
+        + yaml.safe_dump(document, allow_unicode=True, sort_keys=False)
+        + "---"
+        + text[end + 4 :],
+        encoding="utf-8",
+    )
 
 
 def nested_value(document, dotted_path: str):
@@ -109,6 +136,48 @@ def validate_package(contract: dict, package_root: Path) -> list[str]:
             if actual_value != expected_value:
                 errors.append(
                     "unexpected required value: "
+                    f"{relative_path}:{field}={actual_value}"
+                )
+
+    for relative_path, fields in contract.get("required_frontmatter_fields", {}).items():
+        path = package_root / relative_path
+        if not path.is_file():
+            continue
+        try:
+            document = load_frontmatter(path)
+        except yaml.YAMLError as exc:
+            errors.append(f"invalid frontmatter: {relative_path}: {exc}")
+            continue
+        for field in fields:
+            try:
+                nested_value(document, field)
+            except KeyError:
+                errors.append(
+                    f"missing required frontmatter field: {relative_path}:{field}"
+                )
+
+    for relative_path, required_values in contract.get(
+        "required_frontmatter_values", {}
+    ).items():
+        path = package_root / relative_path
+        if not path.is_file():
+            continue
+        try:
+            document = load_frontmatter(path)
+        except yaml.YAMLError as exc:
+            errors.append(f"invalid frontmatter: {relative_path}: {exc}")
+            continue
+        for field, expected_value in required_values.items():
+            try:
+                actual_value = nested_value(document, field)
+            except KeyError:
+                errors.append(
+                    f"missing required frontmatter field: {relative_path}:{field}"
+                )
+                continue
+            if actual_value != expected_value:
+                errors.append(
+                    "unexpected required frontmatter value: "
                     f"{relative_path}:{field}={actual_value}"
                 )
 
@@ -293,6 +362,57 @@ class TemplatePackageTests(unittest.TestCase):
         self.assertEqual(set(io_contract["schemas"]), {"request", "event", "result"})
         self.assertEqual(set(io_contract["envelopes"]), {"success", "failure"})
 
+    def test_requirement_design_package_is_human_first_and_baseline_bound(self):
+        self.existing_contracts()
+        root = ROOT / "templates/standard-project/requirements"
+        card_path = root / "functions/FUNC-001_功能需求卡.md"
+        card = load_frontmatter(card_path)
+        self.assertEqual(card["object_type"], "requirement")
+        self.assertEqual(card["requirement_kind"], "functional")
+        self.assertEqual(
+            set(card["intent"]),
+            {
+                "original_intent",
+                "interpreted_intent",
+                "approved_intent",
+                "implementation_intent",
+            },
+        )
+        self.assertTrue(card["context_snapshot_ref"])
+        self.assertTrue(card["baseline_ref"])
+        self.assertIn("human", card["approver"])
+
+        text = card_path.read_text(encoding="utf-8")
+        self.assertIn("## 已批准实现约束", text)
+        self.assertIn("## 候选实现要点", text)
+        self.assertIn("## AI 生成自检", text)
+        self.assertLess(text.index("## 已批准实现约束"), text.index("## 候选实现要点"))
+
+        baseline = load_yaml(root / "baselines/REQ-BASELINE-001.yaml")
+        self.assertEqual(baseline["object_type"], "requirement_baseline")
+        self.assertEqual(baseline["baseline_state"], "approved")
+        self.assertTrue(baseline["requirement_refs"])
+        for requirement_ref in baseline["requirement_refs"]:
+            self.assertEqual(
+                set(requirement_ref), {"stable_id", "version", "content_hash"}
+            )
+
+        context = load_yaml(root / "context/CTX-001.yaml")
+        self.assertEqual(context["object_type"], "context_snapshot")
+        self.assertIn(".prompts/", context["excluded_files"])
+        self.assertTrue(context["exclusion_reasons"])
+
+        project_map = (root / "项目地图.md").read_text(encoding="utf-8")
+        self.assertIn("只保存稳定引用", project_map)
+        self.assertIn("不是需求权威", project_map)
+        generated_files = {
+            path.name for path in (root / "generated").iterdir() if path.is_file()
+        }
+        self.assertEqual(generated_files, {"README.md"})
+        generated = (root / "generated/README.md").read_text(encoding="utf-8")
+        self.assertIn("运行时生成", generated)
+        self.assertIn("不实现生成器", generated)
+
     def test_workflow_has_task_refs_and_bounded_execution_semantics(self):
         self.existing_contracts()
         workflow = load_yaml(ROOT / "templates/workflow/workflow.yaml")
@@ -455,6 +575,49 @@ class TemplatePackageTests(unittest.TestCase):
                             )
                         )
 
+                for relative_path, fields in contract.get(
+                    "required_frontmatter_fields", {}
+                ).items():
+                    for index, field in enumerate(fields):
+                        copied_root = mutation_root / f"missing-frontmatter-{relative_path.replace('/', '-')}-{index}"
+                        shutil.copytree(source_root, copied_root)
+                        markdown_path = copied_root / relative_path
+                        document = load_frontmatter(markdown_path)
+                        parent = document
+                        parts = field.split(".")
+                        for part in parts[:-1]:
+                            parent = parent[part]
+                        del parent[parts[-1]]
+                        write_frontmatter(markdown_path, document)
+                        with self.subTest(
+                            contract=contract["contract_id"],
+                            mutation="missing-frontmatter-field",
+                            target=f"{relative_path}:{field}",
+                        ):
+                            self.assertIn(
+                                f"missing required frontmatter field: {relative_path}:{field}",
+                                validate_package(contract, copied_root),
+                            )
+
+                    copied_root = mutation_root / f"invalid-frontmatter-{relative_path.replace('/', '-')}"
+                    shutil.copytree(source_root, copied_root)
+                    (copied_root / relative_path).write_text(
+                        "---\ninvalid: [yaml\n---\n", encoding="utf-8"
+                    )
+                    with self.subTest(
+                        contract=contract["contract_id"],
+                        mutation="invalid-frontmatter",
+                        target=relative_path,
+                    ):
+                        self.assertTrue(
+                            any(
+                                error.startswith(
+                                    f"invalid frontmatter: {relative_path}:"
+                                )
+                                for error in validate_package(contract, copied_root)
+                            )
+                        )
+
                 for relative_path, sections in contract.get(
                     "required_sections", {}
                 ).items():
@@ -541,7 +704,7 @@ class TemplatePackageTests(unittest.TestCase):
                 validate_package(contract, copied_root),
             )
 
-    def test_project_os_registers_all_six_template_contracts(self):
+    def test_project_os_registers_all_template_contracts(self):
         self.existing_contracts()
         project_os = load_yaml(ROOT / "project-os.yaml")
         authority = project_os["authority"]
@@ -560,7 +723,7 @@ class TemplatePackageTests(unittest.TestCase):
                 [authority_key],
             )
 
-    def test_six_template_contract_ids_are_unique_at_authority_targets(self):
+    def test_template_contract_ids_are_unique_at_authority_targets(self):
         target_contract_ids = set(PACKAGE_CONTRACTS)
         excluded_roots = {
             ROOT / ".git",

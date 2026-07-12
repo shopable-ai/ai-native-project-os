@@ -13,12 +13,18 @@ class StandardProjectTemplateTests(unittest.TestCase):
         required_paths = [
             "domain/glossary.md",
             "domain/mvp/REQ-001.md",
-            "specs/REQ-001/spec.md",
-            "specs/REQ-001/plan.md",
-            "specs/REQ-001/tasks.md",
-            "specs/REQ-001/acceptance.md",
-            "specs/REQ-001/traceability.md",
-            "reviews/REQ-001-review-evidence.yaml",
+            "requirements/README.md",
+            "requirements/项目地图.md",
+            "requirements/functions/FUNC-001_功能需求卡.md",
+            "requirements/baselines/REQ-BASELINE-001.yaml",
+            "requirements/context/CTX-001.yaml",
+            "requirements/generated/README.md",
+            "specs/REQ-FUNC-001/spec.md",
+            "specs/REQ-FUNC-001/plan.md",
+            "specs/REQ-FUNC-001/tasks.md",
+            "specs/REQ-FUNC-001/acceptance.md",
+            "specs/REQ-FUNC-001/traceability.md",
+            "reviews/REQ-FUNC-001-review-evidence.yaml",
         ]
 
         for relative_path in required_paths:
@@ -26,11 +32,11 @@ class StandardProjectTemplateTests(unittest.TestCase):
 
         fact = (TEMPLATE / "domain/glossary.md").read_text(encoding="utf-8")
         requirement = (TEMPLATE / "domain/mvp/REQ-001.md").read_text(encoding="utf-8")
-        traceability = (TEMPLATE / "specs/REQ-001/traceability.md").read_text(
+        traceability = (TEMPLATE / "specs/REQ-FUNC-001/traceability.md").read_text(
             encoding="utf-8"
         )
         evidence = yaml.safe_load(
-            (TEMPLATE / "reviews/REQ-001-review-evidence.yaml").read_text(
+            (TEMPLATE / "reviews/REQ-FUNC-001-review-evidence.yaml").read_text(
                 encoding="utf-8"
             )
         )
@@ -56,8 +62,10 @@ class StandardProjectTemplateTests(unittest.TestCase):
         self.assertIn("必需", readme)
         self.assertIn("条件启用", readme)
         self.assertIn("运行时生成", readme)
-        self.assertIn("specs/REQ-001/", readme)
-        self.assertIn("reviews/REQ-001-review-evidence.yaml", readme)
+        self.assertIn("specs/REQ-FUNC-001/", readme)
+        self.assertIn("reviews/REQ-FUNC-001-review-evidence.yaml", readme)
+        self.assertIn("requirements/functions/FUNC-001_功能需求卡.md", readme)
+        self.assertIn("requirements/baselines/REQ-BASELINE-001.yaml", readme)
 
 
 if __name__ == "__main__":

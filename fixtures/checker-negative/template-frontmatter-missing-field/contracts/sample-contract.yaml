@@ -1,0 +1,7 @@
+schema_version: 1
+contract_id: sample-contract
+version: 1
+template_root: templates/sample
+required_files: [card.md]
+required_frontmatter_fields:
+  card.md: [stable_id, object_type]

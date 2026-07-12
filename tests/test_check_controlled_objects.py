@@ -1,4 +1,6 @@
 import importlib.util
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -41,6 +43,39 @@ class CheckerExitCodeTests(unittest.TestCase):
             scanned = {path.relative_to(repo).as_posix() for path in checker.iter_repo_files(repo)}
 
         self.assertEqual(scanned, {"project-os.yaml"})
+
+    def test_l2_mode_does_not_require_l1_authority_files(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = Path(temp_dir)
+            (repo / "project-os.lock.yaml").write_text(
+                "schema_version: 1\n", encoding="utf-8"
+            )
+            (repo / "functional.md").write_text(
+                "---\n"
+                "stable_id: REQ-FUNC-001\n"
+                "object_type: requirement\n"
+                "requirement_kind: functional\n"
+                "canonical_path: functional.md\n"
+                "priority: p1\n"
+                "---\n",
+                encoding="utf-8",
+            )
+            spec = repo / "specs" / "REQ-FUNC-001"
+            spec.mkdir(parents=True)
+            (spec / "traceability.md").write_text(
+                "# traceability\n", encoding="utf-8"
+            )
+
+            result = subprocess.run(
+                [sys.executable, str(MODULE_PATH), str(repo), "--l2-mode"],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertNotIn("阶段门禁契约不存在", result.stdout)
+        self.assertNotIn("project-os.yaml", result.stdout)
 
 
 class CheckerGovernanceTests(unittest.TestCase):
@@ -111,6 +146,67 @@ class CheckerGovernanceTests(unittest.TestCase):
         )
 
         self.assertEqual(findings, [])
+
+    def test_c1_nested_stable_id_is_reference_not_second_definition(self):
+        repo = self.make_repo({
+            "requirements/REQ-001.md": (
+                "---\n"
+                "stable_id: REQ-001\n"
+                "canonical_path: requirements/REQ-001.md\n"
+                "---\n"
+            ),
+            "requirements/baseline.yaml": (
+                "stable_id: BASELINE-001\n"
+                "canonical_path: requirements/baseline.yaml\n"
+                "requirement_refs:\n"
+                "  - stable_id: REQ-001\n"
+                "    version: 1\n"
+            ),
+        })
+
+        findings = checker.check_c1_stable_id_unique(
+            repo, checker.iter_repo_files(repo)
+        )
+
+        self.assertEqual(findings, [])
+
+    def test_c3_business_requirement_does_not_skip_functional_design_layer(self):
+        repo = self.make_repo({
+            "business.md": (
+                "---\n"
+                "stable_id: REQ-BIZ-001\n"
+                "object_type: requirement\n"
+                "requirement_kind: business\n"
+                "priority: p1\n"
+                "---\n"
+            ),
+            "specs/.keep.md": "fixture\n",
+        })
+
+        findings = checker.check_c3_p0p1_has_spec_traceability(
+            repo, checker.iter_repo_files(repo)
+        )
+
+        self.assertEqual(findings, [])
+
+    def test_c3_functional_requirement_requires_matching_spec_traceability(self):
+        repo = self.make_repo({
+            "functional.md": (
+                "---\n"
+                "stable_id: REQ-FUNC-001\n"
+                "object_type: requirement\n"
+                "requirement_kind: functional\n"
+                "priority: p1\n"
+                "---\n"
+            ),
+            "specs/.keep.md": "fixture\n",
+        })
+
+        findings = checker.check_c3_p0p1_has_spec_traceability(
+            repo, checker.iter_repo_files(repo)
+        )
+
+        self.assertEqual([finding.rule for finding in findings], ["C3"])
 
     def test_review_verdict_requires_rule_binding_and_bounded_rewrite(self):
         repo = self.make_repo({

@@ -1,0 +1,30 @@
+schema_version: 1
+stable_id: CTX-001
+object_type: context_snapshot
+version: 1
+snapshot_state: approved
+canonical_path: requirements/context/CTX-001.yaml
+included_files:
+  - domain/glossary.md
+  - domain/mvp/REQ-001.md
+  - requirements/项目地图.md
+excluded_files:
+  - .prompts/
+  - chat-transcripts/
+  - external-notes/
+exclusion_reasons:
+  - path: .prompts/
+    reason: 提示词不是批准事实或需求权威
+  - path: chat-transcripts/
+    reason: 聊天包含候选、错误与修正，必须先升格
+  - path: external-notes/
+    reason: 零碎笔记未通过来源和批准门禁
+source_hashes:
+  domain/glossary.md: "{{fact_source_hash}}"
+  domain/mvp/REQ-001.md: "{{business_requirement_content_hash}}"
+  requirements/项目地图.md: "{{project_map_hash}}"
+generated_by: ai-template-author
+approved_by: human-template-owner
+created_at: "{{context_created_at}}"
+content_hash: "{{context_snapshot_content_hash}}"
+proof_boundary: input_scope_only_not_content_correctness

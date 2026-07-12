@@ -102,6 +102,7 @@ authority:
   acceptance_verdict_claim_contract: contracts/governance/acceptance-verdict-claim-contract.yaml # 业务验收裁决与声明契约
   run_evidence_contract: contracts/governance/run-evidence-contract.yaml                # Run 与 Evidence 最小机器结构契约
   chain_package_contract: contracts/artifacts/chain-package-contract.yaml       # 业务链包模板机器契约
+  requirement_design_package_contract: contracts/artifacts/requirement-design-package-contract.yaml # 人机需求设计包机器契约
   spec_package_contract: contracts/artifacts/spec-package-contract.yaml         # Spec 五件套模板机器契约
   io_contract: contracts/io/io-contract.yaml                                    # 跨组件 I/O 模板机器契约
   workflow_contract: contracts/execution/workflow-contract.yaml                 # Workflow 模板机器契约

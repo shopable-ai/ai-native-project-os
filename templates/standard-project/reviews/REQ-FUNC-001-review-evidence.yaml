@@ -1,11 +1,13 @@
 schema_version: 1
-evidence_id: REQ-001-review-evidence
+evidence_id: REQ-FUNC-001-review-evidence
 object_type: evidence
 fixture: true
 subject_refs:
   - FACT-001
   - REQ-001
-  - SPEC-REQ-001
+  - REQ-FUNC-001
+  - REQ-BASELINE-001
+  - SPEC-REQ-FUNC-001
 proof_level: control_package
 criterion_results:
   - criterion_id: AC-001

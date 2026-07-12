@@ -51,6 +51,17 @@ class OperationalSpineCheckerTests(unittest.TestCase):
         root = FIXTURES / "checker-negative" / "template-package-missing-file"
         self.assert_rule(self.findings("check_c9_template_packages", root), "C9")
 
+    def test_c9_rejects_missing_required_frontmatter_field(self):
+        root = FIXTURES / "checker-negative" / "template-frontmatter-missing-field"
+        findings = self.findings("check_c9_template_packages", root)
+        self.assertTrue(
+            any(
+                finding.rule == "C9"
+                and "required_frontmatter_field: object_type" in finding.message
+                for finding in findings
+            )
+        )
+
     def test_c9_required_fields_must_be_mapping(self):
         root = FIXTURES / "checker-negative" / "template-contract-malformed-required-fields"
         findings = self.findings("check_c9_template_packages", root)
@@ -93,18 +104,19 @@ class OperationalSpineCheckerTests(unittest.TestCase):
         findings = self.findings("check_c9_template_packages", root)
         self.assertTrue(any("template_root" in finding.message and "相对路径" in finding.message for finding in findings))
 
-    def test_c9_accepts_all_six_registered_repository_template_contracts(self):
+    def test_c9_accepts_all_registered_repository_template_contracts(self):
         project = yaml.safe_load((REPO_ROOT / "project-os.yaml").read_text(encoding="utf-8"))
         authority_keys = (
             "chain_package_contract",
             "spec_package_contract",
+            "requirement_design_package_contract",
             "io_contract",
             "workflow_contract",
             "skill_contract",
             "project_instance_contract",
         )
         contract_files = [REPO_ROOT / project["authority"][key] for key in authority_keys]
-        self.assertEqual(len({path.resolve() for path in contract_files}), 6)
+        self.assertEqual(len({path.resolve() for path in contract_files}), 7)
         files = contract_files + [path for path in (REPO_ROOT / "templates").rglob("*") if path.is_file()]
         self.assertEqual(checker.check_c9_template_packages(REPO_ROOT, files), [])
 
