@@ -1,0 +1,7 @@
+stable_id: SCENARIO-REQ-001
+object_type: scenario
+version: 1
+canonical_path: fixtures/requirement-design/positive/scenario.yaml
+requirement_refs: [REQ-BIZ-001]
+trigger: 已批准机会进入处理链
+content_hash: sha256:scenario-fixture-001

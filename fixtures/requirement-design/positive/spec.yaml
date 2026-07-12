@@ -1,0 +1,16 @@
+stable_id: SPEC-REQ-FUNC-001
+object_type: spec
+version: 1
+canonical_path: fixtures/requirement-design/positive/spec.yaml
+approval_status: approved
+functional_requirement_ref:
+  stable_id: REQ-FUNC-RD-FIX-001
+  version: 1
+  content_hash: sha256:fd6e6c81a0b4125fa80bbcc3be9f76a9ccfe53b08ddacf391ec0bc8c8c3dae89
+requirement_baseline_ref: REQ-BASELINE-RD-FIX-001
+requirement_baseline_hash: sha256:d9dde34b4eca1602d18267c1dc960304fb654a15fbed202de3ab14e835b05fe9
+adr_refs: [ADR-REQ-001]
+acceptance_criteria:
+  - 判断结果不扩大批准意图
+  - 未批准输入 fail closed
+content_hash: sha256:spec-fixture-001

@@ -1,0 +1,8 @@
+stable_id: FACT-REQ-001
+object_type: fact
+version: 1
+canonical_path: fixtures/requirement-design/positive/fact.yaml
+approval_status: approved
+approver: human-product-owner
+source_refs: [SRC-REQ-001]
+content_hash: sha256:fact-fixture-001

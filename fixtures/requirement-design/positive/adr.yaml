@@ -1,0 +1,11 @@
+stable_id: ADR-REQ-001
+object_type: architecture_decision
+version: 1
+canonical_path: fixtures/requirement-design/positive/adr.yaml
+decision: accepted
+approved_by: human-architecture-owner
+requirement_refs: [REQ-FUNC-RD-FIX-001]
+baseline_ref: REQ-BASELINE-RD-FIX-001
+accepted_solution: 可审计价值判断接口
+rejected_solutions: [按触达次数直接扩量]
+content_hash: sha256:adr-fixture-001

@@ -195,6 +195,31 @@ negative_examples:
     waiver_scope: engineering-design/different-scope/v1
     result: blocked
     handling: fail_closed
+  intent_drift:
+    description: implementation_intent_is_not_bound_to_human_approved_intent
+    criterion_ref: stage-exit-gates-contract@1#stages.S0.exit_criteria[0]
+    result: blocked
+    handling: fail_closed
+  AI_self_approval:
+    description: AI_identity_attempts_to_approve_functional_requirement_or_baseline
+    criterion_ref: stage-exit-gates-contract@1#stages.S2.exit_criteria[1]
+    result: blocked
+    handling: fail_closed
+  unapproved_functional_requirement:
+    description: spec_references_unapproved_or_stale_functional_requirement
+    criterion_ref: stage-exit-gates-contract@1#stages.S5.exit_criteria[0]
+    result: blocked
+    handling: fail_closed
+  baseline_member_hash_mismatch:
+    description: spec_or_baseline_member_does_not_match_exact_requirement_version_and_hash
+    criterion_ref: stage-exit-gates-contract@1#stages.S5.exit_criteria[0]
+    result: blocked
+    handling: fail_closed
+  prompt_context_authority_bypass:
+    description: prompt_chat_or_temporary_note_is_included_as_approved_authority
+    criterion_ref: stage-exit-gates-contract@1#stages.S2.exit_criteria[1]
+    result: blocked
+    handling: fail_closed
 
 stages:
   R0:
@@ -220,16 +245,21 @@ stages:
     required_inputs:
       - approved_requirement_seed_or_R0_recovery_result
       - stakeholders_constraints_and_known_non_goals
+      - original_intent_and_candidate_interpretation
     required_artifacts:
       - objective_scope_roles_success_metrics_and_requirement_baseline
       - initial_project_type_and_governance_route
+      - original_intent_interpreted_intent_approved_intent_and_implementation_intent_record
     exit_criteria:
       - objective_owner_scope_denominator_acceptance_direction_and_forbidden_claims_are_explicit
       - unknown_route_inputs_are_not_treated_as_low_risk
+      - approved_intent_is_human_approved_and_implementation_intent_is_bound_to_it
     evidence_requirements:
       - approval_record_requirement_baseline_hash_scope_diff_and_route_decision_ref
+      - intent_alignment_hashes_and_human_approval_identity
     invalidation_triggers:
       - objective_scope_owner_project_type_or_risk_input_changes
+      - original_intent_approved_intent_or_implementation_intent_changes
     reopen_targets:
       - S0
       - dependent_specs_tasks_evidence_verdicts_and_claims
@@ -252,17 +282,23 @@ stages:
       - S2_when_scenario_basis_is_affected
   S2:
     required_inputs:
-      - approved_requirements_domain_facts_triggers_and_roles
+      - approved_business_requirements_domain_facts_triggers_roles_and_current_requirement_baseline
     required_artifacts:
       - scenarios_trigger_profiles_and_business_chains
       - normal_exception_recovery_paths_capability_tree_and_function_tree
+      - functional_requirement_cards_context_snapshots_and_updated_requirement_baseline
     exit_criteria:
       - every_P0_or_P1_requirement_has_scenario_trigger_chain_failure_terminal_and_recovery_exit
       - business_capabilities_are_not_prematurely_bound_to_engineering_implementation
+      - every_P0_or_P1_function_has_a_functional_requirement_with_intent_alignment_AI_self_review_and_human_approval
+      - functional_requirements_separate_approved_constraints_from_candidate_solutions
     evidence_requirements:
       - requirement_to_scenario_and_chain_coverage_with_branch_terminal_and_owner_review
+      - chain_capability_function_and_functional_requirement_coverage
+      - context_snapshot_AI_self_review_human_approval_version_hash_and_baseline_manifest
     invalidation_triggers:
       - user_trigger_business_policy_fact_or_requirement_denominator_changes
+      - chain_capability_function_intent_context_or_requirement_baseline_changes
     reopen_targets:
       - S2
       - S0_when_objective_is_invalidated
@@ -304,16 +340,21 @@ stages:
   S5:
     required_inputs:
       - engineering_design_acceptance_criteria_approved_spec_baseline_dependencies_and_authorization_constraints
+      - approved_functional_requirement_version_and_hash_current_requirement_baseline_and_accepted_ADR
     required_artifacts:
       - spec_package_derived_task_tree_workflow_and_local_skills_or_tools
       - minimum_vertical_implementation_and_recovery_plan
     exit_criteria:
       - work_packages_are_executable_pausable_and_recoverable
       - tasks_have_no_orphans_and_tools_do_not_hide_control_flow_or_claim_authority
+      - spec_binds_exact_approved_functional_requirement_version_and_hash_in_current_requirement_baseline
+      - unapproved_stale_intent_mismatched_or_out_of_baseline_requirements_fail_closed
     evidence_requirements:
       - static_checks_contract_tests_task_coverage_dependency_authorization_checks_and_recovery_plan
+      - spec_functional_requirement_baseline_and_ADR_binding_evidence
     invalidation_triggers:
       - spec_criteria_dependency_implementation_counterevidence_permission_or_plan_changes
+      - functional_requirement_intent_hash_approval_or_requirement_baseline_changes
     reopen_targets:
       - S5
       - S4_when_contract_is_invalidated

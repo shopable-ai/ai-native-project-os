@@ -1,0 +1,5 @@
+mutation_id: NEG-PROMPT-AUTHORITY
+target_ref: CTX-REQ-001
+path: included_files.0
+value: .prompts/last-chat.md
+expected_error: prompt_or_chat_cannot_be_included_as_authority

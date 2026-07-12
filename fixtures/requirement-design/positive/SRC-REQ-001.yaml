@@ -1,0 +1,6 @@
+stable_id: SRC-REQ-001
+object_type: source
+version: 1
+canonical_path: fixtures/requirement-design/positive/SRC-REQ-001.yaml
+source_state: captured
+content_hash: sha256:source-fixture-001

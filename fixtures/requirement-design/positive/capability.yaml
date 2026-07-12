@@ -1,0 +1,7 @@
+stable_id: CAP-REQ-001
+object_type: business_capability
+version: 1
+canonical_path: fixtures/requirement-design/positive/capability.yaml
+chain_refs: [CHAIN-REQ-001]
+name: 有效机会判断能力
+content_hash: sha256:capability-fixture-001

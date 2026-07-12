@@ -1,0 +1,13 @@
+stable_id: REQ-BIZ-001
+object_type: requirement
+requirement_kind: business
+version: 1
+canonical_path: fixtures/requirement-design/positive/business-requirement.yaml
+priority: p1
+approval_status: approved
+approver: human-product-owner
+fact_refs: [FACT-REQ-001]
+intent:
+  original_intent: 提高有效成交，而不是增加无差别触达
+  approved_intent: 在不扩大骚扰风险的前提下提高有效成交
+content_hash: sha256:09d03abe61f461e4f853c697a9cec3a820bc08af9fd11e7cbf003899ec965312

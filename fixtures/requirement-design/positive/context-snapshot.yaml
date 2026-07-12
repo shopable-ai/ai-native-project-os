@@ -1,0 +1,23 @@
+stable_id: CTX-REQ-001
+object_type: context_snapshot
+version: 1
+canonical_path: fixtures/requirement-design/positive/context-snapshot.yaml
+snapshot_state: approved
+included_files:
+  - fixtures/requirement-design/positive/SRC-REQ-001.yaml
+  - fixtures/requirement-design/positive/fact.yaml
+  - fixtures/requirement-design/positive/business-requirement.yaml
+  - fixtures/requirement-design/positive/chain.yaml
+  - fixtures/requirement-design/positive/capability.yaml
+  - fixtures/requirement-design/positive/function.yaml
+excluded_files:
+  - .prompts/
+  - chat-transcripts/
+exclusion_reasons:
+  - 提示词和聊天不是批准事实源
+source_hashes:
+  SRC-REQ-001: sha256:source-fixture-001
+  FACT-REQ-001: sha256:fact-fixture-001
+generated_by: ai-requirement-author
+approved_by: human-product-owner
+content_hash: sha256:9f3e50368beb5d82fd066b85b307182662e3e7bbd64bd56415a2d4b3973c1c67

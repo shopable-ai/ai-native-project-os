@@ -1,0 +1,37 @@
+stable_id: REQ-FUNC-RD-FIX-001
+object_type: requirement
+requirement_kind: functional
+version: 1
+canonical_path: fixtures/requirement-design/positive/functional-requirement.yaml
+priority: p1
+approval_status: approved
+approver: human-product-owner
+business_requirement_refs: [REQ-BIZ-001]
+scenario_refs: [SCENARIO-REQ-001]
+chain_refs: [CHAIN-REQ-001]
+capability_refs: [CAP-REQ-001]
+function_refs: [FUNC-REQ-001]
+intent:
+  original_intent: 提高有效成交，而不是增加无差别触达
+  interpreted_intent: 先判断机会价值，再决定是否进入销售处理
+  approved_intent: 只让满足批准价值规则的机会进入销售处理
+  implementation_intent: 实现可审计的机会价值判断，不增加无差别触达
+intent_alignment:
+  status: approved
+  approved_intent_hash: sha256:intent-approved-001
+  implementation_intent_source_hash: sha256:intent-approved-001
+  verified_by: human-product-owner
+context_snapshot_ref: CTX-REQ-001
+baseline_ref: REQ-BASELINE-RD-FIX-001
+generation_review:
+  missing_information: [真实业务阈值仍由 L2 配置]
+  assumptions: [本 fixture 只验证追溯结构]
+  possible_errors: [可能把成交质量误解为触达数量]
+  human_confirmations: [目标、非目标、价值规则和验收方向]
+approved_constraints:
+  - 不得把增加触达次数作为目标替代
+  - 未批准或低置信机会必须 fail closed
+candidate_solution_status: candidate
+candidate_solution_notes:
+  - 候选模型与阈值需研究和 ADR
+content_hash: sha256:fd6e6c81a0b4125fa80bbcc3be9f76a9ccfe53b08ddacf391ec0bc8c8c3dae89

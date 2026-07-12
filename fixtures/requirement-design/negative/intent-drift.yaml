@@ -1,0 +1,5 @@
+mutation_id: NEG-INTENT-DRIFT
+target_ref: REQ-FUNC-RD-FIX-001
+path: intent_alignment.implementation_intent_source_hash
+value: sha256:unapproved-intent
+expected_error: implementation_intent_not_bound_to_approved_intent

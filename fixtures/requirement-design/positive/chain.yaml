@@ -1,0 +1,12 @@
+stable_id: CHAIN-REQ-001
+object_type: business_chain
+version: 1
+canonical_path: fixtures/requirement-design/positive/chain.yaml
+priority: p1
+cross_node: false
+multi_state: false
+authorization_or_data_boundary: false
+scenario_refs: [SCENARIO-REQ-001]
+requirement_refs: [REQ-BIZ-001]
+path_types: [normal, exception, recovery]
+content_hash: sha256:chain-fixture-001

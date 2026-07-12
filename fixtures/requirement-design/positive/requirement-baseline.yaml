@@ -1,0 +1,16 @@
+stable_id: REQ-BASELINE-RD-FIX-001
+object_type: requirement_baseline
+version: 1
+canonical_path: fixtures/requirement-design/positive/requirement-baseline.yaml
+baseline_state: approved
+approved_by: human-product-owner
+requirement_refs:
+  - stable_id: REQ-BIZ-001
+    version: 1
+    content_hash: sha256:09d03abe61f461e4f853c697a9cec3a820bc08af9fd11e7cbf003899ec965312
+  - stable_id: REQ-FUNC-RD-FIX-001
+    version: 1
+    content_hash: sha256:fd6e6c81a0b4125fa80bbcc3be9f76a9ccfe53b08ddacf391ec0bc8c8c3dae89
+scope_hash: sha256:requirement-scope-fixture-001
+supersedes: null
+content_hash: sha256:d9dde34b4eca1602d18267c1dc960304fb654a15fbed202de3ab14e835b05fe9

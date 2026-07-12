@@ -1,0 +1,5 @@
+mutation_id: NEG-BASELINE-SILENT-CHANGE
+target_ref: REQ-BASELINE-RD-FIX-001
+path: requirement_refs.1.content_hash
+value: sha256:silently-modified
+expected_error: baseline_member_mismatch:REQ-FUNC-RD-FIX-001

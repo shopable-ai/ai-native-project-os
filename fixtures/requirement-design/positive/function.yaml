@@ -1,0 +1,7 @@
+stable_id: FUNC-REQ-001
+object_type: function
+version: 1
+canonical_path: fixtures/requirement-design/positive/function.yaml
+capability_refs: [CAP-REQ-001]
+name: 判断机会是否值得进入销售处理
+content_hash: sha256:function-fixture-001

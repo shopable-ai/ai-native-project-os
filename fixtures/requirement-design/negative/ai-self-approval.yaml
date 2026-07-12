@@ -1,0 +1,5 @@
+mutation_id: NEG-AI-SELF-APPROVAL
+target_ref: REQ-FUNC-RD-FIX-001
+path: approver
+value: ai-requirement-author
+expected_error: ai_cannot_approve_functional_requirement

@@ -1,0 +1,5 @@
+mutation_id: NEG-UNAPPROVED-SPEC
+target_ref: REQ-FUNC-RD-FIX-001
+path: approval_status
+value: draft
+expected_error: spec_cannot_consume_unapproved_functional_requirement
