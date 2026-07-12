@@ -10,4 +10,4 @@ domain/
 └── capability-map/      # 条件启用：批准 business_capability
 ```
 
-原始材料只能先形成 `source`、候选事实、假设或未知；经可追责的人类 approver 批准后，才可进入本目录。`specs/` 的 traceability 指向这里的批准对象，不能指向原始材料直接驱动实现。
+原始材料只能先形成 `source`、候选事实、假设或未知；经合法 Decision Gate 后，才可进入本目录。低风险对象可引用当前认证策略，高风险目标、责任、scope 或风险变化必须引用可追责人类；`specs/` 不能指向原始材料直接驱动实现。

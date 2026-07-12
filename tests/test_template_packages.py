@@ -50,6 +50,11 @@ PACKAGE_AUTHORITY = {
     "project-instance-contract": "project_instance_contract",
 }
 
+PACKAGE_VERSIONS = {
+    contract_id: (2 if contract_id == "requirement-design-package-contract" else 1)
+    for contract_id in PACKAGE_CONTRACTS
+}
+
 PLACEHOLDER_RE = re.compile(r"\{\{([^{}]+)\}\}")
 SNAKE_CASE_RE = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
 RUNTIME_DIRS = {"Run", "Evidence", "Verdict", "Claim", "artifacts"}
@@ -236,7 +241,7 @@ class TemplatePackageTests(unittest.TestCase):
             contract = load_yaml(path)
             self.assertEqual(contract["schema_version"], 1)
             self.assertEqual(contract["contract_id"], contract_id)
-            self.assertEqual(contract["version"], 1)
+            self.assertEqual(contract["version"], PACKAGE_VERSIONS[contract_id])
             self.assertEqual(contract["template_root"], template_root)
             self.assertTrue(contract["required_files"])
             self.assertTrue(
@@ -380,7 +385,11 @@ class TemplatePackageTests(unittest.TestCase):
         )
         self.assertTrue(card["context_snapshot_ref"])
         self.assertTrue(card["baseline_ref"])
-        self.assertIn("human", card["approver"])
+        self.assertIsNone(card["approval_route"])
+        self.assertIsNone(card["decision_authority_ref"])
+        self.assertIsNone(card["certification_verdict_ref"])
+        self.assertIsNone(card["approver"])
+        self.assertTrue(card["decision_inputs"]["unresolved_unknown"])
 
         text = card_path.read_text(encoding="utf-8")
         self.assertIn("## 已批准实现约束", text)
@@ -391,6 +400,10 @@ class TemplatePackageTests(unittest.TestCase):
         baseline = load_yaml(root / "baselines/REQ-BASELINE-001.yaml")
         self.assertEqual(baseline["object_type"], "requirement_baseline")
         self.assertEqual(baseline["baseline_state"], "approved")
+        self.assertEqual(baseline["approval_route"], "policy_certified")
+        self.assertIsNone(baseline["approved_by"])
+        self.assertTrue(baseline["decision_authority_ref"])
+        self.assertTrue(baseline["certification_verdict_ref"])
         self.assertTrue(baseline["requirement_refs"])
         for requirement_ref in baseline["requirement_refs"]:
             self.assertEqual(
@@ -399,6 +412,9 @@ class TemplatePackageTests(unittest.TestCase):
 
         context = load_yaml(root / "context/CTX-001.yaml")
         self.assertEqual(context["object_type"], "context_snapshot")
+        self.assertEqual(context["approval_route"], "policy_certified")
+        self.assertIsNone(context["approved_by"])
+        self.assertTrue(context["certification_verdict_ref"])
         self.assertIn(".prompts/", context["excluded_files"])
         self.assertTrue(context["exclusion_reasons"])
 

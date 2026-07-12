@@ -25,7 +25,21 @@ requirement_kind: functional
 function_id: FUNC-001
 capability_refs: [CAP-001]
 approval_status: pending
-approver: human-owner
+approval_route: null
+decision_authority_ref: null
+certification_verdict_ref: null
+executor: ai-requirement-author
+approver: null
+verifier: independent-requirement-reviewer
+decision_inputs:
+  scope_change: none
+  threshold_change: unchanged
+  blocking_rule_change: unchanged
+  permission_change: none
+  objective_or_responsibility_change: false
+  residual_risk_acceptance: false
+  external_side_effect: none
+  unresolved_unknown: false
 intent:
   approved_intent: null
 candidate_solution_status: candidate
@@ -33,6 +47,30 @@ spec_refs: []
 ---
 # 功能
 """.format(gap="")
+
+
+HUMAN_APPROVED_FUNCTION = (
+    FUNCTION.replace("approval_status: pending", "approval_status: approved")
+    .replace("approval_route: null", "approval_route: human_signoff")
+    .replace("decision_authority_ref: null", "decision_authority_ref: human-owner")
+    .replace("approver: null", "approver: human-owner")
+    .replace("approved_intent: null", "approved_intent: approved-business-intent")
+)
+
+
+POLICY_APPROVED_FUNCTION = (
+    FUNCTION.replace("approval_status: pending", "approval_status: approved")
+    .replace("approval_route: null", "approval_route: policy_certified")
+    .replace(
+        "decision_authority_ref: null",
+        "decision_authority_ref: review-policy-activation-routing@1",
+    )
+    .replace(
+        "certification_verdict_ref: null",
+        "certification_verdict_ref: REVIEW-POLICY-CERT-001",
+    )
+    .replace("approved_intent: null", "approved_intent: approved-business-intent")
+)
 
 
 class CapabilityFunctionMappingTests(unittest.TestCase):
@@ -83,14 +121,85 @@ class CapabilityFunctionMappingTests(unittest.TestCase):
             codes = {finding.code for finding in validate(root)}
             self.assertIn("C13-UNAPPROVED-SPEC", codes)
 
-    def test_approved_requirement_requires_human_intent(self):
+    def test_approved_requirement_accepts_human_signoff_route(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self.write(root, "requirements/capabilities/CAP-001.md", CAPABILITY)
-            invalid = FUNCTION.replace("approval_status: pending", "approval_status: approved").replace("approver: human-owner", "approver: ai-agent")
+            self.write(root, "requirements/functions/FUNC-001.md", HUMAN_APPROVED_FUNCTION)
+            self.assertEqual([], validate(root))
+
+    def test_approved_requirement_accepts_policy_certified_route(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.write(root, "requirements/capabilities/CAP-001.md", CAPABILITY)
+            self.write(root, "requirements/functions/FUNC-001.md", POLICY_APPROVED_FUNCTION)
+            self.assertEqual([], validate(root))
+
+    def test_approved_requirement_without_route_is_blocking(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.write(root, "requirements/capabilities/CAP-001.md", CAPABILITY)
+            invalid = FUNCTION.replace("approval_status: pending", "approval_status: approved").replace(
+                "approved_intent: null", "approved_intent: approved-business-intent"
+            )
             self.write(root, "requirements/functions/FUNC-001.md", invalid)
             codes = {finding.code for finding in validate(root)}
-            self.assertIn("C13-INVALID-APPROVAL", codes)
+            self.assertIn("C13-INVALID-DECISION-GATE", codes)
+
+    def test_policy_certified_route_requires_certification_verdict(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.write(root, "requirements/capabilities/CAP-001.md", CAPABILITY)
+            invalid = POLICY_APPROVED_FUNCTION.replace(
+                "certification_verdict_ref: REVIEW-POLICY-CERT-001",
+                "certification_verdict_ref: null",
+            )
+            self.write(root, "requirements/functions/FUNC-001.md", invalid)
+            codes = {finding.code for finding in validate(root)}
+            self.assertIn("C13-MISSING-CERTIFICATION", codes)
+
+    def test_policy_certified_route_rejects_high_risk_route_mismatch(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.write(root, "requirements/capabilities/CAP-001.md", CAPABILITY)
+            invalid = POLICY_APPROVED_FUNCTION.replace(
+                "scope_change: none", "scope_change: expanded"
+            )
+            self.write(root, "requirements/functions/FUNC-001.md", invalid)
+            codes = {finding.code for finding in validate(root)}
+            self.assertIn("C13-ROUTE-MISMATCH", codes)
+
+    def test_unresolved_unknown_is_blocking_for_every_approval_route(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.write(root, "requirements/capabilities/CAP-001.md", CAPABILITY)
+            invalid = HUMAN_APPROVED_FUNCTION.replace(
+                "unresolved_unknown: false", "unresolved_unknown: true"
+            )
+            self.write(root, "requirements/functions/FUNC-001.md", invalid)
+            codes = {finding.code for finding in validate(root)}
+            self.assertIn("C13-UNRESOLVED-UNKNOWN", codes)
+
+    def test_policy_route_rejects_generator_as_decision_authority(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.write(root, "requirements/capabilities/CAP-001.md", CAPABILITY)
+            invalid = POLICY_APPROVED_FUNCTION.replace(
+                "decision_authority_ref: review-policy-activation-routing@1",
+                "decision_authority_ref: ai-requirement-author",
+            )
+            self.write(root, "requirements/functions/FUNC-001.md", invalid)
+            codes = {finding.code for finding in validate(root)}
+            self.assertIn("C13-AI-SELF-CERTIFICATION", codes)
+
+    def test_human_signoff_route_rejects_non_human_approver(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.write(root, "requirements/capabilities/CAP-001.md", CAPABILITY)
+            invalid = HUMAN_APPROVED_FUNCTION.replace("approver: human-owner", "approver: ai-agent")
+            self.write(root, "requirements/functions/FUNC-001.md", invalid)
+            codes = {finding.code for finding in validate(root)}
+            self.assertIn("C13-INVALID-HUMAN-SIGNOFF", codes)
 
 
 if __name__ == "__main__":

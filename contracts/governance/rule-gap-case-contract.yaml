@@ -1,5 +1,5 @@
 # 规则缺口记录机器契约
-# 规则不足时阻断当前对象；人类异步维护规则，不承担单条内容审核。
+# 规则不足时阻断当前对象；规则 owner 异步维护规则，不承担单条内容审核。
 
 schema_version: 1
 contract_id: rule-gap-case-contract
@@ -58,7 +58,7 @@ invariants:
   - current_subject_must_remain_blocked
   - rule_owner_must_be_human_governance_role
   - case_must_not_become_per_item_human_review
-  - candidate_rule_changes_cannot_activate_without_human_approval
+  - candidate_rule_changes_cannot_activate_without_valid_policy_certification_or_human_signoff
   - resolved_requires_new_active_rule_set_version_and_hash
   - resolution_reopens_subjects_with_new_run_or_review_attempt
   - old_ai_review_verdict_remains_immutable

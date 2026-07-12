@@ -4,6 +4,9 @@ object_type: requirement_baseline
 version: 1
 baseline_state: draft
 approval_status: pending
+approval_route: null
+decision_authority_ref: null
+certification_verdict_ref: null
 canonical_path: requirements/baselines/REQ-BASELINE-DRAFT-001.yaml
 requirement_refs:
   - stable_id: REQ-001
@@ -13,6 +16,15 @@ requirement_refs:
     version: 1
     content_hash: "{{functional_requirement_content_hash}}"
 scope_hash: "{{requirement_scope_hash}}"
+decision_inputs:
+  scope_change: unknown
+  threshold_change: unknown
+  blocking_rule_change: unknown
+  permission_change: unknown
+  objective_or_responsibility_change: unknown
+  residual_risk_acceptance: unknown
+  external_side_effect: unknown
+  unresolved_unknown: true
 approved_by: null
 approved_at: null
 content_hash: "{{requirement_baseline_draft_content_hash}}"
@@ -20,5 +32,5 @@ supersedes: null
 invariants:
   - copied_project_starts_from_this_draft
   - draft_cannot_be_consumed_by_active_spec
-  - human_approval_creates_new_approved_baseline
-  - ai_cannot_fill_human_approval_identity
+  - valid_decision_gate_creates_new_approved_baseline
+  - generator_cannot_fill_decision_authority_or_self_certify

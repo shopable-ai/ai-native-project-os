@@ -5,8 +5,8 @@
 ## 1. 固定主关系
 
 ```text
-来源→批准事实/目标或业务需求→场景/触发→业务链路→业务能力→功能
-→功能需求→人工批准/需求基线→架构决策/技术能力/组件/工程链路→I/O与验收判据→Spec→Task
+来源→通过决策门的事实/目标或业务需求→场景/触发→业务链路→业务能力→功能
+→功能需求→决策门/需求基线→架构决策/技术能力/组件/工程链路→I/O与验收判据→Spec→Task
 →Workflow→Skill/Tool→生成Run→AI审核Run/Evidence→AI审核裁决
 →验收Evidence→验收裁决→完成声明
 →复盘与资产演进
@@ -14,7 +14,7 @@
 
 R0、S0—S7 是成熟度坐标，不是这条因果链的节点或固定目录。Spec 是覆盖批准范围、计划、任务、验收和追溯的控制外壳，不是普通运行产物。
 
-原始来源只能形成候选事实、假设或未知；经人类责任人批准后才可成为事实或需求。下游失败只能创建上游复审请求，不能直接修改批准事实。
+原始来源只能形成候选事实、假设或未知；经合法 Decision Gate 后才可成为受控事实或需求。目标、责任、scope 或风险边界变化要求人类确认；下游失败只能创建上游复审请求，不能直接修改已接受事实。
 
 关系边采用 allowlist：`source` 只能指向候选事实、假设、未知或研究输入；不得被 Spec、Task、Workflow、Skill、Tool 或执行节点直接 `consumes/implements/governed_by`。研究沙箱可以读取来源，但输出仍是候选对象，不能自行升格。
 
@@ -31,6 +31,9 @@ governance_scope: l3
 lifecycle_stage: S4
 work_status: in_progress
 approval_status: pending
+approval_route: policy-certified-human-signoff-or-null
+decision_authority_ref: policy-human-or-null
+certification_verdict_ref: certification-or-null
 implementation_status: not_started
 owner: role-or-human-id
 executor: role-or-tool-id
@@ -54,7 +57,7 @@ supersedes: null
 
 `lifecycle_stage`、`work_status`、`approval_status`、`implementation_status` 和 `stale_status` 的枚举与迁移只引用状态权威，不在本文件复制。实现状态不得由阶段、批准状态或 proof level 推导。普通对象只保存 `proof_refs`，有效 proof level 由 Evidence、Verdict 和 Claim 计算，禁止对象自证。
 
-`owner` 对对象生命周期负责；`executor` 产生或修改内容；`approver` 只批准规则、事实、需求、范围、例外或风险接受等治理对象进入受控状态；`verifier` 独立检验证据和契约。内容语义审核由类型专属 `ai_review_verdict` 记录，不把 `approver` 重新解释为逐条内容审核员。高风险对象不得由同一 AI 同时承担生成、审核、验证和声明责任。
+`owner` 对对象生命周期负责；`executor` 产生或修改内容；`approver` 记录人工 principal 或策略权威；`approval_route` 记录决策来自 `policy_certified` 还是 `human_signoff`；`verifier` 独立检验证据和契约。自动路径必须引用当前认证 Verdict，高风险路径必须引用可验证人类。内容语义审核仍由类型专属 `ai_review_verdict` 记录，不把 `approver` 重新解释为逐条内容审核员。
 
 `requirement` 使用 `requirement_kind` 区分 `objective`、`business`、`functional`、`quality_attribute` 和 `constraint`。功能需求仍是 `object_type: requirement` 且 `requirement_kind: functional`；禁止另建平行 `object_type: functional_requirement`。类别不是状态轴，不能推出审批、实现、Evidence 或失效状态。
 
@@ -63,16 +66,16 @@ supersedes: null
 | `object_type` | 对象 | 关键关系与约束 | 类型专属状态字段（不代替公共坐标） |
 |---|---|---|---|
 | `source` | 原始来源 | 无权直接 `implements` Task/代码 | source_state: captured / quarantined / superseded |
-| `fact` | 批准事实 | `derives_from source`；必须有 approver | —（使用公共审批、工作和失效坐标） |
-| `requirement` | 需求 | `derives_from fact/requirement/function`；用 `requirement_kind` 区分语义；只有人类批准版本可进入 baseline | —（使用公共审批、工作和失效坐标） |
-| `requirement_baseline` | 需求基线 | 锁定需求 `stable_id/version/content_hash` 集合、scope hash、批准身份和 `supersedes`；禁止原地改写 | baseline_state: draft / approved / superseded / revoked |
-| `context_snapshot` | 上下文快照 | 记录 AI 实际 included/excluded files、理由、hash、生成节点和批准身份；不自证内容正确 | snapshot_state: captured / approved / stale / superseded |
+| `fact` | 受控事实 | `derives_from source`；approved 时必须有合法批准路由 | —（使用公共审批、工作和失效坐标） |
+| `requirement` | 需求 | `derives_from fact/requirement/function`；用 `requirement_kind` 区分语义；只有通过合法 Decision Gate 的版本可进入 baseline | —（使用公共审批、工作和失效坐标） |
+| `requirement_baseline` | 需求基线 | 锁定需求 `stable_id/version/content_hash` 集合、scope hash、批准路由、决策证据和 `supersedes`；禁止原地改写 | baseline_state: draft / approved / superseded / revoked |
+| `context_snapshot` | 上下文快照 | 记录 AI 实际 included/excluded files、理由、hash、生成节点和批准路由；不自证内容正确 | snapshot_state: captured / approved / stale / superseded |
 | `assumption` | 假设 | 必须有验证期限和失败影响 | assumption_state: open / supported / rejected |
 | `unknown` | 未知 | 必须有 owner、影响和处置路径 | unknown_state: open / researching / resolved / accepted_risk |
 | `research` | 研究 | 服务明确 `blocks_decision`，报告不自动成为事实 | research_state: planned / active / decided / archived |
 | `route_decision` | 项目治理路由裁决 | 绑定基础配置、逐 overlay 状态、routing policy 和 control set；不得自引用 | route_state: proposed / approved / expired / superseded |
 | `control_set` | 项目控制集合 | 组合基础配置、overlay 模块、策略、契约和实现证据 | control_set_state: draft / approved / superseded |
-| `governance_rule_set` | 人工治理规则集 | 人类批准并发布版本化 Markdown 规则；锁定成员 `rule_ref/hash`、scope 和有效期 | rule_set_state: draft / approved / active / superseded / revoked |
+| `governance_rule_set` | 治理规则集 | 通过合法 Decision Gate 发布版本化 Markdown 规则；锁定成员 `rule_ref/hash`、scope、认证和有效期 | rule_set_state: draft / approved / active / superseded / revoked |
 | `scenario` | 场景 | `derives_from requirement` | —（使用公共坐标） |
 | `trigger` | 触发 | 声明 actor、条件、入口和权限 | —（使用公共坐标） |
 | `business_chain` | 业务链路 | 从场景/触发推导业务状态变化 | —（使用公共坐标） |
@@ -122,14 +125,14 @@ supersedes: null
 7. 上游变化必须触发下游闭包影响分析。
 8. L3 的 Capability Grant、Approval Ticket、Secret Lease、Checkpoint 和 Side-effect Operation 必须绑定当前 `route_decision_ref`、`control_set_ref` 与 `control_set_hash`；引用过期路由时禁止继续授权、恢复或执行副作用。
 9. 授权快照只有在底层授权全部有效、引用/hash 一一对应、职责分离通过且验证 Evidence 新鲜时才可供激活或验收使用；非空引用不代表有效。
-10. active `governance_rule_set` 必须绑定已验证人类 principal、非空 Markdown 成员引用及配对 hash、scope、有效期和替代关系；AI 只能提案，不能自行发布或修改权威规则。
+10. active `governance_rule_set` 必须绑定唯一合法批准路由、非空 Markdown 成员引用及配对 hash、scope、有效期和替代关系；`policy_certified` 引用当前认证，`human_signoff` 引用已验证人类 principal。
 11. `ai_review_verdict` 必须绑定被审核对象/hash、生成 Run、独立审核 Run/节点、active 规则集/hash、逐规则结果和 Evidence；`allow` 禁止空规则或空 Evidence 真值。
 12. `rewrite_required` 必须有正整数上限并保存全部 attempt；达到上限只能 `blocked`。`rule_gap` 必须创建 `rule_gap_case` 并阻断当前输出。
-13. 普通内容审核不得使用 `waiting_approval`；该状态只服务规则/事实/需求治理、例外、剩余风险和动作授权。
+13. 普通内容审核不得使用 `waiting_approval`；低风险规则/事实/需求优先走已认证策略，只有高风险治理变化、例外、剩余风险和动作授权等待人工。
 14. 人工授权不能覆盖 `blocked` 的 AI 审核；AI 审核通过也不能产生或替代动作授权。
 15. 功能需求必须追溯业务 Requirement、Chain、Capability 和 Function，保存四段意图、AI 自检和 `context_snapshot`；`implementation_intent` 不得扩大 `approved_intent`。
-16. AI 不能批准或冻结需求基线，也不能原地改写 approved 需求或 baseline；变化必须创建新版本与 `supersedes`，并传播下游失效。
-17. Spec 必须绑定当前 baseline 中批准功能需求的 `stable_id/version/content_hash`；未知、未批准、过期或意图不一致时 fail closed。
+16. AI 不能给自己的审核策略签发独立认证、修改激活 Policy 后沿用旧认证，或绕过合法 Decision Gate 冻结需求基线；approved 需求或 baseline 变化必须创建新版本与 `supersedes`。
+17. Spec 必须绑定当前 baseline 中通过合法 Decision Gate 的功能需求 `stable_id/version/content_hash`；Unknown、路由无效、认证过期或意图不一致时 fail closed。
 
 ## 6. Spec 包和需求分母
 
@@ -137,7 +140,7 @@ Spec 包使用一个 `spec_id/version` 覆盖 `spec.md`、`plan.md`、`tasks.md`
 
 风险自适应裁剪必须记录省略项、理由、批准者和 claim ceiling。无论如何不得省略批准需求分母、非目标、事前验收判据、需求到 Task/Evidence 的追溯和禁止声明。
 
-每次验收和声明绑定不可变 `requirement_baseline_id`、需求版本集合与权重 hash。P0/P1 需求不得为零权重。批准需求集合的新增、删除、拆分、合并、退休或权重变化必须产生 scope-change 记录，包含人工批准、前后分母差异和 Claim 影响；未批准删减仍留在分母并视为未完成。Task 取消不能静默删除或降权需求；变更后旧 Evidence、Verdict 和 Claim 按失效传播处理。
+每次验收和声明绑定不可变 `requirement_baseline_id`、需求版本集合与权重 hash。P0/P1 需求不得为零权重。需求集合的新增、删除、拆分、合并、退休或权重变化必须产生 scope-change 记录，包含 `human_signoff`、前后分母差异和 Claim 影响；未批准删减仍留在分母并视为未完成。Task 取消不能静默删除或降权需求。
 
 ## 7. Task、Workflow、Skill 和 Tool 边界
 

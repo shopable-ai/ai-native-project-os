@@ -22,7 +22,7 @@ term-id: `source`
 ### 业务真相
 term-id: `business-truth`
 
-经可追责人类批准、进入受控基线的业务事实或需求，是场景、链路、Spec 与验收的追溯起点。研究结论和运行输出不能自行升格为业务真相。
+经合法 Decision Gate 接受、进入受控基线的业务事实或需求，是场景、链路、Spec 与验收的追溯起点。低风险对象可由当前认证策略裁决，高风险变化由可追责人类确认；研究结论和运行输出不能自行升格。
 
 ### 研究
 term-id: `research`
@@ -119,7 +119,7 @@ term-id: `function-tree`
 ### 意图验证
 term-id: `intent-verification`
 
-把来源中的原始意图、AI/分析者的候选解释、人类批准意图和准备进入实现的意图分别保存并校验一致性。它防止“正确实现错误目标”，不是审批状态或实现状态。
+把来源中的原始意图、AI/分析者的候选解释、Decision Gate 接受意图和准备进入实现的意图分别保存并校验一致性。它防止“正确实现错误目标”，不是审批状态或实现状态。
 
 ### 功能需求
 term-id: `functional-requirement`
@@ -129,7 +129,7 @@ term-id: `functional-requirement`
 ### 需求基线
 term-id: `requirement-baseline`
 
-经人类批准并锁定的需求 `stable_id/version/content_hash` 集合与范围 hash。变更创建新版本并 `supersedes` 旧基线；它不是生命周期、完成状态或证据等级。
+经合法批准路由接受并锁定的需求 `stable_id/version/content_hash` 集合与范围 hash。基线同时绑定决策权威以及认证 Verdict 或人工签署；变更创建新版本并 `supersedes` 旧基线。
 
 ### 上下文快照
 term-id: `context-snapshot`

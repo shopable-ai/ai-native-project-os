@@ -58,7 +58,7 @@ ${EDITOR} {{l2_repo}}/project-os.lock.yaml
 
 # 3. 用已批准事实、意图和需求替换 FACT-001 / REQ-001 / REQ-FUNC-001 fixture
 
-# 4. 人类批准功能需求，创建新 baseline，再更新 Spec 五件套和 Evidence
+# 4. 通过合法 Decision Gate，创建新 baseline，再更新 Spec 五件套和 Evidence
 
 # 5. 运行接入检查器
 python3 {{l1_repo}}/linters/check_controlled_objects.py \
@@ -69,7 +69,7 @@ python3 {{l1_repo}}/linters/check_controlled_objects.py \
 
 - `domain/glossary.md` 演示一条由人类批准的 `fact`。
 - `domain/mvp/REQ-001.md` 演示一条由该 fact 推导的 P1 `requirement`。
-- `requirements/functions/FUNC-001_功能需求卡.md` 是人类主要审查单元；它区分批准约束和候选方案。
+- `requirements/functions/FUNC-001_功能需求卡.md` 是人类主要阅读单元，也是独立 reviewer 的审核对象；它区分批准约束和候选方案。
 - `requirements/baselines/REQ-BASELINE-001.yaml` 与 `context/CTX-001.yaml` 只演示结构，不是真实批准或运行证明。
 - `specs/REQ-FUNC-001/` 演示功能需求进入范围、计划、任务、验收和追溯五件套。
 - `reviews/REQ-FUNC-001-review-evidence.yaml` 只记录 fixture 结构检查，`proof_level` 为 `control_package`。
@@ -80,10 +80,10 @@ python3 {{l1_repo}}/linters/check_controlled_objects.py \
 ```text
 [ ] project-os.lock.yaml 的版本、兼容范围、时间和负责人已填写
 [ ] FACT-001 / REQ-001 / REQ-FUNC-001 已替换为 L2 自己的事实、意图和需求
-[ ] fact/requirement 具有 stable_id、canonical_path 和人类 approver
-[ ] 功能需求已完成 AI 自检与人类批准，baseline 锁定精确 version/content_hash
+[ ] fact/requirement 具有 stable_id、canonical_path、approval_route 和 decision authority
+[ ] 功能需求已完成 AI 自检与独立审核，Decision Gate 证据完整，baseline 锁定精确 version/content_hash
 [ ] Spec 只引用当前 baseline 成员，没有从功能树或聊天直接生成
-[ ] governance/rules/ 的 active 规则集具有成员 hash、scope 和批准记录
+[ ] governance/rules/ 的 active 规则集具有成员 hash、scope、认证或人工签署记录
 [ ] specs/{spec_id}/traceability.md 只指向批准对象，不指向原始来源
 [ ] review Evidence 明确环境、范围、验证状态和禁止外推项
 [ ] --l2-mode 返回 EXIT=0，且 L2 自己的语义验收通过

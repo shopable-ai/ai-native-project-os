@@ -8,7 +8,7 @@
 |---|---|---|
 | `owner` | 对对象生命周期和业务后果负责 | 必须是可追责的人类角色 |
 | `executor` | 产生内容或执行动作 | 不能自批、自证自己的高风险声明 |
-| `approver` | 批准规则、事实、需求、范围、例外或剩余风险 | 必须绑定可验证人类 principal；不承担日常逐条内容审核 |
+| `approver` | 记录规则、事实、需求、范围等治理对象的决策权威 | 自动路径绑定激活 Policy；高风险变化绑定可验证人类 principal；不承担日常逐条内容审核 |
 | `ai_reviewer` | 按 active Markdown 规则独立审核内容、Evidence、风险和质量 | 不能与生成节点复用同一 Run step、prompt/context role 或 attempt |
 | `verifier` | 独立检查 Evidence 与判据 | 不得修改原始 Evidence 迎合结论 |
 | `action_authorizer` | 为明确的高风险或不可逆动作签发受限授权 | 必须绑定精确目标、内容/hash、期限和单次消费语义 |
@@ -21,7 +21,7 @@
 
 内容审核通过不授予动作权限。`ai_review_verdict.decision: allow` 只证明被审核对象满足已绑定规则集，不能生成 Capability Grant、Approval Ticket、Secret Lease 或 Authorization Snapshot。
 
-动作授权也不批准内容。即使目标、账号和副作用票据有效，只要适用的 AI 审核为 `blocked/rule_gap`、规则集失效或审核 Evidence 不完整，动作仍必须 fail-closed。人工只在规则发布、例外、剩余风险接受和高风险动作授权上作决定，不成为日常内容队列的逐条 reviewer。
+动作授权也不批准内容。即使目标、账号和副作用票据有效，只要适用的 AI 审核为 `blocked/rule_gap`、规则集失效或审核 Evidence 不完整，动作仍必须 fail-closed。低风险治理对象可由当前认证策略决策；人工集中在目标/责任/scope 变化、阈值降低、权限扩大、例外、剩余风险接受和高风险动作授权，不成为日常逐条 reviewer。
 
 ## 3. 能力授权
 

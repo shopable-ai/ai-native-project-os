@@ -4,7 +4,7 @@
 |---|---|
 | 解决的问题 | 一个 L2 业务系统仓库第一次消费 L1 时，怎样建立可迁移、可验证且不反向污染 L1 的兼容边界。 |
 | 何时阅读 | 初始化 `{{l2_repo}}`、升级 `{{l1_repo}}` 锁定版本或接入检查失败时。 |
-| 输入 | `{{l1_repo}}`、`{{l2_repo}}`、可选 `{{project_id}}`、批准事实与需求。 |
+| 输入 | `{{l1_repo}}`、`{{l2_repo}}`、可选 `{{project_id}}`、通过决策门的事实与需求。 |
 | 输出 | L1 版本锁、L2 事实/Spec 边界和保存在 L2 的接入 Evidence。 |
 | 下一步 | 完成占位符替换后执行本文检查命令，再按[项目交付工作流](PROJECT_DELIVERY_WORKFLOW.md)定位 R0/S0—S7。 |
 
@@ -17,7 +17,7 @@
 | `{{l1_repo}}` | AI Project OS 仓库根目录 |
 | `{{l2_repo}}` | 待接入的 L2 业务系统仓库根目录 |
 | `{{project_id}}` | 仅在需要 L3 实例隔离时使用的项目标识 |
-| `{{business_term}}` | 由 L2 自己批准和维护的业务术语 |
+| `{{business_term}}` | 由 L2 自己治理和维护的业务术语 |
 | `{{spec_id}}` | L2 规格控制包的稳定编号 |
 | `{{evidence_file}}` | L2 自己保存的接入检查 Evidence 文件名 |
 
@@ -49,7 +49,7 @@ cp {{l1_repo}}/templates/standard-project/project-os.lock.yaml \
 
 锁定记录表示消费约束，不表示 L1 能力已经在 L2 实现、启用或验证。
 
-## 4. 建立 L2 批准事实与需求
+## 4. 建立 L2 受控事实与需求
 
 L2 必须把原始来源与批准事实分开。推荐的通用落点如下；L2 可以采用等价结构，但必须保持来源、事实、控制和 Evidence 的职责分离。
 
@@ -71,11 +71,13 @@ L2 必须把原始来源与批准事实分开。推荐的通用落点如下；L2
 stable_id: term-{{business_term_id}}
 object_type: fact
 canonical_path: domain/glossary.md#{{business_term_anchor}}
-approver: {{human_approver}}
+approval_route: {{policy_certified_or_human_signoff}}
+decision_authority_ref: {{policy_or_human_principal}}
+approver: {{human_approver_or_null}}
 定义：{{approved_definition}}
 ```
 
-示例只规定 L1 公共字段，不替 L2 定义术语内容。原始来源必须先经责任人批准，才能升格为 `fact` 或 `requirement`。
+示例只规定 L1 公共字段，不替 L2 定义术语内容。原始来源必须先经合法 Decision Gate，才能升格为 `fact` 或 `requirement`；自动路径还须引用当前认证 Verdict。
 
 ## 5. 让 Spec 追溯到批准对象
 
@@ -113,7 +115,7 @@ python3 {{l1_repo}}/linters/check_controlled_objects.py \
 ```text
 [ ] project-os.lock.yaml 存在，版本和兼容范围已填写
 [ ] 原始来源与批准 fact/requirement 已分离
-[ ] 批准对象具有 stable_id、canonical_path 和人类 approver
+[ ] approved 对象具有 stable_id、canonical_path、approval_route 和 decision authority
 [ ] specs/{{spec_id}}/traceability.md 指向批准对象
 [ ] 具体业务事实和接入 Evidence 只保存在 {{l2_repo}}
 [ ] --l2-mode 返回 EXIT=0，且 L2 自己的语义门禁通过

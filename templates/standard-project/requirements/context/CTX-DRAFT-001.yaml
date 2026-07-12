@@ -4,6 +4,9 @@ object_type: context_snapshot
 version: 1
 snapshot_state: captured
 approval_status: pending
+approval_route: null
+decision_authority_ref: null
+certification_verdict_ref: null
 canonical_path: requirements/context/CTX-DRAFT-001.yaml
 included_files:
   - domain/glossary.md
@@ -24,6 +27,15 @@ source_hashes:
   domain/glossary.md: "{{fact_source_hash}}"
   domain/mvp/REQ-001.md: "{{business_requirement_content_hash}}"
   requirements/项目地图.md: "{{project_map_hash}}"
+decision_inputs:
+  scope_change: unknown
+  threshold_change: unknown
+  blocking_rule_change: unknown
+  permission_change: unknown
+  objective_or_responsibility_change: unknown
+  residual_risk_acceptance: unknown
+  external_side_effect: unknown
+  unresolved_unknown: true
 generated_by: ai-template-author
 approved_by: null
 created_at: "{{context_created_at}}"

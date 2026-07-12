@@ -251,6 +251,29 @@ class ReviewPolicyCertificationContractTests(unittest.TestCase):
             conditional["review_policy_certification_run"],
         )
 
+    def test_requirement_package_uses_conditional_decision_routes(self):
+        contract = load_yaml(
+            ROOT / "contracts" / "artifacts" / "requirement-design-package-contract.yaml"
+        )
+        function_fields = contract["required_frontmatter_fields"][
+            "functions/FUNC-001_功能需求卡.md"
+        ]
+        for field in (
+            "approval_route",
+            "decision_authority_ref",
+            "certification_verdict_ref",
+            "decision_inputs.scope_change",
+            "decision_inputs.unresolved_unknown",
+        ):
+            self.assertIn(field, function_fields)
+        for invariant in (
+            "approved_object_requires_exactly_one_valid_decision_route",
+            "policy_certified_requires_current_scope_matched_certification_verdict",
+            "human_signoff_requires_verified_human_principal",
+            "AI_cannot_self_certify_or_promote_without_a_valid_decision_gate",
+        ):
+            self.assertIn(invariant, contract["state_invariants"])
+
 
 if __name__ == "__main__":
     unittest.main()
