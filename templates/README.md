@@ -10,6 +10,7 @@
 |---|---|
 | 描述业务链的正常、异常、恢复、责任和 I/O | `chain-package/` |
 | 在 Spec 前审查意图、功能需求和批准基线 | `standard-project/requirements/` |
+| 在自动审核或低风险自动决策前固定策略包、测试集与激活边界 | `standard-project/governance/review-certification/` |
 | 为一个 Spec 建立五件套 | `spec-package/` |
 | 固定 producer/consumer 的 I/O 协议 | `io-contract/` |
 | 编排已批准 task refs | `workflow/` |
@@ -25,6 +26,7 @@ templates/
 ├── README.md                         # 必需：问题导航
 ├── chain-package/                    # 条件启用：需要批准业务链时复制
 ├── standard-project/requirements/    # 必需：standard L2 的人机需求设计包
+├── standard-project/governance/review-certification/ # 必需：审核策略认证模板
 ├── spec-package/                     # 必需：每个进入实现的 Spec 使用
 ├── io-contract/                      # 条件启用：存在跨组件边界时复制
 ├── workflow/                         # 条件启用：需要可恢复编排时复制

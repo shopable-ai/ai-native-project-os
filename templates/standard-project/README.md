@@ -30,7 +30,11 @@
 │   └── generated/
 │       └── README.md                            # 运行时生成：只定义派生视图边界
 ├── governance/
-│   └── rules/                                   # standard 基础治理配置必需
+│   ├── rules/                                   # standard 基础治理配置必需
+│   └── review-certification/                    # 必需：策略包、预注册测试与激活边界
+│       ├── 审核策略包说明.md
+│       ├── 审核策略测试集.yaml
+│       └── 审核策略激活策略.yaml
 ├── specs/
 │   └── REQ-FUNC-001/                            # 必需：功能需求对应 Spec 五件套
 │       ├── spec.md
@@ -58,9 +62,11 @@ ${EDITOR} {{l2_repo}}/project-os.lock.yaml
 
 # 3. 用已批准事实、意图和需求替换 FACT-001 / REQ-001 / REQ-FUNC-001 fixture
 
-# 4. 通过合法 Decision Gate，创建新 baseline，再更新 Spec 五件套和 Evidence
+# 4. 固定审核策略包与预注册测试集，执行全部重复 Run 并取得独立认证
 
-# 5. 运行接入检查器
+# 5. 通过合法 Decision Gate，创建新 baseline，再更新 Spec 五件套和 Evidence
+
+# 6. 运行接入检查器
 python3 {{l1_repo}}/linters/check_controlled_objects.py \
   {{l2_repo}} --l2-mode --report
 ```
@@ -71,6 +77,7 @@ python3 {{l1_repo}}/linters/check_controlled_objects.py \
 - `domain/mvp/REQ-001.md` 演示一条由该 fact 推导的 P1 `requirement`。
 - `requirements/functions/FUNC-001_功能需求卡.md` 是人类主要阅读单元，也是独立 reviewer 的审核对象；它区分批准约束和候选方案。
 - `requirements/baselines/REQ-BASELINE-001.yaml` 与 `context/CTX-001.yaml` 只演示结构，不是真实批准或运行证明。
+- `governance/review-certification/` 只提供 candidate 策略包、预注册测试集和激活边界，不包含真实模型 Run 或有效认证 Verdict。
 - `specs/REQ-FUNC-001/` 演示功能需求进入范围、计划、任务、验收和追溯五件套。
 - `reviews/REQ-FUNC-001-review-evidence.yaml` 只记录 fixture 结构检查，`proof_level` 为 `control_package`。
 - 样例没有签发 Acceptance Verdict 或 Completion Claim，不证明实现、本地运行、真实环境或生产能力。
@@ -82,6 +89,7 @@ python3 {{l1_repo}}/linters/check_controlled_objects.py \
 [ ] FACT-001 / REQ-001 / REQ-FUNC-001 已替换为 L2 自己的事实、意图和需求
 [ ] fact/requirement 具有 stable_id、canonical_path、approval_route 和 decision authority
 [ ] 功能需求已完成 AI 自检与独立审核，Decision Gate 证据完整，baseline 锁定精确 version/content_hash
+[ ] 审核策略包覆盖规则/Prompt/Schema/Context/模型/Tool/权限指纹，测试预期与重复次数在运行前固定
 [ ] Spec 只引用当前 baseline 成员，没有从功能树或聊天直接生成
 [ ] governance/rules/ 的 active 规则集具有成员 hash、scope、认证或人工签署记录
 [ ] specs/{spec_id}/traceability.md 只指向批准对象，不指向原始来源

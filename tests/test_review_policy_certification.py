@@ -15,6 +15,8 @@ CERTIFICATION_CONTRACT = (
     ROOT / "contracts" / "governance" / "review-policy-certification-contract.yaml"
 )
 ACTIVATION_POLICY = ROOT / "policies" / "review-policy-activation-routing.yaml"
+TEMPLATE_ROOT = ROOT / "templates" / "standard-project" / "governance" / "review-certification"
+FIXTURE_ROOT = ROOT / "fixtures" / "review-policy-certification"
 
 
 def load_yaml(path: Path) -> dict:
@@ -273,6 +275,73 @@ class ReviewPolicyCertificationContractTests(unittest.TestCase):
             "AI_cannot_self_certify_or_promote_without_a_valid_decision_gate",
         ):
             self.assertIn(invariant, contract["state_invariants"])
+
+
+class ReviewPolicyCertificationTemplateTests(unittest.TestCase):
+    def test_copyable_template_contains_bundle_test_suite_and_activation_policy(self):
+        required = {
+            "审核策略包说明.md",
+            "审核策略测试集.yaml",
+            "审核策略激活策略.yaml",
+        }
+        self.assertEqual(
+            {path.name for path in TEMPLATE_ROOT.iterdir() if path.is_file()},
+            required,
+        )
+
+        bundle_text = (TEMPLATE_ROOT / "审核策略包说明.md").read_text(encoding="utf-8")
+        self.assertTrue(bundle_text.startswith("---\n"))
+        bundle_end = bundle_text.find("\n---", 4)
+        bundle = yaml.safe_load(bundle_text[4:bundle_end])
+        fingerprints = bundle["component_fingerprints"]
+        self.assertEqual(
+            set(fingerprints),
+            {
+                "rule_set_hash",
+                "prompt_template_hash",
+                "input_schema_hash",
+                "output_schema_hash",
+                "context_policy_hash",
+                "model_fingerprint",
+                "tool_set_hash",
+                "permission_set_hash",
+            },
+        )
+        self.assertTrue(all(fingerprints.values()))
+
+    def test_template_preregisters_all_categories_repeats_metrics_and_thresholds(self):
+        suite = load_yaml(TEMPLATE_ROOT / "审核策略测试集.yaml")
+        contract = load_yaml(TEST_SUITE_CONTRACT)
+        categories = {case["category"] for case in suite["cases"]}
+        self.assertEqual(categories, set(contract["enums"]["case_category"]))
+        self.assertEqual(set(suite["required_categories"]), categories)
+        self.assertEqual(set(suite["metrics"]), set(contract["required_metrics"]))
+        for case in suite["cases"]:
+            minimum = suite["minimum_repeat_policy"][
+                "deterministic" if case["deterministic"] else "nondeterministic"
+            ]
+            if case["risk_level"] in {"high", "critical"}:
+                minimum = max(
+                    minimum,
+                    suite["minimum_repeat_policy"]["high_or_critical_risk"],
+                )
+            self.assertGreaterEqual(case["repeat_count"], minimum)
+
+    def test_template_activation_policy_extends_l1_and_keeps_authorization_independent(self):
+        activation = load_yaml(TEMPLATE_ROOT / "审核策略激活策略.yaml")
+        self.assertEqual(activation["extends"], "review-policy-activation-routing@1")
+        self.assertEqual(
+            activation["external_action_authorization"], "always_independent"
+        )
+        self.assertIn("policy_certified", activation["allowed_routes"])
+        self.assertIn("human_signoff", activation["allowed_routes"])
+        self.assertIn("blocked", activation["allowed_routes"])
+
+    def test_fixture_catalog_has_three_positive_and_seven_negative_scenarios(self):
+        positives = list((FIXTURE_ROOT / "positive").glob("*/scenario.yaml"))
+        negatives = list((FIXTURE_ROOT / "negative").glob("*/scenario.yaml"))
+        self.assertEqual(len(positives), 3)
+        self.assertEqual(len(negatives), 7)
 
 
 if __name__ == "__main__":
