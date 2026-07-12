@@ -2,7 +2,7 @@
 # 本文件不证明真实人工可用性、真实 L2 消费、自动影响模拟、运行时或通用 95+。
 schema_version: 1
 evidence_id: EVIDENCE-HUMAN-AI-REQUIREMENT-DESIGN-STATIC-20260712
-implementation_revision: 7adbd1c
+implementation_revision: 0cb1aa8
 captured_at: "2026-07-12T19:47:25+09:00"
 scope:
   - docs/workflows/REQUIREMENT_DESIGN_WORKFLOW.md
