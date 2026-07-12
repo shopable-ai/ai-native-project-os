@@ -5,8 +5,8 @@
 ## 1. 固定主关系
 
 ```text
-来源→批准事实/需求→场景/触发→业务链路→业务能力/功能
-→架构决策/技术能力/组件/工程链路→I/O与验收判据→Spec→Task
+来源→批准事实/目标或业务需求→场景/触发→业务链路→业务能力→功能
+→功能需求→人工批准/需求基线→架构决策/技术能力/组件/工程链路→I/O与验收判据→Spec→Task
 →Workflow→Skill/Tool→生成Run→AI审核Run/Evidence→AI审核裁决
 →验收Evidence→验收裁决→完成声明
 →复盘与资产演进
@@ -56,13 +56,17 @@ supersedes: null
 
 `owner` 对对象生命周期负责；`executor` 产生或修改内容；`approver` 只批准规则、事实、需求、范围、例外或风险接受等治理对象进入受控状态；`verifier` 独立检验证据和契约。内容语义审核由类型专属 `ai_review_verdict` 记录，不把 `approver` 重新解释为逐条内容审核员。高风险对象不得由同一 AI 同时承担生成、审核、验证和声明责任。
 
+`requirement` 使用 `requirement_kind` 区分 `objective`、`business`、`functional`、`quality_attribute` 和 `constraint`。功能需求仍是 `object_type: requirement` 且 `requirement_kind: functional`；禁止另建平行 `object_type: functional_requirement`。类别不是状态轴，不能推出审批、实现、Evidence 或失效状态。
+
 ## 3. 类型矩阵
 
 | `object_type` | 对象 | 关键关系与约束 | 类型专属状态字段（不代替公共坐标） |
 |---|---|---|---|
 | `source` | 原始来源 | 无权直接 `implements` Task/代码 | source_state: captured / quarantined / superseded |
 | `fact` | 批准事实 | `derives_from source`；必须有 approver | —（使用公共审批、工作和失效坐标） |
-| `requirement` | 批准需求 | `derives_from fact`；锁定验收分母 | —（使用公共审批、工作和失效坐标） |
+| `requirement` | 需求 | `derives_from fact/requirement/function`；用 `requirement_kind` 区分语义；只有人类批准版本可进入 baseline | —（使用公共审批、工作和失效坐标） |
+| `requirement_baseline` | 需求基线 | 锁定需求 `stable_id/version/content_hash` 集合、scope hash、批准身份和 `supersedes`；禁止原地改写 | baseline_state: draft / approved / superseded / revoked |
+| `context_snapshot` | 上下文快照 | 记录 AI 实际 included/excluded files、理由、hash、生成节点和批准身份；不自证内容正确 | snapshot_state: captured / approved / stale / superseded |
 | `assumption` | 假设 | 必须有验证期限和失败影响 | assumption_state: open / supported / rejected |
 | `unknown` | 未知 | 必须有 owner、影响和处置路径 | unknown_state: open / researching / resolved / accepted_risk |
 | `research` | 研究 | 服务明确 `blocks_decision`，报告不自动成为事实 | research_state: planned / active / decided / archived |
@@ -103,7 +107,7 @@ supersedes: null
 
 ## 4. 关系类型
 
-`derives_from`、`governed_by`、`implements`、`consumes`、`produces`、`produced_by`、`reviewed_by`、`identifies_gap_in`、`verified_by`、`authorized_by`、`approved_by`、`checkpoint_of`、`resumes_from`、`attempt_of`、`invalidates`、`supersedes`、`requests_review_of`。
+`derives_from`、`governed_by`、`implements`、`consumes`、`produces`、`produced_by`、`reviewed_by`、`identifies_gap_in`、`verified_by`、`authorized_by`、`approved_by`、`bound_by_baseline`、`context_bound_by`、`checkpoint_of`、`resumes_from`、`attempt_of`、`invalidates`、`supersedes`、`requests_review_of`。
 
 每个活跃对象只有一个 `canonical_path`，但可以有多个有类型上游。禁止把“唯一权威位置”误解为“只能有一个父节点”。
 
@@ -123,6 +127,9 @@ supersedes: null
 12. `rewrite_required` 必须有正整数上限并保存全部 attempt；达到上限只能 `blocked`。`rule_gap` 必须创建 `rule_gap_case` 并阻断当前输出。
 13. 普通内容审核不得使用 `waiting_approval`；该状态只服务规则/事实/需求治理、例外、剩余风险和动作授权。
 14. 人工授权不能覆盖 `blocked` 的 AI 审核；AI 审核通过也不能产生或替代动作授权。
+15. 功能需求必须追溯业务 Requirement、Chain、Capability 和 Function，保存四段意图、AI 自检和 `context_snapshot`；`implementation_intent` 不得扩大 `approved_intent`。
+16. AI 不能批准或冻结需求基线，也不能原地改写 approved 需求或 baseline；变化必须创建新版本与 `supersedes`，并传播下游失效。
+17. Spec 必须绑定当前 baseline 中批准功能需求的 `stable_id/version/content_hash`；未知、未批准、过期或意图不一致时 fail closed。
 
 ## 6. Spec 包和需求分母
 

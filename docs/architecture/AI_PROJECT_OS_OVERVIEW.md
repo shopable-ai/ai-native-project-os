@@ -6,7 +6,7 @@
 | 何时阅读 | 第一次进入仓库、需要判断下一步或解释当前声明边界时。 |
 | 输入 | 需求种子或存量系统、当前项目类型、治理路由和已有 Evidence。 |
 | 输出 | 四条不可折叠的阅读线、当前推进位置和下一份应阅读的权威文件。 |
-| 下一步 | 按[项目交付工作流](../workflows/PROJECT_DELIVERY_WORKFLOW.md)定位动作，再按[阶段退出门禁](../workflows/STAGE_EXIT_GATES.md)核对出口。 |
+| 下一步 | 按[项目交付工作流](../workflows/PROJECT_DELIVERY_WORKFLOW.md)定位动作；需要形成需求时进入[需求设计工作流](../workflows/REQUIREMENT_DESIGN_WORKFLOW.md)，再按[阶段退出门禁](../workflows/STAGE_EXIT_GATES.md)核对出口。 |
 
 本文件是人类入口，不维护机器枚举。字段、状态和证据等级始终链接到各自唯一权威；本图出现的文字不能覆盖那些机器定义。
 
@@ -18,7 +18,7 @@
 
 ### 1.2 产物追溯依赖链
 
-回答“每个产物为什么存在”。它从来源与批准事实/需求，经场景、业务链、能力、ADR、工程链、契约、Spec/Task、Workflow、Skill/Tool，最终到 Run、Evidence、Verdict、Claim 和复盘。下游不能绕过上游批准对象自证合理性。
+回答“每个产物为什么存在”。它从来源与批准事实/业务需求，经场景、业务链、能力、功能、功能需求和人类批准基线，再到 ADR、工程链、契约、Spec/Task、Workflow、Skill/Tool、Run、Evidence、Verdict、Claim 和复盘。下游不能绕过上游批准对象自证合理性。
 
 ### 1.3 状态坐标
 
@@ -53,6 +53,8 @@ flowchart TD
 ```
 
 图中的主箭头表示依赖顺序，不表示所有对象只能串行产生。多个对象可以并行工作，但下游不得越过未通过的上游门禁。
+
+S2 的“业务链路”内部必须继续经过能力树、功能树、功能需求卡、AI 自检和人类批准基线；这条人类审查路径只由[需求设计工作流](../workflows/REQUIREMENT_DESIGN_WORKFLOW.md)定义，本总图不复制其机器字段。
 
 ## 3. 正交坐标怎么读
 

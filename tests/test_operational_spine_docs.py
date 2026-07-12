@@ -146,11 +146,14 @@ class OperationalSpineDocsTests(unittest.TestCase):
     def test_delivery_workflow_preserves_causal_order_and_boundaries(self) -> None:
         text = read_text("docs/workflows/PROJECT_DELIVERY_WORKFLOW.md")
         expected_chain = (
-            "批准需求/存量恢复 → 项目类型 → 治理路由 → 生命周期阶段 → 研究 → 业务链路 → ADR → "
-            "工程链路 → Spec/Task → Workflow → Skill/Tool → Run → Evidence → Verdict → Claim → 复盘/升格"
+            "来源/存量恢复 → 项目类型 → 治理路由 → 生命周期阶段 → 研究 → 业务链路 → 能力树 → "
+            "功能树 → 功能级需求 → 人工批准与需求基线 → ADR → 工程设计 → Spec/Task → Workflow → "
+            "Skill/Tool → Run → Evidence → Verdict → Claim → 复盘/升格"
         )
         self.assertIn(expected_chain, text)
         self.assertIn("能力树从业务链路推导", text)
+        self.assertIn("功能需求卡", text)
+        self.assertIn("AI 生成的 draft 不能自行升格", text)
         self.assertIn("任务树从已批准的 Spec 与验收判据推导", text)
         self.assertIn("Workflow 编排 Task", text)
         self.assertIn("Skill 是局部、可复用的能力", text)

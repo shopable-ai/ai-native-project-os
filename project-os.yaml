@@ -86,6 +86,7 @@ authority:
   ai_native_execution: docs/architecture/AI_NATIVE_EXECUTION_MODEL.md    # AI 原生执行节点语义
   lifecycle: docs/workflows/PROJECT_LIFECYCLE.md                         # R0、S0—S7 生命周期
   project_delivery_workflow: docs/workflows/PROJECT_DELIVERY_WORKFLOW.md # 从入口到声明的推进控制流
+  requirement_design_workflow: docs/workflows/REQUIREMENT_DESIGN_WORKFLOW.md # 人机协作需求设计、批准与基线冻结
   stage_exit_gates: docs/workflows/STAGE_EXIT_GATES.md                   # 九阶段人类退出门禁视图
   stage_exit_gates_contract: contracts/governance/stage-exit-gates-contract.yaml # 九阶段机器门禁记录契约
   l2_progression: docs/workflows/L2_PROGRESSION.md                       # L2 接入后的端到端推进与重开 SOP
@@ -139,6 +140,11 @@ terminology_manifest:
     - engineering-chain
     - capability-tree
     - function-tree
+    - intent-verification
+    - functional-requirement
+    - requirement-baseline
+    - context-snapshot
+    - project-map
     - task-tree
     - workflow
     - skill

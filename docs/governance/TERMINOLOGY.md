@@ -111,6 +111,31 @@ term-id: `function-tree`
 
 把业务能力展开为用户或调用方可观察的功能，回答“能力以什么行为被使用”。它不产生无来源 Task。
 
+### 意图验证
+term-id: `intent-verification`
+
+把来源中的原始意图、AI/分析者的候选解释、人类批准意图和准备进入实现的意图分别保存并校验一致性。它防止“正确实现错误目标”，不是审批状态或实现状态。
+
+### 功能需求
+term-id: `functional-requirement`
+
+面向单个 Function 的人类主要审查单元，说明为什么需要、谁在何时使用、正常/异常/恢复、输入输出、规则、边界、风险和业务验收方向。机器上仍使用 `object_type: requirement` 与 `requirement_kind: functional`，不是新的对象平面。
+
+### 需求基线
+term-id: `requirement-baseline`
+
+经人类批准并锁定的需求 `stable_id/version/content_hash` 集合与范围 hash。变更创建新版本并 `supersedes` 旧基线；它不是生命周期、完成状态或证据等级。
+
+### 上下文快照
+term-id: `context-snapshot`
+
+记录某次 AI 起草或审查实际包含/排除的文件、理由、hash 和生成身份，使输入范围可重放。它不把聊天或提示词升格为事实，也不证明输出正确。
+
+### 项目地图
+term-id: `project-map`
+
+L2 面向人的当前导航，聚合目标、阶段、核心链路、能力/功能、批准需求、决策、风险、Unknown 和下一步的稳定引用。它不复制需求正文、状态枚举或任务权威。
+
 ### 任务树
 term-id: `task-tree`
 
