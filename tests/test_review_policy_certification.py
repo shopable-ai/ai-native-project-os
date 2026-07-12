@@ -344,5 +344,85 @@ class ReviewPolicyCertificationTemplateTests(unittest.TestCase):
         self.assertEqual(len(negatives), 7)
 
 
+class ReviewPolicyCertificationInvalidationAndScoreTests(unittest.TestCase):
+    def test_invalidation_authority_covers_full_bundle_tests_thresholds_and_downstream(self):
+        text = (
+            ROOT / "docs" / "governance" / "STATE_TRANSITIONS_AND_INVALIDATION.md"
+        ).read_text(encoding="utf-8")
+        for token in (
+            "规则",
+            "Prompt",
+            "Schema",
+            "Context",
+            "模型",
+            "Tool",
+            "权限",
+            "测试集",
+            "指标",
+            "阈值",
+            "review_policy_certification",
+            "Requirement Baseline",
+            "Spec",
+            "Workflow",
+            "AI Review Verdict",
+            "Claim",
+        ):
+            self.assertIn(token, text)
+        self.assertIn("不改写历史 Run", text)
+
+    def test_run_evidence_authority_preserves_every_attempt_metric_and_certification_binding(self):
+        text = (
+            ROOT / "docs" / "governance" / "RUN_EVIDENCE_ACCEPTANCE.md"
+        ).read_text(encoding="utf-8")
+        for token in (
+            "review_policy_bundle_fingerprints",
+            "review_policy_test_suite_refs",
+            "review_policy_certification_refs",
+            "included_attempt_refs",
+            "excluded_attempts_and_reasons",
+            "metric_results",
+            "threshold_results",
+            "不能只保留最佳",
+            "policy_certified",
+            "human_signoff",
+        ):
+            self.assertIn(token, text)
+
+    def test_score_surfaces_static_certification_without_claiming_runtime_or_95_plus(self):
+        current = load_yaml(ROOT / "reviews" / "current-score-status.yaml")
+        project = load_yaml(ROOT / "project-os.yaml")
+        self.assertEqual(current["current_overall_score"], "not_evaluated")
+        self.assertEqual(project["score_summary"]["current_overall_score"], "not_evaluated")
+        self.assertEqual(
+            current["evidence_layers"]["review_policy_certification_static"],
+            "present_unscored",
+        )
+        self.assertEqual(
+            project["score_summary"]["review_policy_certification_static_evidence"],
+            "present_unscored",
+        )
+        for gate in (
+            "real_model_multi_run_evaluation",
+            "real_l2_policy_consumption",
+            "cross_project_isolation",
+            "second_heterogeneous_l2",
+        ):
+            self.assertEqual(current["hard_gates"][gate], "unmet")
+            self.assertEqual(project["score_summary"]["hard_gates"][gate], "unmet")
+        self.assertIn("general_95_plus", project["claim_limits"]["forbidden"])
+
+    def test_readme_reports_static_certification_and_explicit_unproven_layers(self):
+        text = (ROOT / "README.zh-CN.md").read_text(encoding="utf-8")
+        for token in (
+            "审核策略认证静态闭环",
+            "三条正例",
+            "七条反例",
+            "真实模型多轮评测",
+            "真实 L2 策略消费",
+            "当前总体评分继续是 `not_evaluated`",
+        ):
+            self.assertIn(token, text)
+
+
 if __name__ == "__main__":
     unittest.main()
