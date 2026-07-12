@@ -31,6 +31,9 @@ stage_gate_record:
     - proof_level
     - framework_edition
     - governance_profile
+    - approval_route
+    - decision_authority_ref
+    - certification_verdict_ref
     - stage_definition_ref
     - stage_definition_hash
     - exit_criterion_results
@@ -50,6 +53,7 @@ stage_gate_record:
     - evidence_hashes
   enums:
     result: [passed, failed, unknown]
+    approval_route: [not_applicable, policy_certified, human_signoff]
   fail_closed_results: [failed, unknown]
   exit_criterion_result:
     required_fields:
@@ -80,6 +84,9 @@ stage_gate_record:
     - checked_at_must_precede_valid_until
     - invalidation_condition_match_invalidates_record_and_reopens_target
     - approval_and_verification_must_preserve_required_separation_of_duties
+    - policy_certified_requires_current_scope_matched_certification_verdict
+    - human_signoff_requires_verified_human_principal
+    - approval_route_is_decision_provenance_not_an_independent_state_axis
 
 # required_proof_level 表示退出门禁要求达到的最低目标；proof_level 表示本记录中 Evidence 实际证明到的坐标。
 field_semantics:
@@ -95,6 +102,9 @@ manifest_example:
   proof_level: contract_tests_ready
   framework_edition: standard
   governance_profile: standard
+  approval_route: human_signoff
+  decision_authority_ref: architecture-approver-id
+  certification_verdict_ref: null
   stage_definition_ref: stage-exit-gates-contract@1#stages.S4
   stage_definition_hash: "sha256:stage-S4-example"
   exit_criterion_results:

@@ -19,6 +19,8 @@ MOVED_CONTRACTS = {
 }
 GOVERNANCE_CONTRACTS = MOVED_CONTRACTS | {
     "project-instance-contract.yaml",
+    "review-policy-certification-contract.yaml",
+    "review-policy-test-suite-contract.yaml",
     "run-evidence-contract.yaml",
     "stage-exit-gates-contract.yaml",
 }
@@ -88,7 +90,14 @@ class ContractPolicyBoundaryTests(unittest.TestCase):
     def test_policies_contains_only_policy_authority_and_navigation(self):
         policy_files = {path.name for path in (ROOT / "policies").iterdir() if path.is_file()}
 
-        self.assertEqual(policy_files, {"README.md", "project-governance-routing.yaml"})
+        self.assertEqual(
+            policy_files,
+            {
+                "README.md",
+                "project-governance-routing.yaml",
+                "review-policy-activation-routing.yaml",
+            },
+        )
         self.assertEqual(list((ROOT / "policies").glob("*-contract.yaml")), [])
         for name in MOVED_CONTRACTS:
             self.assertFalse((ROOT / "policies" / name).exists())

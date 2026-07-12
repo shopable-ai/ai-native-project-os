@@ -18,14 +18,25 @@ def load_contract(name: str) -> dict:
 
 
 class GovernanceContractsTests(unittest.TestCase):
-    def test_rule_set_contract_requires_human_approved_markdown_members(self):
+    def test_rule_set_contract_requires_governed_markdown_members_and_decision_route(self):
         contract = load_contract("governance-rule-set-contract.yaml")
 
         self.assertEqual(contract["object_type"], "governance_rule_set")
         self.assertIn("approved_by", contract["required_fields"])
         self.assertIn("rule_refs", contract["required_fields"])
         self.assertIn("rule_hashes", contract["required_fields"])
-        self.assertIn("active_requires_verified_human_principal", contract["invariants"])
+        self.assertEqual(
+            contract["enums"]["approval_route"],
+            ["policy_certified", "human_signoff"],
+        )
+        self.assertIn(
+            "policy_certified_requires_current_scope_matched_certification_verdict",
+            contract["invariants"],
+        )
+        self.assertIn(
+            "human_signoff_requires_verified_human_principal",
+            contract["invariants"],
+        )
         self.assertIn("canonical_path_and_rule_refs_must_reference_markdown", contract["invariants"])
         self.assertIn("rule_refs_and_hashes_have_same_cardinality", contract["invariants"])
 

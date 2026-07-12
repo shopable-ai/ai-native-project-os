@@ -1,0 +1,108 @@
+# 审核策略认证机器契约
+# 根据预注册测试集的全部 Run/Evidence 和阈值结果，签发有范围、期限和声明上限的认证裁决。
+
+schema_version: 1
+contract_id: review-policy-certification-contract
+contract_version: 1
+object_type: review_policy_certification
+governance_scope: l1_l2_l3
+
+required_fields:
+  - extends
+  - certification_id
+  - version
+  - canonical_path
+  - content_hash
+  - project_id
+  - subject_bundle_ref
+  - subject_bundle_hash
+  - test_suite_ref
+  - test_suite_hash
+  - run_refs
+  - evidence_refs
+  - evidence_hashes
+  - included_attempt_refs
+  - excluded_attempts_and_reasons
+  - metric_results
+  - threshold_results
+  - verifier_ref
+  - verifier_independence_evidence_ref
+  - certification_decision
+  - eligible_activation_routes
+  - claim_ceiling
+  - uncovered_scope
+  - decided_at
+  - valid_from
+  - expires_at
+  - invalidation_conditions
+  - supersedes
+
+metric_result_required_fields:
+  - metric_id
+  - metric_definition_version
+  - observed_value
+  - threshold_ref
+  - result
+  - evidence_refs
+
+enums:
+  certification_decision:
+    - certified
+    - certified_with_ceiling
+    - rejected
+    - rule_gap
+    - expired
+    - revoked
+  activation_route: [policy_certified, human_signoff]
+  threshold_result: [passed, failed, not_evaluated]
+
+manifest_example:
+  extends: controlled_object_base/v1
+  certification_id: review-policy-certification-id
+  version: 1
+  canonical_path: reviews/review-policy-certification-id.yaml
+  content_hash: sha256
+  project_id: project-id
+  subject_bundle_ref: review-policy-bundle-id/version
+  subject_bundle_hash: sha256
+  test_suite_ref: review-policy-test-suite-id/version
+  test_suite_hash: sha256
+  run_refs: [run-review-evaluation-001]
+  evidence_refs: [evidence-review-evaluation-001]
+  evidence_hashes: [sha256]
+  included_attempt_refs: [attempt-review-evaluation-001]
+  excluded_attempts_and_reasons: []
+  metric_results: []
+  threshold_results: []
+  verifier_ref: independent-review-policy-verifier
+  verifier_independence_evidence_ref: evidence-verifier-independence-001
+  certification_decision: rejected
+  eligible_activation_routes: []
+  claim_ceiling: control_package
+  uncovered_scope: [real_model_runtime]
+  decided_at: timestamp
+  valid_from: null
+  expires_at: null
+  invalidation_conditions:
+    - rule_prompt_model_schema_context_or_permission_hash_changes
+  supersedes: null
+
+invariants:
+  - subject_bundle_and_test_suite_refs_and_hashes_must_match_exact_versions
+  - all_required_test_cases_and_repeats_have_resolvable_run_and_evidence
+  - all_attempts_must_be_included_or_excluded_with_reason
+  - excluded_attempts_cannot_remove_failures_from_metric_denominators
+  - every_metric_result_uses_pre_registered_definition_and_threshold
+  - certified_requires_every_required_threshold_passed
+  - certified_with_ceiling_requires_explicit_failed_or_uncovered_scope_and_lower_claim_ceiling
+  - rejected_rule_gap_expired_or_revoked_cannot_enable_policy_certified
+  - verifier_must_be_independent_from_bundle_generator_and_review_runs
+  - ai_cannot_self_certify_its_own_policy_bundle
+  - eligible_activation_routes_must_be_allowed_by_current_activation_policy
+  - policy_certified_cannot_be_eligible_when_scope_expands_thresholds_reduce_or_permissions_increase
+  - human_signoff_eligibility_does_not_substitute_for_actual_human_decision
+  - certification_does_not_grant_external_action_authorization
+  - valid_certification_requires_timezone_aware_validity_window
+  - any_invalidation_condition_match_requires_review_or_invalidation
+  - superseded_certification_remains_immutable
+  - unknown_or_missing_field_fails_closed

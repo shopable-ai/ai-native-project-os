@@ -1,10 +1,11 @@
 # policies/ 机器政策问题导航
 
-本目录只保存“在什么结构化条件下选择哪条治理路线”的机器政策，不保存受控对象结构。当前唯一政策权威是 `project-governance-routing.yaml`；契约统一位于 `contracts/governance/`，不在本目录保留兼容副本。
+本目录只保存“在什么结构化条件下选择哪条治理路线”的机器政策，不保存受控对象结构。当前政策权威包括项目治理路由和审核策略激活路由；契约统一位于 `contracts/governance/`，不在本目录保留兼容副本。
 
 | 问题 | 时机 | 输入 | 输出 | 文件 | 示例 | 下一步 |
 |---|---|---|---|---|---|---|
 | 项目应采用哪种基础治理配置、哪些 overlay 必需 | L2 接入、关键风险输入变化或人工覆盖到期时 | 项目类型、复杂度、不确定性、数据敏感度、副作用与运行环境等结构化事实 | 基础治理配置建议、逐 overlay 的 required 状态与显式 unknown | `project-governance-routing.yaml` | 未知生产副作用保持 unknown，不按低风险处理 | 按 `contracts/governance/route-decision-contract.yaml` 固定新版本路由裁决 |
+| 审核策略应自动激活、等待人工确认还是阻断 | 认证完成或规则、阈值、scope、权限发生变化时 | 认证结果、新鲜度、风险变化、Unknown 与副作用 | `policy_certified`、`human_signoff` 或 `blocked` 路由 | `review-policy-activation-routing.yaml` | 阈值降低即使测试通过也转人工确认 | 由治理规则集或阶段门禁记录决策来源 |
 
 ## 政策与契约怎样相连
 

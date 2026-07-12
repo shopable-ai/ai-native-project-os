@@ -98,6 +98,7 @@ authority:
   l2_progression: docs/workflows/L2_PROGRESSION.md                       # L2 接入后的端到端推进与重开 SOP
   project_type_and_governance: docs/workflows/PROJECT_TYPE_AND_GOVERNANCE_ROUTING.md # 类型与治理配置路由
   project_governance_policy: policies/project-governance-routing.yaml   # 机器可判定路由条件
+  review_policy_activation_policy: policies/review-policy-activation-routing.yaml # 审核策略自动激活、人工确认与阻断路由
   route_decision_contract: contracts/governance/route-decision-contract.yaml        # 路由裁决与逐 overlay 状态契约
   control_set_contract: contracts/governance/control-set-contract.yaml              # 控制集合机器契约
   governance_rule_set_contract: contracts/governance/governance-rule-set-contract.yaml # 人工治理 Markdown 规则集契约
@@ -107,6 +108,8 @@ authority:
   authorization_snapshot_contract: contracts/governance/authorization-snapshot-contract.yaml # 授权快照有效性契约
   acceptance_verdict_claim_contract: contracts/governance/acceptance-verdict-claim-contract.yaml # 业务验收裁决与声明契约
   run_evidence_contract: contracts/governance/run-evidence-contract.yaml                # Run 与 Evidence 最小机器结构契约
+  review_policy_test_suite_contract: contracts/governance/review-policy-test-suite-contract.yaml # 审核策略预注册测试集契约
+  review_policy_certification_contract: contracts/governance/review-policy-certification-contract.yaml # 审核策略认证裁决契约
   chain_package_contract: contracts/artifacts/chain-package-contract.yaml       # 业务链包模板机器契约
   requirement_design_package_contract: contracts/artifacts/requirement-design-package-contract.yaml # 人机需求设计包机器契约
   spec_package_contract: contracts/artifacts/spec-package-contract.yaml         # Spec 五件套模板机器契约
