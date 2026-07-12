@@ -1,3 +1,4 @@
+import hashlib
 import re
 import unittest
 from pathlib import Path
@@ -17,10 +18,21 @@ CERTIFICATION_CONTRACT = (
 ACTIVATION_POLICY = ROOT / "policies" / "review-policy-activation-routing.yaml"
 TEMPLATE_ROOT = ROOT / "templates" / "standard-project" / "governance" / "review-certification"
 FIXTURE_ROOT = ROOT / "fixtures" / "review-policy-certification"
+STATIC_EVIDENCE = ROOT / "reviews" / "review-policy-certification-static-evidence.yaml"
 
 
 def load_yaml(path: Path) -> dict:
     return yaml.safe_load(path.read_text(encoding="utf-8"))
+
+
+def fixture_integrity(root: Path) -> tuple[dict[str, str], str]:
+    files = {
+        path.relative_to(ROOT).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in sorted(root.rglob("*"))
+        if path.is_file()
+    }
+    manifest = "\n".join(f"{path}:{digest}" for path, digest in files.items())
+    return files, hashlib.sha256(manifest.encode("utf-8")).hexdigest()
 
 
 class ReviewPolicyCertificationAuthorityTests(unittest.TestCase):
@@ -422,6 +434,52 @@ class ReviewPolicyCertificationInvalidationAndScoreTests(unittest.TestCase):
             "当前总体评分继续是 `not_evaluated`",
         ):
             self.assertIn(token, text)
+
+
+class ReviewPolicyCertificationEvidenceTests(unittest.TestCase):
+    def test_static_evidence_is_registered_recomputable_and_claim_limited(self):
+        evidence = load_yaml(STATIC_EVIDENCE)
+        project = load_yaml(ROOT / "project-os.yaml")
+        current = load_yaml(ROOT / "reviews" / "current-score-status.yaml")
+        expected_files, expected_manifest = fixture_integrity(FIXTURE_ROOT)
+
+        self.assertEqual(
+            project["score_summary"]["review_policy_certification_static_evidence_ref"],
+            "reviews/review-policy-certification-static-evidence.yaml",
+        )
+        self.assertIn(
+            "reviews/review-policy-certification-static-evidence.yaml",
+            project["proof_evidence"],
+        )
+        self.assertEqual(
+            current["review_policy_certification_static_evidence_ref"],
+            "reviews/review-policy-certification-static-evidence.yaml",
+        )
+        self.assertEqual(
+            evidence["implementation_revision"],
+            "b69e1d1023d822f93d7ebea79dc08b45ce1a119e",
+        )
+        self.assertEqual(evidence["content_integrity"]["files"], expected_files)
+        self.assertEqual(
+            evidence["content_integrity"]["fixture_tree_manifest_sha256"],
+            expected_manifest,
+        )
+        expected_assets = {
+            path: hashlib.sha256((ROOT / path).read_bytes()).hexdigest()
+            for path in evidence["content_integrity"]["scoped_asset_hashes"]
+        }
+        self.assertEqual(
+            evidence["content_integrity"]["scoped_asset_hashes"],
+            expected_assets,
+        )
+        self.assertEqual(evidence["results"]["full"]["tests_run"], 174)
+        self.assertEqual(evidence["results"]["checker"]["version"], "0.5.0")
+        self.assertEqual(evidence["results"]["checker"]["p0_count"], 0)
+        self.assertEqual(evidence["results"]["checker"]["p1_count"], 0)
+        self.assertEqual(evidence["current_overall_score"], "not_evaluated")
+        self.assertEqual(evidence["proof_level_ceiling"], "contract_tests_ready")
+        self.assertFalse(evidence["claims_allowed"]["real_model_stability_proven"])
+        self.assertFalse(evidence["claims_allowed"]["general_95_plus"])
 
 
 if __name__ == "__main__":

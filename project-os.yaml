@@ -57,6 +57,7 @@ score_summary:
   requirement_design_static_evidence_ref: reviews/human-ai-requirement-design-static-evidence.yaml
   review_policy_certification_static_evidence: present_unscored # 只有 Contract、模板、synthetic fixture 与 C14 静态门禁
   review_policy_certification_proof_scope: static_contract_and_synthetic_fixture_only # 不证明真实模型或真实 L2
+  review_policy_certification_static_evidence_ref: reviews/review-policy-certification-static-evidence.yaml
   local_runtime_proof: not_evaluated    # 没有非 fixture 本地真实运行证明
   readonly_real_proof: not_evaluated    # 没有真实目标环境只读预检证明
   production_proof: not_evaluated       # 没有经批准生产 Run/Evidence/Verdict
@@ -184,6 +185,8 @@ review_evidence:
     - reviews/profile-taxonomy-file-audit.yaml
   human_governed_ai_review:
     - reviews/human-governed-ai-review-adversarial.yaml
+  review_policy_certification_static:
+    - reviews/review-policy-certification-static-evidence.yaml
   historical_invalidated:
     - reviews/phase0-checker-evidence.yaml # 旧检查快照已失效，只保留历史审计
     - reviews/profile-taxonomy-alignment-score.yaml # 旧 84 分封顶记录仅保留历史审计，不再作为 current
@@ -197,6 +200,7 @@ scoring_evidence:
 proof_evidence:
   - reviews/operational-spine-static-and-fixture-evidence.yaml
   - reviews/human-ai-requirement-design-static-evidence.yaml
+  - reviews/review-policy-certification-static-evidence.yaml
 
 # 第三方依赖策略
 dependencies:

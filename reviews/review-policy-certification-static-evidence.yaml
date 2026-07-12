@@ -1,0 +1,131 @@
+# 审核策略认证的静态 Contract、模板、C14 与 synthetic fixture Evidence。
+# 本文件不证明真实模型多轮稳定性、真实 L2 消费、外部动作授权、生产运行或通用 95+。
+schema_version: 1
+evidence_id: EVIDENCE-REVIEW-POLICY-CERTIFICATION-STATIC-20260712
+implementation_revision: b69e1d1023d822f93d7ebea79dc08b45ce1a119e
+captured_at: "2026-07-12T13:23:53Z"
+scope:
+  - docs/governance/REVIEW_POLICY_CERTIFICATION.md
+  - docs/governance/STATE_TRANSITIONS_AND_INVALIDATION.md
+  - docs/governance/RUN_EVIDENCE_ACCEPTANCE.md
+  - contracts/governance/review-policy-test-suite-contract.yaml
+  - contracts/governance/review-policy-certification-contract.yaml
+  - policies/review-policy-activation-routing.yaml
+  - contracts/artifacts/requirement-design-package-contract.yaml
+  - templates/standard-project/governance/review-certification
+  - fixtures/review-policy-certification
+  - linters/check_controlled_objects.py
+  - linters/check_capability_function_mapping.py
+  - tests/test_review_policy_certification.py
+  - tests/test_operational_spine_checker.py
+  - reviews/current-score-status.yaml
+  - project-os.yaml
+  - README.zh-CN.md
+commands:
+  focused_authority_contract_template_and_score: python3 -m unittest tests.test_review_policy_certification
+  focused_c14_and_template: python3 -m unittest tests.test_review_policy_certification.ReviewPolicyCertificationTemplateTests tests.test_operational_spine_checker
+  full: python3 -m unittest discover -s tests
+  checker: python3 linters/check_controlled_objects.py . --report
+  l2_checker: python3 linters/check_controlled_objects.py templates/standard-project --l2-mode --report
+  c13_checker: python3 linters/check_capability_function_mapping.py templates/standard-project --report
+  yaml_json: parse every repository YAML and JSON file except intentional invalid checker fixtures
+  markdown_links: python3 -m unittest tests.test_operational_spine_docs
+  pycompile: python3 -m py_compile linters/*.py tests/*.py
+  diff_check: git diff --check
+content_integrity:
+  algorithm: sha256
+  fixture_tree_manifest_sha256: 2b485bbcb7ded93a087cfffa7cc8a021fc59872988b3fd47bab51ce30a5b9e38
+  files:
+    fixtures/review-policy-certification/negative/authorization-escalation/scenario.yaml: 0352a9cc9a2f47741065e80c1b09c41f879a1a4839415832054e21e5ebfea91b
+    fixtures/review-policy-certification/negative/bundle-hash-drift/scenario.yaml: f0864e3f35d633add379c4bd349b6ca9aea32e46836e6ff7d70239fd621813b4
+    fixtures/review-policy-certification/negative/failed-threshold-active/scenario.yaml: e06e7671b050f270d0e9e0512917097cc77c100ef0fab8867b5ac61397a3ab1a
+    fixtures/review-policy-certification/negative/insufficient-repeats/scenario.yaml: 44ddadbfe854f3f2b51e5859013a1dae1361b5ea484efec34c82bd93050c6b66
+    fixtures/review-policy-certification/negative/missing-core-categories/scenario.yaml: ea26d53365f3854c2d47b5f43b11230b841af23af871f518ba3199ef9c5d6d49
+    fixtures/review-policy-certification/negative/scope-expansion-auto/scenario.yaml: 6eceefc3a99b8ad35372ada95ea59c050a4bcac72092473e5fbda79f39dd8695
+    fixtures/review-policy-certification/negative/self-certification/scenario.yaml: b1c34a899eaa44c0f88fbaa8d2602f0d5a992e5b6477763dfbb2f8eb412c05cf
+    fixtures/review-policy-certification/positive/human-signoff/scenario.yaml: fe015b7b80c236a60f952652bfff290f0f68f3dfa39f93890d6367c17c3b44af
+    fixtures/review-policy-certification/positive/policy-certified/scenario.yaml: 22f3c044df4f45c5522647aded7042893d069f4bc5e127ae18e2385e18b80f89
+    fixtures/review-policy-certification/positive/rule-gap-recovery/scenario.yaml: c820b1f7bbd7cc7d98d13143f0cbf0a3912d1b3467b4dcc228d78193300998ec
+  scoped_asset_hashes:
+    contracts/governance/review-policy-test-suite-contract.yaml: c5a34db6eb35d127bd2fe158d150f78eae071d6eaed8d6f6c1941b69b1310e03
+    contracts/governance/review-policy-certification-contract.yaml: 147ac644f398b09fda2088868046525fa1d8c694394085e33b2facc060a7612f
+    policies/review-policy-activation-routing.yaml: 183499ba4a277f0f46aa6f906fd8787063411878eab10f89c864f8baf4c8fdf2
+    templates/standard-project/governance/review-certification/审核策略包说明.md: 15fb73afa7a7808008f57cf26109272dd71a2b0e9a782ec27017f9a5017f3873
+    templates/standard-project/governance/review-certification/审核策略测试集.yaml: bbb2be3e501669f0559240f9f4cb4eb7d89288c2173e9eb0f5c5e7176c6117bf
+    templates/standard-project/governance/review-certification/审核策略激活策略.yaml: a4f7a6b8e7d753223b28f7ee98e42cf303fafb2df54598dec63c17bf00ef0daf
+    linters/check_controlled_objects.py: b8cc5e20f1ef331811b863a81faa27d830fa9d20de8e35fc4c4f54bd81bf6024
+    linters/check_capability_function_mapping.py: a463ce9cc091aa73b75942bba9db53951748231bf5c27c088523a2a61eba45d2
+results:
+  focused_authority_contract_template_and_score:
+    status: passed
+    tests_run: 19
+    failures: 0
+    errors: 0
+  focused_c14_and_template:
+    status: passed
+    tests_run: 53
+    failures: 0
+    errors: 0
+  full:
+    status: passed
+    tests_run: 174
+    failures: 0
+    errors: 0
+  checker:
+    status: passed
+    version: 0.5.0
+    files_scanned: 220
+    p0_count: 0
+    p1_count: 0
+  l2_template_checker:
+    status: passed
+    files_scanned: 27
+    p0_count: 0
+    p1_count: 0
+  c13_checker:
+    status: passed
+    p0_count: 0
+    p1_count: 0
+  yaml_json:
+    status: passed
+    yaml_files_parsed: 119
+    json_files_parsed: 3
+    intentional_invalid_checker_fixtures_excluded: true
+  markdown_links:
+    status: passed
+    tests_run: 14
+  pycompile:
+    status: passed
+  diff_check:
+    status: passed
+current_overall_score: not_evaluated
+design_target_score: 95.93
+proof_level_ceiling: contract_tests_ready
+proof_scope: static_contract_and_synthetic_fixture_only
+evidence_layers:
+  static_contracts_templates_and_checkers: present
+  synthetic_positive_negative_scenarios: present
+  real_model_multi_run: not_evaluated
+  real_l2_policy_consumption: not_evaluated
+  cross_project_runtime_isolation: not_evaluated
+  readonly_real: not_evaluated
+  production: not_evaluated
+hard_gates:
+  real_model_multi_run_evaluation: unmet
+  real_l2_policy_consumption: unmet
+  cross_project_isolation: unmet
+  second_heterogeneous_l2: unmet
+  independent_adversarial_94_gate: unmet
+claims_allowed:
+  static_contract_template_and_route_enforcement: true
+  synthetic_positive_negative_gate_behavior: true
+  real_model_stability_proven: false
+  real_l2_policy_consumption_proven: false
+  external_action_authorized: false
+  production_ready: false
+  general_95_plus: false
+known_limits:
+  - 三条正例和七条反例是 synthetic fixture，不包含真实模型输出、延迟、成本或非确定性漂移。
+  - C14 验证静态字段、计数、hash 绑定和路由不变量，不执行 reviewer 或认证平台。
+  - 模板中的 hash 和引用是待 L2 替换的占位符，不是有效认证。
+  - 跨项目隔离、第二异构 L2、真实模型、只读真实和生产证明均未完成。

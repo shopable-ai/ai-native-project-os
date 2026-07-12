@@ -15,6 +15,7 @@ evidence_layers:
 fixture_proof_scope: operational_spine_fixture_only
 requirement_design_proof_scope: human_requirement_design_static_fixture_only
 review_policy_certification_proof_scope: static_contract_and_synthetic_fixture_only
+review_policy_certification_static_evidence_ref: reviews/review-policy-certification-static-evidence.yaml
 design_assessment_context:
   approved_operational_spine_target: 95.93
   discussion_estimates:
