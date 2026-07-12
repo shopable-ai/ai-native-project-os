@@ -52,10 +52,16 @@ score_summary:
   fixture_proof: fixture_runtime_proven  # 仅匿名 operational-spine fixture 已结构闭合并可重放
   fixture_proof_scope: operational_spine_fixture_only # 不得外推到本地真实、只读真实或生产
   fixture_proof_evidence_ref: reviews/operational-spine-static-and-fixture-evidence.yaml
+  requirement_design_static_evidence: present_unscored # 人机需求层只有静态资产和 mutation fixture 证明
+  requirement_design_proof_scope: human_requirement_design_static_fixture_only # 不得外推到真实人工或真实 L2
+  requirement_design_static_evidence_ref: reviews/human-ai-requirement-design-static-evidence.yaml
   local_runtime_proof: not_evaluated    # 没有非 fixture 本地真实运行证明
   readonly_real_proof: not_evaluated    # 没有真实目标环境只读预检证明
   production_proof: not_evaluated       # 没有经批准生产 Run/Evidence/Verdict
   hard_gates:
+    real_human_usability_test: unmet   # 尚未用真实项目成员验证阅读、审查和批准体验
+    real_l2_requirement_migration: unmet # 尚未迁移一个真实 L2 的需求层并由其 Spec 消费
+    automatic_impact_simulation: unmet # 当前只有失效语义，没有自动变更影响模拟器
     cross_project_isolation: unmet      # 跨项目隔离与安全验证尚未成立
     second_heterogeneous_l2: unmet      # 第二个异构 L2 真实验证尚未成立
     independent_adversarial_94_gate: unmet # 当前快照尚未通过独立反方 94 分门禁
@@ -179,6 +185,7 @@ scoring_evidence:
 # 当前证明快照。它只证明各自声明的 scope，不自动成为当前总评分。
 proof_evidence:
   - reviews/operational-spine-static-and-fixture-evidence.yaml
+  - reviews/human-ai-requirement-design-static-evidence.yaml
 
 # 第三方依赖策略
 dependencies:
@@ -195,3 +202,6 @@ claim_limits:
     - production_ready                      # 禁止声明：生产已就绪
     - cross_project_proven                  # 禁止声明：已完成跨项目验证
     - requirements_100_percent_complete     # 禁止声明：代码需求已 100% 完成
+    - human_requirement_design_proven_in_real_l2 # 禁止声明：真实 L2 已采用并证明需求设计层
+    - automatic_impact_simulation_ready     # 禁止声明：变更影响自动模拟已就绪
+    - general_95_plus                       # 禁止声明：已证明通用 95+

@@ -13,6 +13,9 @@ WORKFLOW = ROOT / "docs" / "workflows" / "REQUIREMENT_DESIGN_WORKFLOW.md"
 FIXTURE_ROOT = ROOT / "fixtures" / "requirement-design"
 POSITIVE = FIXTURE_ROOT / "positive"
 NEGATIVE = FIXTURE_ROOT / "negative"
+STATIC_EVIDENCE = (
+    ROOT / "reviews" / "human-ai-requirement-design-static-evidence.yaml"
+)
 
 
 def load_yaml(path: Path) -> dict:
@@ -41,6 +44,17 @@ def load_registry(root: Path) -> dict[str, dict]:
         document = load_yaml(path)
         registry[document["stable_id"]] = document
     return registry
+
+
+def fixture_integrity(root: Path) -> tuple[dict[str, str], str]:
+    files = {}
+    for path in sorted(
+        candidate for candidate in root.rglob("*") if candidate.is_file()
+    ):
+        relative_path = path.relative_to(ROOT).as_posix()
+        files[relative_path] = hashlib.sha256(path.read_bytes()).hexdigest()
+    manifest = "\n".join(f"{path}:{digest}" for path, digest in files.items())
+    return files, hashlib.sha256(manifest.encode("utf-8")).hexdigest()
 
 
 def set_dotted(document: dict, dotted_path: str, value) -> None:
@@ -318,6 +332,77 @@ class RequirementDesignMachineGateTests(unittest.TestCase):
         self.assertEqual(project_os["score_summary"]["current_overall_score"], "not_evaluated")
         self.assertEqual(current["current_overall_score"], "not_evaluated")
         self.assertIn("runtime_ready", project_os["claim_limits"]["forbidden"])
+
+
+class RequirementDesignEvidenceTests(unittest.TestCase):
+    def test_static_evidence_is_registered_and_fixture_integrity_is_recomputable(self):
+        self.assertTrue(STATIC_EVIDENCE.is_file())
+        evidence = load_yaml(STATIC_EVIDENCE)
+        project_os = load_yaml(ROOT / "project-os.yaml")
+        expected_files, expected_manifest = fixture_integrity(FIXTURE_ROOT)
+
+        self.assertEqual(
+            project_os["score_summary"]["requirement_design_static_evidence_ref"],
+            "reviews/human-ai-requirement-design-static-evidence.yaml",
+        )
+        self.assertIn(
+            "reviews/human-ai-requirement-design-static-evidence.yaml",
+            project_os["proof_evidence"],
+        )
+        self.assertEqual(
+            project_os["score_summary"]["requirement_design_proof_scope"],
+            "human_requirement_design_static_fixture_only",
+        )
+        self.assertEqual(
+            evidence["content_integrity"]["files"], expected_files
+        )
+        self.assertEqual(
+            evidence["content_integrity"]["fixture_tree_manifest_sha256"],
+            expected_manifest,
+        )
+        self.assertEqual(evidence["results"]["full"]["tests_run"], 135)
+        self.assertEqual(evidence["results"]["checker"]["p0_count"], 0)
+        self.assertEqual(evidence["results"]["checker"]["p1_count"], 0)
+        self.assertEqual(evidence["current_overall_score"], "not_evaluated")
+        self.assertEqual(evidence["proof_level_ceiling"], "control_package")
+        self.assertFalse(evidence["claims_allowed"]["general_95_plus"])
+
+    def test_discussion_scores_are_non_official_and_current_score_stays_unknown(self):
+        current = load_yaml(ROOT / "reviews/current-score-status.yaml")
+        assessment = current["design_assessment_context"]
+
+        self.assertEqual(current["current_overall_score"], "not_evaluated")
+        self.assertEqual(assessment["approved_operational_spine_target"], 95.93)
+        self.assertEqual(
+            assessment["discussion_estimates"],
+            {
+                "machine_governance_only": 86.4,
+                "human_requirement_layer": 96.4,
+                "broader_blind_spot_candidate": 97.6,
+            },
+        )
+        self.assertEqual(
+            assessment["status"], "non_official_unverified_not_current_score"
+        )
+        for gate in (
+            "real_human_usability_test",
+            "real_l2_requirement_migration",
+            "automatic_impact_simulation",
+        ):
+            self.assertEqual(current["hard_gates"][gate], "unmet")
+
+    def test_readme_separates_static_requirement_proof_from_real_capability(self):
+        readme = (ROOT / "README.zh-CN.md").read_text(encoding="utf-8")
+        for token in ("86.4", "96.4", "97.6", "非官方"):
+            self.assertIn(token, readme)
+        for token in (
+            "human_requirement_design_static_fixture_only",
+            "真实人工可用性测试",
+            "真实 L2 需求迁移",
+            "自动影响模拟",
+        ):
+            self.assertIn(token, readme)
+        self.assertIn("当前总体评分继续是 `not_evaluated`", readme)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,119 @@
+# 人机协作需求设计层的静态实现与语义 mutation fixture 证据快照。
+# 本文件不证明真实人工可用性、真实 L2 消费、自动影响模拟、运行时或通用 95+。
+schema_version: 1
+evidence_id: EVIDENCE-HUMAN-AI-REQUIREMENT-DESIGN-STATIC-20260712
+implementation_revision: 7adbd1c
+captured_at: "2026-07-12T19:47:25+09:00"
+scope:
+  - docs/workflows/REQUIREMENT_DESIGN_WORKFLOW.md
+  - contracts/artifacts/requirement-design-package-contract.yaml
+  - contracts/governance/stage-exit-gates-contract.yaml
+  - templates/standard-project/requirements
+  - fixtures/requirement-design
+  - tests/test_requirement_design_layer.py
+  - reviews/current-score-status.yaml
+  - project-os.yaml
+  - README.zh-CN.md
+commands:
+  focused: python3 -m unittest tests.test_requirement_design_layer -v
+  full: python3 -m unittest discover -s tests -v
+  checker: python3 linters/check_controlled_objects.py . --report
+  l2_checker: python3 linters/check_controlled_objects.py templates/standard-project --l2-mode --report
+  yaml_json: parse every repository YAML and JSON file, excluding the three intentional invalid-YAML checker fixtures
+  markdown_links: python3 -m unittest tests.test_operational_spine_docs -v
+  pycompile: python3 -m py_compile linters/check_controlled_objects.py tests/*.py
+  diff_check: git diff --check
+content_integrity:
+  algorithm: sha256
+  fixture_tree_manifest_sha256: 2c5a0d065998d43df231736207a68e7c1dc329a4b9da4dbd4655d674e713e48f
+  files:
+    fixtures/requirement-design/negative/ai-self-approval.yaml: 9af01ed7b4dbeaf5a2427ef96a7fcbc9130ec425b3e309ae38ae516c229b242e
+    fixtures/requirement-design/negative/baseline-silent-change.yaml: 341f7b8b38f493e2ae1d78d6d48985048fc6b6f76503ddf1aea73e38fce0dc62
+    fixtures/requirement-design/negative/intent-drift.yaml: a579fa14fe3d7d851732f9f4636f226c0ab64cc4023481ac6fa63ce7b30a4629
+    fixtures/requirement-design/negative/prompt-authority-bypass.yaml: 111f4bfd853a571c757093deb7a94879f6932749b6353f3b135a503b73eb8842
+    fixtures/requirement-design/negative/unapproved-spec-input.yaml: 5e57022bfcffeb7a05661e54f7fcd27aebcc7af28dd6b5fd5ecf7296d411c232
+    fixtures/requirement-design/positive/SRC-REQ-001.yaml: a72b57832491b327ef7cff4ce3c5a0e6fd3dd714898b5acbcc25806e0d70a7d7
+    fixtures/requirement-design/positive/adr.yaml: 76ac11269cd6029823730adab2f95bae9ebe6ceac4983b01385f9ecbce08dce6
+    fixtures/requirement-design/positive/business-requirement.yaml: 683f8646ca04bf7b9414c76f0c318c33dd2ce7367c3bbcbf002682abbf020c2a
+    fixtures/requirement-design/positive/capability.yaml: 2b06d8140f1c309d4230277b93670295fd50d9d551224939cc1030bfdd44640f
+    fixtures/requirement-design/positive/chain.yaml: dac7c3ac85b7eb5b74903cca7d078dd88872ded10b292d6022074da3335f15a0
+    fixtures/requirement-design/positive/context-snapshot.yaml: 3a14618084069cb3b1a8cbb7970009ef74acfdf649753653e91d012c82ede574
+    fixtures/requirement-design/positive/diagrams/flowchart.md: a10198017390442a27c777e16fd998a9457442e24d490a00946438ba0f5e9fa7
+    fixtures/requirement-design/positive/fact.yaml: 32d564e43c33d59c0b90e1273f6256d567d32214ba0fc4939a0bd2cf76d1bd07
+    fixtures/requirement-design/positive/function.yaml: 9790f1d10ea3158b2ddaf456128256a3c37abfa346f061247a17a1bab013f844
+    fixtures/requirement-design/positive/functional-requirement.yaml: 329326d108acb01b6f133ffefb0d234480192944ec20a6b7eab07464d2fdb566
+    fixtures/requirement-design/positive/requirement-baseline.yaml: b384176d4467e98526ab349a81dd41ad0a702f0d59e6b5ea9cf750538ccee21e
+    fixtures/requirement-design/positive/scenario.yaml: 83e3d76ee4283094bd5333ce0fc1eaaf13c7f3d7b2b9c790d0e53dfd80410f6a
+    fixtures/requirement-design/positive/spec.yaml: fee25c071147b98f548f48365b37c10f6d8f3b9922770593d3ce7c82082bee3a
+results:
+  focused:
+    status: passed
+    tests_run: 14
+    failures: 0
+    errors: 0
+  full:
+    status: passed
+    tests_run: 135
+    failures: 0
+    errors: 0
+  checker:
+    status: passed
+    version: 0.4.0
+    files_scanned: 193
+    p0_count: 0
+    p1_count: 0
+  l2_checker:
+    status: passed
+    files_scanned: 21
+    p0_count: 0
+    p1_count: 0
+  yaml_json:
+    status: passed
+    yaml_files_parsed: 138
+    json_files_parsed: 3
+    intentional_invalid_checker_fixtures_excluded: 3
+  markdown_links:
+    status: passed
+    operational_docs_tests_run: 14
+  pycompile:
+    status: passed
+  diff_check:
+    status: passed
+current_overall_score: not_evaluated
+design_assessment_context:
+  approved_operational_spine_target: 95.93
+  discussion_estimates:
+    machine_governance_only: 86.4
+    human_requirement_layer: 96.4
+    broader_blind_spot_candidate: 97.6
+  status: non_official_unverified_not_current_score
+proof_level_ceiling: control_package
+proof_scope: human_requirement_design_static_fixture_only
+evidence_layers:
+  static: present_unscored
+  semantic_fixture: static_mutation_proven
+  real_human_usability: not_evaluated
+  real_l2_consumption: not_evaluated
+  local_runtime: not_evaluated
+  readonly_real: not_evaluated
+  production: not_evaluated
+hard_gates:
+  real_human_usability_test: unmet
+  real_l2_requirement_migration: unmet
+  automatic_impact_simulation: unmet
+  cross_project_isolation: unmet
+  second_heterogeneous_l2: unmet
+  independent_adversarial_94_gate: unmet
+claims_allowed:
+  requirement_structure_and_fail_closed_mutations: true
+  real_human_usability_proven: false
+  real_l2_consumption_proven: false
+  automatic_impact_simulation_ready: false
+  local_runtime_ready: false
+  production_ready: false
+  general_95_plus: false
+known_limits:
+  - 当前只证明需求设计权威、模板、契约和正反例 mutation fixture 能静态闭合。
+  - project map、context snapshot 和 baseline 目前是模板与契约，不是自动生成或运行平台。
+  - 未在真实 L2 上完成需求迁移，也没有真实人类审查可用性证据。
+  - 跨项目隔离、第二个异构 L2 和独立反方 94 分门禁仍未满足。
