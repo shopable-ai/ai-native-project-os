@@ -261,6 +261,80 @@
       "system/private paths such as .git, .shopme, .next, build, dist, and node_modules"
     ]
   },
+  "mermaidAiImages": {
+    "v1Scope": "unversioned local filesystem documents in docs-cli or development runtimes",
+    "sourceOfTruth": "Mermaid fence source",
+    "providerConfigPath": "ai.image",
+    "providerProtocols": {
+      "codex-cli": "installed Codex CLI owns ChatGPT authentication",
+      "openai-images": "API credential is referenced through apiKeyEnv"
+    },
+    "credentialReferenceField": "apiKeyEnv",
+    "rejectedCredentialSources": [
+      "inline apiKey",
+      ".codex/auth.json"
+    ],
+    "discoveryEndpoint": "GET /api/docs/v1/capabilities",
+    "generationEndpoint": "POST /api/docs/v1/images:generate",
+    "requestFields": [
+      "documentId",
+      "blockIndex",
+      "mermaidSource",
+      "styleId"
+    ],
+    "fenceMetaField": "shopme-image",
+    "fenceMetaFields": [
+      "shopme-image",
+      "shopme-image-style"
+    ],
+    "styles": {
+      "allowed": [
+        "technical",
+        "editorial",
+        "whiteboard",
+        "presentation"
+      ],
+      "default": "technical",
+      "customBrowserPrompts": false,
+      "promptFragments": "server-side only"
+    },
+    "assetLayout": "<document-stem>.assets/mermaid-<cache-key-prefix>.png",
+    "cacheFreshness": {
+      "states": [
+        "missing",
+        "fresh",
+        "stale"
+      ],
+      "comparison": "current cache-key prefix must match the shopme-image filename",
+      "staleBehavior": "keep the old image visible with an outdated warning",
+      "missingAction": "Open style menu",
+      "staleAction": "Open refresh/style menu",
+      "freshAction": "Open refresh/style menu",
+      "sameFreshStyleAction": "disabled",
+      "styleMenuPaidRequest": false,
+      "automaticPaidRequests": false
+    },
+    "assetCacheControl": {
+      "contentAddressedMermaidPng": "private, max-age=31536000, immutable",
+      "otherDocsAssets": "private, max-age=0, must-revalidate"
+    },
+    "hostedBehavior": "display persisted assets and the disabled explanatory style menu only",
+    "readOnlyContexts": [
+      "version-directory documents",
+      "cross-page included Mermaid blocks",
+      "hosted pages without durable asset storage"
+    ],
+    "safetyRules": [
+      "author and validate the Mermaid fence before generating the finished diagram image",
+      "check image generation capability before making a paid request",
+      "send the exact zero-based raw Mermaid block index, exact source, and one allowed styleId",
+      "never call the image provider directly from a browser or expose its credential",
+      "never accept an arbitrary browser-supplied prompt or style fragment",
+      "never make a paid image request automatically when rendering or detecting stale state",
+      "never write shopme-image or shopme-image-style before the server has persisted the PNG",
+      "reread the document after a source mismatch or version conflict"
+    ]
+  },
   "projectConventions": {
     "projectMap": ".shopme/project-map.md",
     "deliverablesRoot": "deliverables",

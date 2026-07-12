@@ -32,7 +32,7 @@
 
 ## 2. 人类地图
 
-```mermaid
+```mermaid shopme-image="./AI_PROJECT_OS_OVERVIEW.assets/mermaid-92d38a27f3851c57.png" shopme-image-style="technical" shopme-image-source="sha256:232bc44a3d45bd268c0e3aedea0a7515b572c2bd9756e4dfb4c43174c526fddb"
 flowchart TD
     A["需求种子 / 存量系统"] --> B{"项目类型判断"}
     B -->|存量恢复型| R0["R0 存量架构恢复"]
