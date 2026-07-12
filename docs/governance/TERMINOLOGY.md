@@ -74,6 +74,11 @@ term-id: `approval-status`
 
 治理对象或动作授权是否待处理、获批、拒绝、过期或撤销的独立坐标。审批通过不表示内容审核通过、实现完成或 Evidence 有效。
 
+### 批准路由
+term-id: `approval-route`
+
+说明批准结果由哪一种受控路径产生：通过有效认证与激活 Policy 的策略决策，或由可验证人类完成的高风险确认。它不是审批状态、工作状态或证据等级；两条路径都必须绑定 Decision/Evidence，且不能替代外部动作授权。
+
 ### 实现状态
 term-id: `implementation-status`
 
@@ -135,6 +140,16 @@ term-id: `context-snapshot`
 term-id: `project-map`
 
 L2 面向人的当前导航，聚合目标、阶段、核心链路、能力/功能、批准需求、决策、风险、Unknown 和下一步的稳定引用。它不复制需求正文、状态枚举或任务权威。
+
+### 审核策略包
+term-id: `review-policy-bundle`
+
+由规则集、Prompt、输入输出 Schema、Context 策略、模型 fingerprint、Tool/权限边界、改写上限和失败出口共同组成的可重放审核对象。Prompt 只是装配载体，不是规则权威。
+
+### 审核策略认证
+term-id: `review-policy-certification`
+
+针对审核策略包执行预注册正例、反例、边界、对抗和恢复测试，依据全部 Run/Evidence、指标与阈值作出有范围和有效期的认证 Verdict。认证通过只允许按激活 Policy 使用，不授予外部动作权限。
 
 ### 任务树
 term-id: `task-tree`

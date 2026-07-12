@@ -226,7 +226,7 @@ class RequirementDesignAuthorityTests(unittest.TestCase):
         self.assertIn("context_snapshot", model)
         self.assertIn("AI 不能批准或冻结需求基线", model)
 
-    def test_stage_gates_put_intent_approval_before_spec(self):
+    def test_stage_gates_put_intent_decision_before_spec(self):
         gates = (ROOT / "docs/workflows/STAGE_EXIT_GATES.md").read_text(
             encoding="utf-8"
         )
@@ -235,7 +235,7 @@ class RequirementDesignAuthorityTests(unittest.TestCase):
         s5 = section(gates, "## S5", "## S6")
         for token in ("original_intent", "approved_intent", "需求基线"):
             self.assertIn(token, s0)
-        for token in ("功能需求卡", "AI 自检", "人工批准"):
+        for token in ("功能需求卡", "AI 自检", "Decision Gate"):
             self.assertIn(token, s2)
         for token in ("功能需求", "version", "content_hash", "需求基线"):
             self.assertIn(token, s5)

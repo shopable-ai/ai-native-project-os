@@ -120,6 +120,7 @@ authority:
   state_and_invalidation: docs/governance/STATE_TRANSITIONS_AND_INVALIDATION.md # 状态迁移和失效传播
   authorization_and_isolation: docs/governance/AUTHORIZATION_SIDE_EFFECTS_AND_ISOLATION.md # 权限、副作用、隔离
   run_evidence_acceptance: docs/governance/RUN_EVIDENCE_ACCEPTANCE.md    # Run、Evidence、裁决和声明
+  review_policy_certification: docs/governance/REVIEW_POLICY_CERTIFICATION.md # 审核策略测试、认证、激活与失效的人类权威
   gates_and_scoring: docs/governance/GATES_PROOF_SCORING.md              # 门禁、证据和评分
   terminology: docs/governance/TERMINOLOGY.md                            # 中文术语和稳定 term-id
   research_method: docs/research/RESEARCH_WORKFLOW.md                     # 研究方法
@@ -140,6 +141,7 @@ terminology_manifest:
     - lifecycle-stage
     - work-status
     - approval-status
+    - approval-route
     - implementation-status
     - proof-level
     - invalidation-status
@@ -152,6 +154,8 @@ terminology_manifest:
     - requirement-baseline
     - context-snapshot
     - project-map
+    - review-policy-bundle
+    - review-policy-certification
     - task-tree
     - workflow
     - skill

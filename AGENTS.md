@@ -27,9 +27,10 @@
 - `docs/architecture/AI_NATIVE_EXECUTION_MODEL.md` 是 AI 执行节点、上下文信任、版本指纹、评测和降级的权威源。
 - `docs/architecture/AI_PROJECT_OS_OVERVIEW.md` 是面向人的四条不可折叠主线与阅读入口，不替代各主题权威。
 - `docs/workflows/PROJECT_DELIVERY_WORKFLOW.md` 是从需求或存量恢复到 Claim、复盘和升格的推进控制流权威源。
-- `docs/workflows/REQUIREMENT_DESIGN_WORKFLOW.md` 是从原始意图、链路、能力和功能到人类批准需求基线及 Spec 入口的权威源。
+- `docs/workflows/REQUIREMENT_DESIGN_WORKFLOW.md` 是从原始意图、链路、能力和功能到受控决策门、需求基线及 Spec 入口的权威源。
 - `docs/workflows/STAGE_EXIT_GATES.md` 是 R0、S0—S7 人类可读退出门禁与重开入口；机器记录结构由对应 governance contract 定义。
 - `docs/governance/TERMINOLOGY.md` 是中文术语与稳定 term-id 的唯一权威源。
+- `docs/governance/REVIEW_POLICY_CERTIFICATION.md` 是审核策略包、预注册测试、多轮认证、激活路由与失效重开的唯一人类操作权威源。
 - `docs/workflows/` 是推进和架构师职责权威源。
 - `docs/governance/` 是追溯、门禁、证据和评分权威源。
 - `contracts/` 只定义机器结构、版本、引用和失败语义，不承载项目事实或可变治理策略；`policies/` 承载可审计的治理决策规则。
