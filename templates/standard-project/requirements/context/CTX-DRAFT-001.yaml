@@ -1,9 +1,10 @@
 schema_version: 1
-stable_id: CTX-001
+stable_id: CTX-DRAFT-001
 object_type: context_snapshot
 version: 1
-snapshot_state: approved
-canonical_path: requirements/context/CTX-001.yaml
+snapshot_state: captured
+approval_status: pending
+canonical_path: requirements/context/CTX-DRAFT-001.yaml
 included_files:
   - domain/glossary.md
   - domain/mvp/REQ-001.md
@@ -24,7 +25,7 @@ source_hashes:
   domain/mvp/REQ-001.md: "{{business_requirement_content_hash}}"
   requirements/项目地图.md: "{{project_map_hash}}"
 generated_by: ai-template-author
-approved_by: human-template-owner
+approved_by: null
 created_at: "{{context_created_at}}"
-content_hash: "{{context_snapshot_content_hash}}"
-proof_boundary: input_scope_only_not_content_correctness
+content_hash: "{{context_snapshot_draft_content_hash}}"
+proof_boundary: captured_input_scope_only_not_content_correctness

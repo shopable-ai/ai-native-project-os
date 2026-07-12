@@ -24,8 +24,8 @@ intent:
   interpreted_intent: "{{ai_candidate_interpretation}}"
   approved_intent: null
   implementation_intent: "{{candidate_implementation_intent}}"
-context_snapshot_ref: CTX-001
-baseline_ref: REQ-BASELINE-001
+context_snapshot_ref: CTX-DRAFT-001
+baseline_ref: REQ-BASELINE-DRAFT-001
 content_hash: "{{functional_requirement_content_hash}}"
 supersedes: null
 candidate_solution_status: candidate
@@ -129,12 +129,14 @@ traceability_ref: REQ-FUNC-001
 
 只保存已经由事实、规则或 ADR 批准的约束；未批准技术偏好不得写在这里。
 
-## 候选实现方案
+## 候选实现要点
 
 | 方案 | 优点 | 风险/限制 | 当前状态 |
 |---|---|---|---|
 | `OPTION-A` | `{{benefit}}` | `{{risk}}` | candidate |
 | `OPTION-B` | `{{benefit}}` | `{{risk}}` | candidate |
+
+候选方案不是批准要求。
 
 ## 方案选择入口
 

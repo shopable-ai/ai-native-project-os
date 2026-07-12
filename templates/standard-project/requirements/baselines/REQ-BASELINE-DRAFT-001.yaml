@@ -1,9 +1,10 @@
 schema_version: 1
-stable_id: REQ-BASELINE-001
+stable_id: REQ-BASELINE-DRAFT-001
 object_type: requirement_baseline
 version: 1
-baseline_state: approved
-canonical_path: requirements/baselines/REQ-BASELINE-001.yaml
+baseline_state: draft
+approval_status: pending
+canonical_path: requirements/baselines/REQ-BASELINE-DRAFT-001.yaml
 requirement_refs:
   - stable_id: REQ-001
     version: 1
@@ -12,12 +13,12 @@ requirement_refs:
     version: 1
     content_hash: "{{functional_requirement_content_hash}}"
 scope_hash: "{{requirement_scope_hash}}"
-approved_by: human-template-owner
-approved_at: "{{approved_at}}"
-content_hash: "{{requirement_baseline_content_hash}}"
+approved_by: null
+approved_at: null
+content_hash: "{{requirement_baseline_draft_content_hash}}"
 supersedes: null
 invariants:
-  - approved_members_are_immutable
-  - member_change_requires_new_baseline_version
+  - copied_project_starts_from_this_draft
+  - draft_cannot_be_consumed_by_active_spec
+  - human_approval_creates_new_approved_baseline
   - ai_cannot_fill_human_approval_identity
-  - specs_bind_exact_member_version_and_hash

@@ -1,7 +1,7 @@
 # 人机需求设计包的机器结构契约；业务内容与批准决定留在 L2。
 schema_version: 1
 contract_id: requirement-design-package-contract
-version: 2
+version: 1
 template_root: templates/standard-project/requirements
 required_files:
   - README.md
@@ -9,7 +9,9 @@ required_files:
   - capabilities/CAP-001_能力卡.md
   - functions/FUNC-001_功能需求卡.md
   - baselines/REQ-BASELINE-001.yaml
+  - baselines/REQ-BASELINE-DRAFT-001.yaml
   - context/CTX-001.yaml
+  - context/CTX-DRAFT-001.yaml
   - generated/README.md
 required_frontmatter_fields:
   capabilities/CAP-001_能力卡.md:
@@ -80,6 +82,19 @@ required_fields:
     - object_type
     - version
     - baseline_state
+    - canonical_path
+    - requirement_refs
+    - scope_hash
+    - approved_by
+    - approved_at
+    - content_hash
+    - supersedes
+  baselines/REQ-BASELINE-DRAFT-001.yaml:
+    - schema_version
+    - stable_id
+    - object_type
+    - version
+    - baseline_state
     - approval_status
     - canonical_path
     - requirement_refs
@@ -89,6 +104,21 @@ required_fields:
     - content_hash
     - supersedes
   context/CTX-001.yaml:
+    - schema_version
+    - stable_id
+    - object_type
+    - version
+    - snapshot_state
+    - canonical_path
+    - included_files
+    - excluded_files
+    - exclusion_reasons
+    - source_hashes
+    - generated_by
+    - approved_by
+    - created_at
+    - content_hash
+  context/CTX-DRAFT-001.yaml:
     - schema_version
     - stable_id
     - object_type
@@ -107,17 +137,18 @@ required_fields:
 required_values:
   baselines/REQ-BASELINE-001.yaml:
     object_type: requirement_baseline
+    baseline_state: approved
+  baselines/REQ-BASELINE-DRAFT-001.yaml:
+    object_type: requirement_baseline
+    baseline_state: draft
+    approval_status: pending
   context/CTX-001.yaml:
     object_type: context_snapshot
-allowed_states:
-  baseline_state: [draft, approved, superseded, revoked]
-  snapshot_state: [captured, approved, stale, superseded]
-  approval_status: [pending, approved, rejected, expired, revoked]
-state_invariants:
-  - copied_template_starts_as_draft_or_captured_and_pending
-  - approved_baseline_requires_human_approved_by_and_non_empty_member_hashes
-  - approved_snapshot_requires_human_approved_by_and_verified_source_hashes
-  - ai_cannot_promote_draft_or_captured_state_to_approved
+    snapshot_state: approved
+  context/CTX-DRAFT-001.yaml:
+    object_type: context_snapshot
+    snapshot_state: captured
+    approval_status: pending
 required_sections:
   README.md: [复制后的目录, 权威边界, 使用顺序, 声明边界]
   项目地图.md: [当前目标, 当前阶段, 核心链路, 能力与功能, 批准需求, 重大决策, 风险与 Unknown, 下一步]
@@ -147,7 +178,7 @@ required_sections:
     - 数据、权限与风险
     - 验收方向
     - 已批准实现约束
-    - 候选实现方案
+    - 候选实现要点
     - 方案选择入口
     - 已有资产
     - 未知与待确认
@@ -162,6 +193,12 @@ authority_boundary:
   generated_role: derived_non_authoritative
   spec_may_consume_only: approved_baseline_members
   candidate_solution_must_enter: research_or_ADR
+state_invariants:
+  - copied_project_uses_draft_baseline_and_captured_context
+  - approved_examples_are_reference_fixtures_not_copy_targets
+  - approved_baseline_requires_human_approved_by_and_non_empty_member_hashes
+  - approved_snapshot_requires_human_approved_by_and_verified_source_hashes
+  - ai_cannot_promote_draft_or_captured_state_to_approved
 failure_semantics:
   mode: fail_closed
   missing_required_file: invalid_package
@@ -176,5 +213,5 @@ failure_semantics:
   prompt_or_chat_as_authority: blocked
 compatibility:
   minimum_project_os_schema_version: 3
-  template_contract_version: 2
+  template_contract_version: 1
   breaking_change_requires_major_version: true
