@@ -8,7 +8,7 @@
 | 输出 | 经 AI 自检与人类批准的功能需求、不可变 Requirement Baseline、上下文快照、待研究问题和 ADR/Spec 入口。 |
 | 下一步 | 需求批准后进入研究/ADR 和工程设计，再由[项目交付工作流](PROJECT_DELIVERY_WORKFLOW.md)生成 Spec；未批准时留在本工作流。 |
 
-本文是“人怎样借助 AI 形成正确需求”的操作权威。对象字段和关系由[受控对象模型](../governance/CONTROLLED_OBJECT_MODEL.md)定义，模板结构由注册的 requirement design package contract 定义；本文不维护第二份机器枚举。
+本文是“人怎样借助 AI 形成正确需求”的操作权威。对象字段和关系由[受控对象模型](../governance/CONTROLLED_OBJECT_MODEL.md)定义，模板结构由注册的 requirement design package contract 定义；本文不维护第二份机器枚举。复杂能力的拆分与命名示例见[能力、功能与 Spec 映射指南](../governance/CAPABILITY_FUNCTION_SPEC_MAPPING.md)。
 
 ## 1. 固定因果顺序
 
@@ -127,3 +127,19 @@ Unknown → Research → Decision → Fact/Requirement/ADR update
 `lite` 项目可以压缩中间展示，但不能省略原始/批准意图、功能需求、非目标、批准基线和验收方向。`standard` 项目使用完整链路、能力、功能和需求设计路径。高风险或生产场景使用现有 `standard + production` 及授权/审核控制，不新增第三种基础 Profile。
 
 无论选择哪种治理配置，AI draft、人类批准、实现状态和 proof level 都必须分别记录，不能由一个 `completed` 推导。
+
+## 11. 复杂能力、内部状态门与 Spec 拆分
+
+复杂业务节点可以先形成父级 Capability，再展开子 Capability 与 Function：
+
+```text
+Business Chain → CAP-root → CAP-child → FUNC → Functional Requirement
+```
+
+`CAP-root` 只是能力树根节点，不是新的 `subsystem` 对象类型；工程子系统在 ADR 后通过 Component 和 Engineering Chain 表达。
+
+拆 Function 的主要条件：独立业务结果、独立输入输出、独立异常/恢复、独立业务验收或可被调用方单独使用。内部判断步骤不应自动升级为顶层 Function；它可以保留为某个功能中的状态门、规则或子流程。
+
+拆 Spec 的主要条件：独立 owner、独立工程边界、独立发布节奏、独立 proof gate、独立权限/副作用或可单独替换。Function 与 Spec 不要求一一对应，但必须保留可解释映射。
+
+复杂功能需求卡必须给出典型输入、结构化输出、正例/反例/边界例、业务状态与执行状态的区别，以及候选实现方案。候选方案只能进入 Research/ADR，不能在需求卡中被 AI 自动冻结为唯一实现。

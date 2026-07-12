@@ -1,16 +1,38 @@
 # 人机需求设计包的机器结构契约；业务内容与批准决定留在 L2。
 schema_version: 1
 contract_id: requirement-design-package-contract
-version: 1
+version: 2
 template_root: templates/standard-project/requirements
 required_files:
   - README.md
   - 项目地图.md
+  - capabilities/CAP-001_能力卡.md
   - functions/FUNC-001_功能需求卡.md
   - baselines/REQ-BASELINE-001.yaml
   - context/CTX-001.yaml
   - generated/README.md
 required_frontmatter_fields:
+  capabilities/CAP-001_能力卡.md:
+    - stable_id
+    - object_type
+    - canonical_path
+    - version
+    - governance_scope
+    - lifecycle_stage
+    - work_status
+    - approval_status
+    - implementation_status
+    - owner
+    - executor
+    - approver
+    - verifier
+    - business_chain_refs
+    - parent_capability_ref
+    - child_capability_refs
+    - function_refs
+    - content_hash
+    - supersedes
+    - stale_status
   functions/FUNC-001_功能需求卡.md:
     - stable_id
     - object_type
@@ -42,8 +64,11 @@ required_frontmatter_fields:
     - supersedes
     - candidate_solution_status
     - spec_refs
+    - output_contract_refs
     - stale_status
 required_frontmatter_values:
+  capabilities/CAP-001_能力卡.md:
+    object_type: business_capability
   functions/FUNC-001_功能需求卡.md:
     object_type: requirement
     requirement_kind: functional
@@ -55,6 +80,7 @@ required_fields:
     - object_type
     - version
     - baseline_state
+    - approval_status
     - canonical_path
     - requirement_refs
     - scope_hash
@@ -68,6 +94,7 @@ required_fields:
     - object_type
     - version
     - snapshot_state
+    - approval_status
     - canonical_path
     - included_files
     - excluded_files
@@ -80,13 +107,30 @@ required_fields:
 required_values:
   baselines/REQ-BASELINE-001.yaml:
     object_type: requirement_baseline
-    baseline_state: approved
   context/CTX-001.yaml:
     object_type: context_snapshot
-    snapshot_state: approved
+allowed_states:
+  baseline_state: [draft, approved, superseded, revoked]
+  snapshot_state: [captured, approved, stale, superseded]
+  approval_status: [pending, approved, rejected, expired, revoked]
+state_invariants:
+  - copied_template_starts_as_draft_or_captured_and_pending
+  - approved_baseline_requires_human_approved_by_and_non_empty_member_hashes
+  - approved_snapshot_requires_human_approved_by_and_verified_source_hashes
+  - ai_cannot_promote_draft_or_captured_state_to_approved
 required_sections:
   README.md: [复制后的目录, 权威边界, 使用顺序, 声明边界]
   项目地图.md: [当前目标, 当前阶段, 核心链路, 能力与功能, 批准需求, 重大决策, 风险与 Unknown, 下一步]
+  capabilities/CAP-001_能力卡.md:
+    - 能力目标
+    - 业务来源
+    - 父级与子级能力
+    - 包含的功能
+    - 主要输入输出
+    - 不包含什么
+    - 跨能力接缝
+    - 适用范围
+    - AI 拆分自检
   functions/FUNC-001_功能需求卡.md:
     - 一句话结论
     - 为什么需要
@@ -95,12 +139,16 @@ required_sections:
     - 异常、拒绝和恢复
     - 输入
     - 输出
+    - 输出格式示例
+    - 状态矩阵
+    - 典型示例
     - 业务规则
     - 非目标与边界
     - 数据、权限与风险
     - 验收方向
     - 已批准实现约束
-    - 候选实现要点
+    - 候选实现方案
+    - 方案选择入口
     - 已有资产
     - 未知与待确认
     - 上下游影响
@@ -108,21 +156,25 @@ required_sections:
     - Spec 映射
   generated/README.md: [可生成视图, 声明边界]
 authority_boundary:
+  capability_authority: capabilities/*.md
   functional_requirement_authority: functions/*.md
   project_map_role: reference_only
   generated_role: derived_non_authoritative
   spec_may_consume_only: approved_baseline_members
+  candidate_solution_must_enter: research_or_ADR
 failure_semantics:
   mode: fail_closed
   missing_required_file: invalid_package
   missing_required_field: invalid_package
   missing_required_frontmatter_field: invalid_package
   invalid_yaml_or_frontmatter: invalid_package
+  orphan_function: blocked
+  capability_cycle: blocked
   unapproved_spec_ref: blocked
   intent_mismatch: blocked
   mutable_approved_baseline: invalid_package
   prompt_or_chat_as_authority: blocked
 compatibility:
   minimum_project_os_schema_version: 3
-  template_contract_version: 1
+  template_contract_version: 2
   breaking_change_requires_major_version: true
