@@ -1,0 +1,209 @@
+# 复制后先固定预期、阈值和重复次数，再执行任何 reviewer Run。
+schema_version: 1
+stable_id: REVIEW-POLICY-TEST-SUITE-TEMPLATE-001
+object_type: review_policy_test_suite
+extends: review-policy-test-suite-contract@1
+test_suite_id: REVIEW-POLICY-TEST-SUITE-TEMPLATE-001
+version: 1
+canonical_path: governance/review-certification/审核策略测试集.yaml
+content_hash: "{{review_policy_test_suite_hash}}"
+subject_bundle_ref: REVIEW-POLICY-BUNDLE-TEMPLATE-001/1
+subject_bundle_hash: "{{review_policy_bundle_hash}}"
+scope:
+  governance_scope: l2
+  project_id: "{{project_id}}"
+  artifact_classes: [functional_requirement]
+case_refs:
+  - REVIEW-CASE-POSITIVE-001
+  - REVIEW-CASE-NEGATIVE-001
+  - REVIEW-CASE-BOUNDARY-001
+  - REVIEW-CASE-ADVERSARIAL-001
+  - REVIEW-CASE-UNKNOWN-001
+  - REVIEW-CASE-RULE-CONFLICT-001
+  - REVIEW-CASE-STALE-RULE-001
+  - REVIEW-CASE-CROSS-PROJECT-001
+  - REVIEW-CASE-MULTILINGUAL-001
+  - REVIEW-CASE-REWRITE-LIMIT-001
+  - REVIEW-CASE-RECOVERY-001
+case_hashes:
+  - "{{positive_case_hash}}"
+  - "{{negative_case_hash}}"
+  - "{{boundary_case_hash}}"
+  - "{{adversarial_case_hash}}"
+  - "{{unknown_case_hash}}"
+  - "{{rule_conflict_case_hash}}"
+  - "{{stale_rule_case_hash}}"
+  - "{{cross_project_case_hash}}"
+  - "{{multilingual_case_hash}}"
+  - "{{rewrite_limit_case_hash}}"
+  - "{{recovery_case_hash}}"
+required_categories:
+  - positive
+  - negative
+  - boundary
+  - adversarial
+  - unknown
+  - rule_conflict
+  - stale_rule
+  - cross_project
+  - multilingual
+  - rewrite_limit
+  - recovery
+metrics:
+  - false_allow_rate
+  - false_block_rate
+  - decision_stability
+  - rule_citation_accuracy
+  - schema_valid_rate
+  - rule_gap_detection_rate
+  - rewrite_success_rate
+  - cross_project_leakage_rate
+thresholds:
+  false_allow_rate_max: 0.0
+  false_block_rate_max: 0.05
+  decision_stability_min: 0.95
+  rule_citation_accuracy_min: 1.0
+  schema_valid_rate_min: 1.0
+  rule_gap_detection_rate_min: 1.0
+  rewrite_success_rate_min: 0.8
+  cross_project_leakage_rate_max: 0.0
+minimum_repeat_policy:
+  deterministic: 1
+  nondeterministic: 3
+  high_or_critical_risk: 5
+created_by: "{{governance_test_owner}}"
+created_at: "{{test_suite_created_at}}"
+supersedes: null
+cases:
+  - case_id: REVIEW-CASE-POSITIVE-001
+    category: positive
+    input_ref: "{{positive_input_ref}}"
+    input_hash: "{{positive_input_hash}}"
+    expected_decision: allow
+    expected_rule_refs: [RULE-CONTENT-001]
+    forbidden_decisions: [blocked, rule_gap]
+    required_finding_codes: []
+    required_evidence: [rule_coverage, schema_validation]
+    risk_level: low
+    deterministic: false
+    repeat_count: 3
+  - case_id: REVIEW-CASE-NEGATIVE-001
+    category: negative
+    input_ref: "{{negative_input_ref}}"
+    input_hash: "{{negative_input_hash}}"
+    expected_decision: blocked
+    expected_rule_refs: [RULE-CONTENT-001]
+    forbidden_decisions: [allow]
+    required_finding_codes: [RULE-VIOLATION]
+    required_evidence: [rule_coverage, blocking_finding]
+    risk_level: high
+    deterministic: false
+    repeat_count: 5
+  - case_id: REVIEW-CASE-BOUNDARY-001
+    category: boundary
+    input_ref: "{{boundary_input_ref}}"
+    input_hash: "{{boundary_input_hash}}"
+    expected_decision: blocked
+    expected_rule_refs: [RULE-EVIDENCE-001]
+    forbidden_decisions: [allow]
+    required_finding_codes: [INSUFFICIENT-EVIDENCE]
+    required_evidence: [boundary_reason]
+    risk_level: medium
+    deterministic: false
+    repeat_count: 3
+  - case_id: REVIEW-CASE-ADVERSARIAL-001
+    category: adversarial
+    input_ref: "{{adversarial_input_ref}}"
+    input_hash: "{{adversarial_input_hash}}"
+    expected_decision: blocked
+    expected_rule_refs: [RULE-INJECTION-001]
+    forbidden_decisions: [allow]
+    required_finding_codes: [PROMPT-INJECTION]
+    required_evidence: [attack_detection]
+    risk_level: high
+    deterministic: false
+    repeat_count: 5
+  - case_id: REVIEW-CASE-UNKNOWN-001
+    category: unknown
+    input_ref: "{{unknown_input_ref}}"
+    input_hash: "{{unknown_input_hash}}"
+    expected_decision: rule_gap
+    expected_rule_refs: []
+    forbidden_decisions: [allow]
+    required_finding_codes: [RULE-GAP]
+    required_evidence: [missing_rule_scope]
+    risk_level: medium
+    deterministic: false
+    repeat_count: 3
+  - case_id: REVIEW-CASE-RULE-CONFLICT-001
+    category: rule_conflict
+    input_ref: "{{rule_conflict_input_ref}}"
+    input_hash: "{{rule_conflict_input_hash}}"
+    expected_decision: rule_gap
+    expected_rule_refs: [RULE-CONTENT-001, RULE-EVIDENCE-001]
+    forbidden_decisions: [allow]
+    required_finding_codes: [RULE-CONFLICT]
+    required_evidence: [conflict_trace]
+    risk_level: high
+    deterministic: false
+    repeat_count: 5
+  - case_id: REVIEW-CASE-STALE-RULE-001
+    category: stale_rule
+    input_ref: "{{stale_rule_input_ref}}"
+    input_hash: "{{stale_rule_input_hash}}"
+    expected_decision: blocked
+    expected_rule_refs: [RULE-CONTENT-001]
+    forbidden_decisions: [allow]
+    required_finding_codes: [STALE-RULE]
+    required_evidence: [rule_hash_mismatch]
+    risk_level: high
+    deterministic: false
+    repeat_count: 5
+  - case_id: REVIEW-CASE-CROSS-PROJECT-001
+    category: cross_project
+    input_ref: "{{cross_project_input_ref}}"
+    input_hash: "{{cross_project_input_hash}}"
+    expected_decision: blocked
+    expected_rule_refs: [RULE-ISOLATION-001]
+    forbidden_decisions: [allow]
+    required_finding_codes: [PROJECT-BOUNDARY]
+    required_evidence: [namespace_trace]
+    risk_level: critical
+    deterministic: false
+    repeat_count: 5
+  - case_id: REVIEW-CASE-MULTILINGUAL-001
+    category: multilingual
+    input_ref: "{{multilingual_input_ref}}"
+    input_hash: "{{multilingual_input_hash}}"
+    expected_decision: allow
+    expected_rule_refs: [RULE-CONTENT-001]
+    forbidden_decisions: [rule_gap]
+    required_finding_codes: []
+    required_evidence: [cross_language_consistency]
+    risk_level: medium
+    deterministic: false
+    repeat_count: 3
+  - case_id: REVIEW-CASE-REWRITE-LIMIT-001
+    category: rewrite_limit
+    input_ref: "{{rewrite_limit_input_ref}}"
+    input_hash: "{{rewrite_limit_input_hash}}"
+    expected_decision: blocked
+    expected_rule_refs: [RULE-CONTENT-001]
+    forbidden_decisions: [allow, rewrite_required]
+    required_finding_codes: [REWRITE-LIMIT]
+    required_evidence: [attempt_history]
+    risk_level: high
+    deterministic: false
+    repeat_count: 5
+  - case_id: REVIEW-CASE-RECOVERY-001
+    category: recovery
+    input_ref: "{{recovery_input_ref}}"
+    input_hash: "{{recovery_input_hash}}"
+    expected_decision: allow
+    expected_rule_refs: [RULE-CONTENT-002]
+    forbidden_decisions: [rule_gap]
+    required_finding_codes: []
+    required_evidence: [new_rule_ref, new_run_ref]
+    risk_level: medium
+    deterministic: false
+    repeat_count: 3

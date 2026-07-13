@@ -1,7 +1,7 @@
 # 人机需求设计包的机器结构契约；业务内容与批准决定留在 L2。
 schema_version: 1
 contract_id: requirement-design-package-contract
-version: 1
+version: 2
 template_root: templates/standard-project/requirements
 required_files:
   - README.md
@@ -47,6 +47,9 @@ required_frontmatter_fields:
     - priority
     - work_status
     - approval_status
+    - approval_route
+    - decision_authority_ref
+    - certification_verdict_ref
     - implementation_status
     - owner
     - executor
@@ -60,6 +63,14 @@ required_frontmatter_fields:
     - intent.interpreted_intent
     - intent.approved_intent
     - intent.implementation_intent
+    - decision_inputs.scope_change
+    - decision_inputs.threshold_change
+    - decision_inputs.blocking_rule_change
+    - decision_inputs.permission_change
+    - decision_inputs.objective_or_responsibility_change
+    - decision_inputs.residual_risk_acceptance
+    - decision_inputs.external_side_effect
+    - decision_inputs.unresolved_unknown
     - context_snapshot_ref
     - baseline_ref
     - content_hash
@@ -82,9 +93,14 @@ required_fields:
     - object_type
     - version
     - baseline_state
+    - approval_status
+    - approval_route
+    - decision_authority_ref
+    - certification_verdict_ref
     - canonical_path
     - requirement_refs
     - scope_hash
+    - decision_inputs
     - approved_by
     - approved_at
     - content_hash
@@ -96,9 +112,13 @@ required_fields:
     - version
     - baseline_state
     - approval_status
+    - approval_route
+    - decision_authority_ref
+    - certification_verdict_ref
     - canonical_path
     - requirement_refs
     - scope_hash
+    - decision_inputs
     - approved_by
     - approved_at
     - content_hash
@@ -109,11 +129,16 @@ required_fields:
     - object_type
     - version
     - snapshot_state
+    - approval_status
+    - approval_route
+    - decision_authority_ref
+    - certification_verdict_ref
     - canonical_path
     - included_files
     - excluded_files
     - exclusion_reasons
     - source_hashes
+    - decision_inputs
     - generated_by
     - approved_by
     - created_at
@@ -125,11 +150,15 @@ required_fields:
     - version
     - snapshot_state
     - approval_status
+    - approval_route
+    - decision_authority_ref
+    - certification_verdict_ref
     - canonical_path
     - included_files
     - excluded_files
     - exclusion_reasons
     - source_hashes
+    - decision_inputs
     - generated_by
     - approved_by
     - created_at
@@ -138,6 +167,8 @@ required_values:
   baselines/REQ-BASELINE-001.yaml:
     object_type: requirement_baseline
     baseline_state: approved
+    approval_status: approved
+    approval_route: policy_certified
   baselines/REQ-BASELINE-DRAFT-001.yaml:
     object_type: requirement_baseline
     baseline_state: draft
@@ -145,6 +176,8 @@ required_values:
   context/CTX-001.yaml:
     object_type: context_snapshot
     snapshot_state: approved
+    approval_status: approved
+    approval_route: policy_certified
   context/CTX-DRAFT-001.yaml:
     object_type: context_snapshot
     snapshot_state: captured
@@ -182,6 +215,7 @@ required_sections:
     - 方案选择入口
     - 已有资产
     - 未知与待确认
+    - 决策门与批准路由
     - 上下游影响
     - AI 生成自检
     - Spec 映射
@@ -196,9 +230,14 @@ authority_boundary:
 state_invariants:
   - copied_project_uses_draft_baseline_and_captured_context
   - approved_examples_are_reference_fixtures_not_copy_targets
-  - approved_baseline_requires_human_approved_by_and_non_empty_member_hashes
-  - approved_snapshot_requires_human_approved_by_and_verified_source_hashes
-  - ai_cannot_promote_draft_or_captured_state_to_approved
+  - approved_object_requires_exactly_one_valid_decision_route
+  - approved_baseline_requires_valid_decision_gate_and_non_empty_member_hashes
+  - approved_snapshot_requires_valid_decision_gate_and_verified_source_hashes
+  - policy_certified_requires_current_scope_matched_certification_verdict
+  - policy_certified_rejects_scope_threshold_rule_permission_or_responsibility_expansion
+  - human_signoff_requires_verified_human_principal
+  - unresolved_unknown_blocks_approved_state
+  - AI_cannot_self_certify_or_promote_without_a_valid_decision_gate
 failure_semantics:
   mode: fail_closed
   missing_required_file: invalid_package
@@ -209,9 +248,13 @@ failure_semantics:
   capability_cycle: blocked
   unapproved_spec_ref: blocked
   intent_mismatch: blocked
+  invalid_approval_route: blocked
+  missing_or_stale_certification: blocked
+  decision_route_mismatch: blocked
+  unresolved_unknown: blocked
   mutable_approved_baseline: invalid_package
   prompt_or_chat_as_authority: blocked
 compatibility:
   minimum_project_os_schema_version: 3
-  template_contract_version: 1
+  template_contract_version: 2
   breaking_change_requires_major_version: true

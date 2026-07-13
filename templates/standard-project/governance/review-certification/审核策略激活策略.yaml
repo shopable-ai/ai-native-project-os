@@ -1,0 +1,37 @@
+# L2 项目只能在 L1 路由政策允许的范围内收紧条件，不能放宽或替代 L1 权威。
+schema_version: 1
+policy_id: REVIEW-POLICY-ACTIVATION-TEMPLATE-001
+object_type: review_policy_activation_policy
+version: 1
+canonical_path: governance/review-certification/审核策略激活策略.yaml
+extends: review-policy-activation-routing@1
+project_id: "{{project_id}}"
+allowed_routes: [policy_certified, human_signoff, blocked]
+policy_certified_constraints:
+  certification_freshness: fresh
+  scope_change: [none, reduced]
+  threshold_change: [unchanged, stricter]
+  blocking_rule_change: [unchanged, stronger]
+  permission_change: [none, reduced]
+  objective_or_responsibility_change: false
+  residual_risk_acceptance: false
+  external_side_effect: [none, read_external, write_reversible]
+  unresolved_unknown: false
+human_signoff_triggers:
+  - scope_expansion
+  - threshold_reduction
+  - blocking_rule_removal
+  - permission_increase
+  - objective_or_responsibility_change
+  - residual_risk_acceptance
+  - irreversible_external_side_effect
+blocked_triggers:
+  - unknown_input
+  - certification_missing_stale_rejected_or_rule_gap
+  - required_test_or_threshold_not_passed
+  - verifier_independence_missing
+  - subject_or_test_suite_hash_mismatch
+route_precedence: [blocked, human_signoff, policy_certified]
+external_action_authorization: always_independent
+content_hash: "{{review_policy_activation_policy_hash}}"
+supersedes: null

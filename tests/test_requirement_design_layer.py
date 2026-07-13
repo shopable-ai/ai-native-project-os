@@ -197,11 +197,11 @@ class RequirementDesignAuthorityTests(unittest.TestCase):
         self.assertIn("REQUIREMENT_DESIGN_WORKFLOW.md", (ROOT / "AGENTS.md").read_text(encoding="utf-8"))
         self.assertIn("需求设计工作流", (ROOT / "README.zh-CN.md").read_text(encoding="utf-8"))
 
-    def test_human_reasoning_flow_precedes_adr_spec_and_execution(self):
+    def test_human_ai_reasoning_flow_uses_decision_gate_before_spec_and_execution(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
         canonical_flow = (
             "Source → Fact / Unknown → Requirement → Scenario → Business Chain "
-            "→ Capability → Function → Functional Requirement → Human Approval "
+            "→ Capability → Function → Functional Requirement → Decision Gate "
             "→ Requirement Baseline → Research / ADR → Engineering Design → Spec"
         )
         self.assertIn(canonical_flow, workflow)
@@ -210,7 +210,7 @@ class RequirementDesignAuthorityTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn(
-            "业务链路 → 能力树 → 功能树 → 功能级需求 → 人工批准与需求基线 → ADR → 工程设计 → Spec",
+            "业务链路 → 能力树 → 功能树 → 功能级需求 → 决策门与需求基线 → ADR → 工程设计 → Spec",
             delivery,
         )
         self.assertIn("AI 生成的 draft 不能自行升格", delivery)
@@ -224,9 +224,11 @@ class RequirementDesignAuthorityTests(unittest.TestCase):
             self.assertIn(f"`{kind}`", model)
         self.assertIn("functional_requirement", model)
         self.assertIn("context_snapshot", model)
-        self.assertIn("AI 不能批准或冻结需求基线", model)
+        self.assertIn("AI 不能给自己的审核策略签发独立认证", model)
+        self.assertIn("policy_certified", model)
+        self.assertIn("human_signoff", model)
 
-    def test_stage_gates_put_intent_approval_before_spec(self):
+    def test_stage_gates_put_intent_decision_before_spec(self):
         gates = (ROOT / "docs/workflows/STAGE_EXIT_GATES.md").read_text(
             encoding="utf-8"
         )
@@ -235,7 +237,7 @@ class RequirementDesignAuthorityTests(unittest.TestCase):
         s5 = section(gates, "## S5", "## S6")
         for token in ("original_intent", "approved_intent", "需求基线"):
             self.assertIn(token, s0)
-        for token in ("功能需求卡", "AI 自检", "人工批准"):
+        for token in ("功能需求卡", "AI 自检", "Decision Gate"):
             self.assertIn(token, s2)
         for token in ("功能需求", "version", "content_hash", "需求基线"):
             self.assertIn(token, s5)
@@ -298,13 +300,16 @@ class RequirementDesignMachineGateTests(unittest.TestCase):
             "functional_requirement",
             "context_snapshot",
             "AI_self_review",
-            "human_approval",
+            "decision_gate",
+            "policy_certified",
+            "human_signoff",
         ):
             self.assertIn(token, s2)
         for token in (
             "functional_requirement_version_and_hash",
             "requirement_baseline",
-            "unapproved",
+            "invalid_decision_gate",
+            "stale_certification",
             "fail_closed",
         ):
             self.assertIn(token, s5)

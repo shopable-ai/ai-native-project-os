@@ -7,12 +7,15 @@ numeric_score_recomputable: false
 evidence_layers:
   static: present_unscored
   requirement_design_static: present_unscored
+  review_policy_certification_static: present_unscored
   fixture: fixture_runtime_proven
   local_runtime: not_evaluated
   readonly_real: not_evaluated
   production: not_evaluated
 fixture_proof_scope: operational_spine_fixture_only
 requirement_design_proof_scope: human_requirement_design_static_fixture_only
+review_policy_certification_proof_scope: static_contract_and_synthetic_fixture_only
+review_policy_certification_static_evidence_ref: reviews/review-policy-certification-static-evidence.yaml
 design_assessment_context:
   approved_operational_spine_target: 95.93
   discussion_estimates:
@@ -24,6 +27,8 @@ hard_gates:
   real_human_usability_test: unmet
   real_l2_requirement_migration: unmet
   automatic_impact_simulation: unmet
+  real_model_multi_run_evaluation: unmet
+  real_l2_policy_consumption: unmet
   cross_project_isolation: unmet
   second_heterogeneous_l2: unmet
   independent_adversarial_94_gate: unmet
@@ -34,5 +39,6 @@ missing_numeric_inputs:
 claim_limits:
   - 匿名 fixture 只证明受控结构和重放，不证明本地真实、只读真实或生产运行。
   - 人机需求正反例只证明静态权威、契约、模板和失败关闭，不证明真实人工可用性或真实 L2 消费。
+  - 审核策略认证 fixture 只证明静态 Contract、模板、路由和反例门禁，不证明真实模型多轮稳定性或真实 L2 策略消费。
   - 86.4、96.4 和 97.6 都是讨论中的设计估算，不是当前官方评分或可重算评分输入。
   - 设计目标 95.93 不是当前得分，也不能用于解除任何硬门禁。

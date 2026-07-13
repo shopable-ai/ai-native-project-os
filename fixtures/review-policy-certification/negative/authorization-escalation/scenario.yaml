@@ -1,0 +1,66 @@
+schema_version: 1
+fixture_kind: review_policy_certification_scenario
+scenario_id: REVIEW-CERT-NEG-AUTHORIZATION
+bundle:
+  bundle_ref: BUNDLE-NEG-007/1
+  bundle_hash: sha256:bundle-neg-007
+  generator_ref: ai-policy-generator
+  component_fingerprints:
+    rule_set_hash: sha256:rules
+    prompt_template_hash: sha256:prompt
+    input_schema_hash: sha256:input
+    output_schema_hash: sha256:output
+    context_policy_hash: sha256:context
+    model_fingerprint: model/revision/parameters
+    tool_set_hash: sha256:tools
+    permission_set_hash: sha256:permissions
+test_suite:
+  test_suite_ref: SUITE-NEG-007/1
+  test_suite_hash: sha256:suite-neg-007
+  required_categories: [positive, negative, boundary, adversarial]
+  minimum_repeat_policy: {deterministic: 1, nondeterministic: 3, high_or_critical_risk: 5}
+  cases:
+    - {category: positive, deterministic: false, risk_level: low, repeat_count: 3}
+    - {category: negative, deterministic: false, risk_level: high, repeat_count: 5}
+    - {category: boundary, deterministic: false, risk_level: medium, repeat_count: 3}
+    - {category: adversarial, deterministic: false, risk_level: high, repeat_count: 5}
+certification:
+  subject_bundle_ref: BUNDLE-NEG-007/1
+  subject_bundle_hash: sha256:bundle-neg-007
+  test_suite_ref: SUITE-NEG-007/1
+  test_suite_hash: sha256:suite-neg-007
+  run_refs: [RUN-NEG-007]
+  evidence_refs: [EVIDENCE-NEG-007]
+  included_attempt_count: 16
+  excluded_attempts_and_reasons: []
+  threshold_results:
+    false_allow_rate: passed
+    false_block_rate: passed
+    decision_stability: passed
+    rule_citation_accuracy: passed
+    schema_valid_rate: passed
+    rule_gap_detection_rate: passed
+    rewrite_success_rate: passed
+    cross_project_leakage_rate: passed
+  verifier_ref: independent-policy-verifier
+  reviewer_refs: [independent-ai-reviewer]
+  verifier_independence_evidence_ref: EVIDENCE-INDEPENDENCE-NEG-007
+  certification_decision: certified
+  certification_freshness: fresh
+  scope_match: true
+  eligible_activation_routes: [policy_certified]
+activation:
+  requested_route: policy_certified
+  active: true
+  decision_inputs:
+    scope_change: none
+    threshold_change: unchanged
+    blocking_rule_change: unchanged
+    permission_change: none
+    objective_or_responsibility_change: false
+    residual_risk_acceptance: false
+    external_side_effect: write_reversible
+    unresolved_unknown: false
+  human_signoff_ref: null
+  external_action_authorization_granted: true
+proof_boundary: intentional_negative_static_fixture

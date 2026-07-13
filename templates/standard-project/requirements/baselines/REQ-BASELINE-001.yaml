@@ -3,6 +3,10 @@ stable_id: REQ-BASELINE-001
 object_type: requirement_baseline
 version: 1
 baseline_state: approved
+approval_status: approved
+approval_route: policy_certified
+decision_authority_ref: review-policy-activation-routing@1
+certification_verdict_ref: "{{review_policy_certification_verdict_ref}}"
 canonical_path: requirements/baselines/REQ-BASELINE-001.yaml
 requirement_refs:
   - stable_id: REQ-001
@@ -12,12 +16,22 @@ requirement_refs:
     version: 1
     content_hash: "{{functional_requirement_content_hash}}"
 scope_hash: "{{requirement_scope_hash}}"
-approved_by: human-template-owner
+decision_inputs:
+  scope_change: none
+  threshold_change: unchanged
+  blocking_rule_change: unchanged
+  permission_change: none
+  objective_or_responsibility_change: false
+  residual_risk_acceptance: false
+  external_side_effect: none
+  unresolved_unknown: false
+approved_by: null
 approved_at: "{{approved_at}}"
 content_hash: "{{requirement_baseline_content_hash}}"
 supersedes: null
 invariants:
   - approved_members_are_immutable
   - member_change_requires_new_baseline_version
-  - ai_cannot_fill_human_approval_identity
+  - policy_certified_requires_current_scope_matched_certification
+  - generator_cannot_self_certify
   - specs_bind_exact_member_version_and_hash

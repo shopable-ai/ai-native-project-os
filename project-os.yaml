@@ -55,6 +55,9 @@ score_summary:
   requirement_design_static_evidence: present_unscored # 人机需求层只有静态资产和 mutation fixture 证明
   requirement_design_proof_scope: human_requirement_design_static_fixture_only # 不得外推到真实人工或真实 L2
   requirement_design_static_evidence_ref: reviews/human-ai-requirement-design-static-evidence.yaml
+  review_policy_certification_static_evidence: present_unscored # 只有 Contract、模板、synthetic fixture 与 C14 静态门禁
+  review_policy_certification_proof_scope: static_contract_and_synthetic_fixture_only # 不证明真实模型或真实 L2
+  review_policy_certification_static_evidence_ref: reviews/review-policy-certification-static-evidence.yaml
   local_runtime_proof: not_evaluated    # 没有非 fixture 本地真实运行证明
   readonly_real_proof: not_evaluated    # 没有真实目标环境只读预检证明
   production_proof: not_evaluated       # 没有经批准生产 Run/Evidence/Verdict
@@ -62,6 +65,8 @@ score_summary:
     real_human_usability_test: unmet   # 尚未用真实项目成员验证阅读、审查和批准体验
     real_l2_requirement_migration: unmet # 尚未迁移一个真实 L2 的需求层并由其 Spec 消费
     automatic_impact_simulation: unmet # 当前只有失效语义，没有自动变更影响模拟器
+    real_model_multi_run_evaluation: unmet # 尚未执行真实模型的预注册多轮认证评测
+    real_l2_policy_consumption: unmet # 尚无真实 L2 使用认证策略推进 Baseline
     cross_project_isolation: unmet      # 跨项目隔离与安全验证尚未成立
     second_heterogeneous_l2: unmet      # 第二个异构 L2 真实验证尚未成立
     independent_adversarial_94_gate: unmet # 当前快照尚未通过独立反方 94 分门禁
@@ -81,7 +86,7 @@ architecture:
 authority_policy:
   single_editable_truth_per_topic: true
   summaries_must_link_to_authority: true
-  raw_sources_may_drive_execution: false  # 原始来源必须先升格为批准事实或需求
+  raw_sources_may_drive_execution: false  # 原始来源必须先经合法 Decision Gate 升格为受控事实或需求
 
 # 各类问题的唯一权威文件
 authority:
@@ -92,21 +97,24 @@ authority:
   ai_native_execution: docs/architecture/AI_NATIVE_EXECUTION_MODEL.md    # AI 原生执行节点语义
   lifecycle: docs/workflows/PROJECT_LIFECYCLE.md                         # R0、S0—S7 生命周期
   project_delivery_workflow: docs/workflows/PROJECT_DELIVERY_WORKFLOW.md # 从入口到声明的推进控制流
-  requirement_design_workflow: docs/workflows/REQUIREMENT_DESIGN_WORKFLOW.md # 人机协作需求设计、批准与基线冻结
+  requirement_design_workflow: docs/workflows/REQUIREMENT_DESIGN_WORKFLOW.md # 人机协作需求设计、决策门与基线冻结
   stage_exit_gates: docs/workflows/STAGE_EXIT_GATES.md                   # 九阶段人类退出门禁视图
   stage_exit_gates_contract: contracts/governance/stage-exit-gates-contract.yaml # 九阶段机器门禁记录契约
   l2_progression: docs/workflows/L2_PROGRESSION.md                       # L2 接入后的端到端推进与重开 SOP
   project_type_and_governance: docs/workflows/PROJECT_TYPE_AND_GOVERNANCE_ROUTING.md # 类型与治理配置路由
   project_governance_policy: policies/project-governance-routing.yaml   # 机器可判定路由条件
+  review_policy_activation_policy: policies/review-policy-activation-routing.yaml # 审核策略自动激活、人工确认与阻断路由
   route_decision_contract: contracts/governance/route-decision-contract.yaml        # 路由裁决与逐 overlay 状态契约
   control_set_contract: contracts/governance/control-set-contract.yaml              # 控制集合机器契约
-  governance_rule_set_contract: contracts/governance/governance-rule-set-contract.yaml # 人工治理 Markdown 规则集契约
+  governance_rule_set_contract: contracts/governance/governance-rule-set-contract.yaml # 受控 Markdown 规则集与条件式批准契约
   ai_review_verdict_contract: contracts/governance/ai-review-verdict-contract.yaml  # 独立 AI 自动审核裁决契约
   rule_gap_case_contract: contracts/governance/rule-gap-case-contract.yaml          # 规则缺口异步治理契约
   overlay_activation_verdict_contract: contracts/governance/overlay-activation-verdict-contract.yaml # 叠加能力激活裁决契约
   authorization_snapshot_contract: contracts/governance/authorization-snapshot-contract.yaml # 授权快照有效性契约
   acceptance_verdict_claim_contract: contracts/governance/acceptance-verdict-claim-contract.yaml # 业务验收裁决与声明契约
   run_evidence_contract: contracts/governance/run-evidence-contract.yaml                # Run 与 Evidence 最小机器结构契约
+  review_policy_test_suite_contract: contracts/governance/review-policy-test-suite-contract.yaml # 审核策略预注册测试集契约
+  review_policy_certification_contract: contracts/governance/review-policy-certification-contract.yaml # 审核策略认证裁决契约
   chain_package_contract: contracts/artifacts/chain-package-contract.yaml       # 业务链包模板机器契约
   requirement_design_package_contract: contracts/artifacts/requirement-design-package-contract.yaml # 人机需求设计包机器契约
   spec_package_contract: contracts/artifacts/spec-package-contract.yaml         # Spec 五件套模板机器契约
@@ -120,6 +128,7 @@ authority:
   state_and_invalidation: docs/governance/STATE_TRANSITIONS_AND_INVALIDATION.md # 状态迁移和失效传播
   authorization_and_isolation: docs/governance/AUTHORIZATION_SIDE_EFFECTS_AND_ISOLATION.md # 权限、副作用、隔离
   run_evidence_acceptance: docs/governance/RUN_EVIDENCE_ACCEPTANCE.md    # Run、Evidence、裁决和声明
+  review_policy_certification: docs/governance/REVIEW_POLICY_CERTIFICATION.md # 审核策略测试、认证、激活与失效的人类权威
   gates_and_scoring: docs/governance/GATES_PROOF_SCORING.md              # 门禁、证据和评分
   terminology: docs/governance/TERMINOLOGY.md                            # 中文术语和稳定 term-id
   research_method: docs/research/RESEARCH_WORKFLOW.md                     # 研究方法
@@ -140,6 +149,7 @@ terminology_manifest:
     - lifecycle-stage
     - work-status
     - approval-status
+    - approval-route
     - implementation-status
     - proof-level
     - invalidation-status
@@ -152,6 +162,8 @@ terminology_manifest:
     - requirement-baseline
     - context-snapshot
     - project-map
+    - review-policy-bundle
+    - review-policy-certification
     - task-tree
     - workflow
     - skill
@@ -173,6 +185,8 @@ review_evidence:
     - reviews/profile-taxonomy-file-audit.yaml
   human_governed_ai_review:
     - reviews/human-governed-ai-review-adversarial.yaml
+  review_policy_certification_static:
+    - reviews/review-policy-certification-static-evidence.yaml
   historical_invalidated:
     - reviews/phase0-checker-evidence.yaml # 旧检查快照已失效，只保留历史审计
     - reviews/profile-taxonomy-alignment-score.yaml # 旧 84 分封顶记录仅保留历史审计，不再作为 current
@@ -186,6 +200,7 @@ scoring_evidence:
 proof_evidence:
   - reviews/operational-spine-static-and-fixture-evidence.yaml
   - reviews/human-ai-requirement-design-static-evidence.yaml
+  - reviews/review-policy-certification-static-evidence.yaml
 
 # 第三方依赖策略
 dependencies:
@@ -204,4 +219,6 @@ claim_limits:
     - requirements_100_percent_complete     # 禁止声明：代码需求已 100% 完成
     - human_requirement_design_proven_in_real_l2 # 禁止声明：真实 L2 已采用并证明需求设计层
     - automatic_impact_simulation_ready     # 禁止声明：变更影响自动模拟已就绪
+    - real_review_policy_runtime_proven     # 禁止声明：真实模型审核策略运行已证明
+    - real_l2_policy_consumption_proven     # 禁止声明：真实 L2 已采用认证策略推进
     - general_95_plus                       # 禁止声明：已证明通用 95+

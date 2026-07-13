@@ -44,6 +44,14 @@ run:
     execution_outcome: [success, failure, partial, unknown]
     semantic_result: [passed, failed, partial, unknown, not_evaluated]
     review_mode: [not_applicable, independent_ai_review]
+  conditional_required_fields:
+    independent_ai_review:
+      - review_policy_bundle_fingerprints
+      - review_policy_certification_refs
+    review_policy_certification_run:
+      - review_policy_bundle_fingerprints
+      - review_policy_test_suite_refs
+      - review_policy_certification_refs
   attempt_required_fields:
     - attempt_id
     - attempt_kind
@@ -75,6 +83,8 @@ run:
     - consumed_by_run
   invariants:
     - every_required_fingerprint_is_non_empty
+    - independent_ai_review_requires_current_review_policy_bundle_and_certification_refs
+    - review_policy_bundle_fingerprint_covers_rules_prompt_schema_context_model_tools_and_permissions
     - route_control_workflow_and_checkpoint_hashes_are_verified
     - attempt_manifest_is_non_empty_complete_unique_and_immutable
     - every_attempt_id_is_resolvable
@@ -124,6 +134,11 @@ evidence:
     verification_status: [captured, verified, rejected]
     stale_status: [fresh, stale, expired, invalidated]
     criterion_result: [passed, failed]
+  conditional_required_fields:
+    review_policy_certification_evidence:
+      - review_policy_certification_refs
+      - included_attempt_refs
+      - excluded_attempts_and_reasons
   invariants:
     - evidence_is_distinct_from_run_and_subject
     - subject_ref_and_hash_exactly_bind_observed_object
@@ -138,3 +153,4 @@ evidence:
     - expired_or_invalidated_evidence_blocks_acceptance
     - raw_outputs_are_hash_bound_and_append_only
     - proof_level_participates_in_critical_path_claim_ceiling
+    - certification_evidence_includes_all_required_runs_attempts_metrics_and_threshold_results

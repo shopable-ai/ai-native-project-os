@@ -31,6 +31,9 @@ stage_gate_record:
     - proof_level
     - framework_edition
     - governance_profile
+    - approval_route
+    - decision_authority_ref
+    - certification_verdict_ref
     - stage_definition_ref
     - stage_definition_hash
     - exit_criterion_results
@@ -50,6 +53,7 @@ stage_gate_record:
     - evidence_hashes
   enums:
     result: [passed, failed, unknown]
+    approval_route: [not_applicable, policy_certified, human_signoff]
   fail_closed_results: [failed, unknown]
   exit_criterion_result:
     required_fields:
@@ -80,6 +84,9 @@ stage_gate_record:
     - checked_at_must_precede_valid_until
     - invalidation_condition_match_invalidates_record_and_reopens_target
     - approval_and_verification_must_preserve_required_separation_of_duties
+    - policy_certified_requires_current_scope_matched_certification_verdict
+    - human_signoff_requires_verified_human_principal
+    - approval_route_is_decision_provenance_not_an_independent_state_axis
 
 # required_proof_level 表示退出门禁要求达到的最低目标；proof_level 表示本记录中 Evidence 实际证明到的坐标。
 field_semantics:
@@ -95,6 +102,9 @@ manifest_example:
   proof_level: contract_tests_ready
   framework_edition: standard
   governance_profile: standard
+  approval_route: human_signoff
+  decision_authority_ref: architecture-approver-id
+  certification_verdict_ref: null
   stage_definition_ref: stage-exit-gates-contract@1#stages.S4
   stage_definition_hash: "sha256:stage-S4-example"
   exit_criterion_results:
@@ -196,12 +206,12 @@ negative_examples:
     result: blocked
     handling: fail_closed
   intent_drift:
-    description: implementation_intent_is_not_bound_to_human_approved_intent
+    description: implementation_intent_is_not_bound_to_decision_gate_approved_intent
     criterion_ref: stage-exit-gates-contract@1#stages.S0.exit_criteria[0]
     result: blocked
     handling: fail_closed
-  AI_self_approval:
-    description: AI_identity_attempts_to_approve_functional_requirement_or_baseline
+  AI_self_certification:
+    description: requirement_generator_attempts_to_self_certify_or_bypass_activation_policy
     criterion_ref: stage-exit-gates-contract@1#stages.S2.exit_criteria[1]
     result: blocked
     handling: fail_closed
@@ -253,10 +263,11 @@ stages:
     exit_criteria:
       - objective_owner_scope_denominator_acceptance_direction_and_forbidden_claims_are_explicit
       - unknown_route_inputs_are_not_treated_as_low_risk
-      - approved_intent_is_human_approved_and_implementation_intent_is_bound_to_it
+      - decision_gate_selects_policy_certified_or_human_signoff_and_binds_approved_intent
+      - objective_scope_responsibility_or_risk_boundary_change_requires_human_signoff
     evidence_requirements:
-      - approval_record_requirement_baseline_hash_scope_diff_and_route_decision_ref
-      - intent_alignment_hashes_and_human_approval_identity
+      - approval_route_decision_authority_requirement_baseline_hash_scope_diff_and_route_decision_ref
+      - intent_alignment_hashes_and_certification_verdict_or_human_signoff_identity
     invalidation_triggers:
       - objective_scope_owner_project_type_or_risk_input_changes
       - original_intent_approved_intent_or_implementation_intent_changes
@@ -290,12 +301,13 @@ stages:
     exit_criteria:
       - every_P0_or_P1_requirement_has_scenario_trigger_chain_failure_terminal_and_recovery_exit
       - business_capabilities_are_not_prematurely_bound_to_engineering_implementation
-      - every_P0_or_P1_function_has_a_functional_requirement_with_intent_alignment_AI_self_review_and_human_approval
+      - every_P0_or_P1_function_has_a_functional_requirement_with_intent_alignment_AI_self_review_and_valid_decision_gate
+      - decision_gate_selects_policy_certified_or_human_signoff_and_blocks_unresolved_unknowns
       - functional_requirements_separate_approved_constraints_from_candidate_solutions
     evidence_requirements:
       - requirement_to_scenario_and_chain_coverage_with_branch_terminal_and_owner_review
       - chain_capability_function_and_functional_requirement_coverage
-      - context_snapshot_AI_self_review_human_approval_version_hash_and_baseline_manifest
+      - context_snapshot_AI_self_review_approval_route_decision_authority_certification_or_human_signoff_version_hash_and_baseline_manifest
     invalidation_triggers:
       - user_trigger_business_policy_fact_or_requirement_denominator_changes
       - chain_capability_function_intent_context_or_requirement_baseline_changes
@@ -347,14 +359,14 @@ stages:
     exit_criteria:
       - work_packages_are_executable_pausable_and_recoverable
       - tasks_have_no_orphans_and_tools_do_not_hide_control_flow_or_claim_authority
-      - spec_binds_exact_approved_functional_requirement_version_and_hash_in_current_requirement_baseline
-      - unapproved_stale_intent_mismatched_or_out_of_baseline_requirements_fail_closed
+      - spec_binds_exact_decision_gate_approved_functional_requirement_version_and_hash_in_current_requirement_baseline
+      - invalid_decision_gate_stale_certification_intent_mismatched_or_out_of_baseline_requirements_fail_closed
     evidence_requirements:
       - static_checks_contract_tests_task_coverage_dependency_authorization_checks_and_recovery_plan
       - spec_functional_requirement_baseline_and_ADR_binding_evidence
     invalidation_triggers:
       - spec_criteria_dependency_implementation_counterevidence_permission_or_plan_changes
-      - functional_requirement_intent_hash_approval_or_requirement_baseline_changes
+      - functional_requirement_intent_hash_approval_route_certification_or_requirement_baseline_changes
     reopen_targets:
       - S5
       - S4_when_contract_is_invalidated

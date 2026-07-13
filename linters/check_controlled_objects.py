@@ -15,6 +15,7 @@
   C10 术语 term-id 只由唯一权威定义并与机器清单精确一致
   C11 权威路径与契约引用存在、唯一且版本匹配
   C12 结构化业务链/工程链具备按风险字段要求的 Mermaid 图
+  C14 审核策略包、预注册测试、认证与激活路由形成静态闭环
 
 退出码 0 = 无 P0/P1 发现；1 = 有发现（CI 可拦）。只读，不改任何文件。
 
@@ -994,6 +995,367 @@ def check_c12_diagram_coverage(repo: Path, files: list[Path]) -> list[Finding]:
     return findings
 
 
+REVIEW_POLICY_COMPONENT_FINGERPRINTS = {
+    "rule_set_hash",
+    "prompt_template_hash",
+    "input_schema_hash",
+    "output_schema_hash",
+    "context_policy_hash",
+    "model_fingerprint",
+    "tool_set_hash",
+    "permission_set_hash",
+}
+REVIEW_POLICY_CORE_CATEGORIES = {"positive", "negative", "boundary", "adversarial"}
+REVIEW_POLICY_ALL_CATEGORIES = REVIEW_POLICY_CORE_CATEGORIES | {
+    "unknown",
+    "rule_conflict",
+    "stale_rule",
+    "cross_project",
+    "multilingual",
+    "rewrite_limit",
+    "recovery",
+}
+REVIEW_POLICY_METRICS = {
+    "false_allow_rate",
+    "false_block_rate",
+    "decision_stability",
+    "rule_citation_accuracy",
+    "schema_valid_rate",
+    "rule_gap_detection_rate",
+    "rewrite_success_rate",
+    "cross_project_leakage_rate",
+}
+REVIEW_POLICY_TEMPLATE_FILES = {
+    "审核策略包说明.md",
+    "审核策略测试集.yaml",
+    "审核策略激活策略.yaml",
+}
+
+
+def _c14_non_empty(value: object) -> bool:
+    return isinstance(value, str) and bool(value.strip())
+
+
+def _c14_mapping(value: object) -> dict:
+    return value if isinstance(value, dict) else {}
+
+
+def _c14_list(value: object) -> list:
+    return value if isinstance(value, list) else []
+
+
+def _c14_template_root(repo: Path) -> Path | None:
+    candidates = (
+        repo / "templates/standard-project/governance/review-certification",
+        repo / "governance/review-certification",
+    )
+    return next((candidate for candidate in candidates if candidate.exists()), None)
+
+
+def _c14_load_frontmatter(repo: Path, path: Path) -> tuple[dict | None, list[Finding]]:
+    text = read_text(path)
+    if not text.startswith("---\n"):
+        return None, [Finding("C14", "P0", rel(repo, path), 0, "审核策略包说明缺少 YAML frontmatter")]
+    end = text.find("\n---", 4)
+    if end < 0:
+        return None, [Finding("C14", "P0", rel(repo, path), 0, "审核策略包说明 frontmatter 未闭合")]
+    try:
+        data = yaml.safe_load(text[4:end])
+    except yaml.YAMLError as exc:
+        return None, [Finding("C14", "P0", rel(repo, path), 0, f"审核策略包说明 YAML 无法解析: {exc}")]
+    if not isinstance(data, dict):
+        return None, [Finding("C14", "P0", rel(repo, path), 0, "审核策略包说明 frontmatter 必须是 mapping")]
+    return data, []
+
+
+def _c14_repeat_findings(
+    repo: Path,
+    path: Path,
+    suite: dict,
+    require_all_categories: bool,
+) -> tuple[list[Finding], int]:
+    findings: list[Finding] = []
+    categories = suite.get("required_categories")
+    cases = suite.get("cases")
+    minimums = suite.get("minimum_repeat_policy")
+    if not isinstance(categories, list) or any(not isinstance(item, str) for item in categories):
+        findings.append(Finding("C14", "P0", rel(repo, path), 0, "预注册测试类别必须是 list[str]"))
+        categories_set: set[str] = set()
+    else:
+        categories_set = set(categories)
+    required = REVIEW_POLICY_ALL_CATEGORIES if require_all_categories else REVIEW_POLICY_CORE_CATEGORIES
+    if not required <= categories_set:
+        findings.append(Finding("C14", "P0", rel(repo, path), 0, "预注册测试类别缺少必需正例、反例、边界、对抗或适用扩展类别"))
+    if not isinstance(cases, list) or not cases:
+        findings.append(Finding("C14", "P0", rel(repo, path), 0, "预注册测试 cases 必须是非空列表"))
+        return findings, 0
+    case_categories = {
+        case.get("category") for case in cases if isinstance(case, dict) and isinstance(case.get("category"), str)
+    }
+    if case_categories != categories_set:
+        findings.append(Finding("C14", "P0", rel(repo, path), 0, "required_categories 与实际 case 类别不一致"))
+    if not isinstance(minimums, dict):
+        findings.append(Finding("C14", "P0", rel(repo, path), 0, "minimum_repeat_policy 必须是 mapping"))
+        minimums = {}
+    total_attempts = 0
+    for index, case in enumerate(cases):
+        if not isinstance(case, dict):
+            findings.append(Finding("C14", "P0", rel(repo, path), 0, f"case[{index}] 必须是 mapping"))
+            continue
+        deterministic = case.get("deterministic")
+        repeat_count = case.get("repeat_count")
+        risk_level = case.get("risk_level")
+        if type(deterministic) is not bool:
+            findings.append(Finding("C14", "P0", rel(repo, path), 0, f"case[{index}] deterministic 必须是 boolean"))
+        base_key = "deterministic" if deterministic is True else "nondeterministic"
+        base_minimum = minimums.get(base_key)
+        high_minimum = minimums.get("high_or_critical_risk")
+        if type(repeat_count) is not int or repeat_count <= 0:
+            findings.append(Finding("C14", "P0", rel(repo, path), 0, f"case[{index}] 重复次数必须是正整数"))
+            continue
+        total_attempts += repeat_count
+        required_repeat = base_minimum if type(base_minimum) is int else None
+        if risk_level in {"high", "critical"} and type(high_minimum) is int:
+            required_repeat = max(required_repeat or 0, high_minimum)
+        if required_repeat is None or repeat_count < required_repeat:
+            findings.append(Finding("C14", "P0", rel(repo, path), 0, f"case[{index}] 重复次数低于预注册最小值"))
+    return findings, total_attempts
+
+
+def _c14_template_findings(repo: Path) -> list[Finding]:
+    root = _c14_template_root(repo)
+    if root is None:
+        return []
+    findings: list[Finding] = []
+    existing = {path.name for path in root.iterdir() if path.is_file()}
+    missing = REVIEW_POLICY_TEMPLATE_FILES - existing
+    for filename in sorted(missing):
+        findings.append(Finding("C14", "P0", rel(repo, root / filename), 0, "审核策略认证模板缺少必需文件"))
+    if missing:
+        return findings
+
+    bundle_path = root / "审核策略包说明.md"
+    bundle, errors = _c14_load_frontmatter(repo, bundle_path)
+    findings.extend(errors)
+    if isinstance(bundle, dict):
+        component_refs = bundle.get("component_refs")
+        fingerprints = bundle.get("component_fingerprints")
+        if not isinstance(component_refs, dict) or set(component_refs) != {
+            "rule_set_ref",
+            "prompt_template_ref",
+            "input_schema_ref",
+            "output_schema_ref",
+            "context_policy_ref",
+            "model_ref",
+            "tool_set_ref",
+            "permission_set_ref",
+        }:
+            findings.append(Finding("C14", "P0", rel(repo, bundle_path), 0, "审核策略包必须精确引用全部组件"))
+        if not isinstance(fingerprints, dict) or set(fingerprints) != REVIEW_POLICY_COMPONENT_FINGERPRINTS:
+            findings.append(Finding("C14", "P0", rel(repo, bundle_path), 0, "审核策略包必须精确覆盖规则、Prompt、I/O Schema、Context、模型、Tool 与权限指纹"))
+        elif any(not _c14_non_empty(value) for value in fingerprints.values()):
+            findings.append(Finding("C14", "P0", rel(repo, bundle_path), 0, "审核策略包组件指纹不得为空"))
+        if bundle.get("bundle_state") != "candidate":
+            findings.append(Finding("C14", "P0", rel(repo, bundle_path), 0, "复制模板不得伪装为已认证策略包"))
+
+    suite_path = root / "审核策略测试集.yaml"
+    suite, errors = _load_yaml(repo, suite_path, "C14")
+    findings.extend(errors)
+    if isinstance(suite, dict):
+        repeat_findings, _ = _c14_repeat_findings(repo, suite_path, suite, True)
+        findings.extend(repeat_findings)
+        case_fields = {
+            "case_id",
+            "category",
+            "input_ref",
+            "input_hash",
+            "expected_decision",
+            "expected_rule_refs",
+            "forbidden_decisions",
+            "required_finding_codes",
+            "required_evidence",
+            "risk_level",
+            "deterministic",
+            "repeat_count",
+        }
+        for index, case in enumerate(_c14_list(suite.get("cases"))):
+            if not isinstance(case, dict) or not case_fields <= set(case):
+                findings.append(Finding("C14", "P0", rel(repo, suite_path), 0, f"case[{index}] 缺少预注册输入、预期、规则、Evidence、风险或重复字段"))
+        if set(_c14_list(suite.get("metrics"))) != REVIEW_POLICY_METRICS:
+            findings.append(Finding("C14", "P0", rel(repo, suite_path), 0, "测试集 metrics 必须完整覆盖认证指标"))
+        thresholds = suite.get("thresholds")
+        if not isinstance(thresholds, dict) or any(
+            not any(key.startswith(metric) for key in thresholds)
+            for metric in REVIEW_POLICY_METRICS
+        ):
+            findings.append(Finding("C14", "P0", rel(repo, suite_path), 0, "每个认证指标必须有预注册阈值"))
+
+    activation_path = root / "审核策略激活策略.yaml"
+    activation, errors = _load_yaml(repo, activation_path, "C14")
+    findings.extend(errors)
+    if isinstance(activation, dict):
+        if activation.get("extends") != "review-policy-activation-routing@1":
+            findings.append(Finding("C14", "P0", rel(repo, activation_path), 0, "L2 激活策略必须扩展 L1 权威政策"))
+        if set(_c14_list(activation.get("allowed_routes"))) != {"policy_certified", "human_signoff", "blocked"}:
+            findings.append(Finding("C14", "P0", rel(repo, activation_path), 0, "激活策略路由必须完整且 fail closed"))
+        if activation.get("external_action_authorization") != "always_independent":
+            findings.append(Finding("C14", "P0", rel(repo, activation_path), 0, "审核策略认证不能替代外部动作授权"))
+        if activation.get("route_precedence") != ["blocked", "human_signoff", "policy_certified"]:
+            findings.append(Finding("C14", "P0", rel(repo, activation_path), 0, "激活策略必须保持 blocked 最高优先级"))
+        for field in ("policy_certified_constraints", "human_signoff_triggers", "blocked_triggers"):
+            if not activation.get(field):
+                findings.append(Finding("C14", "P0", rel(repo, activation_path), 0, f"激活策略缺少非空 {field}"))
+    return findings
+
+
+def _c14_scenario_findings(repo: Path, path: Path, scenario: dict) -> list[Finding]:
+    findings: list[Finding] = []
+    bundle = _c14_mapping(scenario.get("bundle"))
+    suite = _c14_mapping(scenario.get("test_suite"))
+    certification = _c14_mapping(scenario.get("certification"))
+    activation = _c14_mapping(scenario.get("activation"))
+
+    fingerprints = bundle.get("component_fingerprints")
+    if not isinstance(fingerprints, dict) or set(fingerprints) != REVIEW_POLICY_COMPONENT_FINGERPRINTS:
+        findings.append(Finding("C14", "P0", rel(repo, path), 0, "策略包指纹不完整"))
+    elif any(not _c14_non_empty(value) for value in fingerprints.values()):
+        findings.append(Finding("C14", "P0", rel(repo, path), 0, "策略包指纹不得为空"))
+
+    repeat_findings, total_attempts = _c14_repeat_findings(repo, path, suite, False)
+    findings.extend(repeat_findings)
+    excluded = certification.get("excluded_attempts_and_reasons")
+    included_count = certification.get("included_attempt_count")
+    exclusions_valid = isinstance(excluded, list) and all(
+        isinstance(item, dict)
+        and _c14_non_empty(item.get("attempt_ref"))
+        and _c14_non_empty(item.get("reason"))
+        for item in excluded
+    )
+    if (
+        type(included_count) is not int
+        or not exclusions_valid
+        or included_count + len(excluded) != total_attempts
+    ):
+        findings.append(Finding("C14", "P0", rel(repo, path), 0, "认证未覆盖全部重复尝试或排除项缺少理由"))
+
+    binding_pairs = (
+        (bundle.get("bundle_ref"), certification.get("subject_bundle_ref")),
+        (bundle.get("bundle_hash"), certification.get("subject_bundle_hash")),
+        (suite.get("test_suite_ref"), certification.get("test_suite_ref")),
+        (suite.get("test_suite_hash"), certification.get("test_suite_hash")),
+    )
+    if any(not _c14_non_empty(left) or left != right for left, right in binding_pairs):
+        findings.append(Finding("C14", "P0", rel(repo, path), 0, "认证 subject/test suite 引用或 hash 与当前策略包不匹配"))
+
+    generator_ref = bundle.get("generator_ref")
+    verifier_ref = certification.get("verifier_ref")
+    reviewer_refs = _c14_list(certification.get("reviewer_refs"))
+    if (
+        not _c14_non_empty(verifier_ref)
+        or verifier_ref == generator_ref
+        or verifier_ref in reviewer_refs
+        or not _c14_non_empty(certification.get("verifier_independence_evidence_ref"))
+    ):
+        findings.append(Finding("C14", "P0", rel(repo, path), 0, "认证 verifier 必须独立于策略生成者和 review Run"))
+
+    run_refs = certification.get("run_refs")
+    evidence_refs = certification.get("evidence_refs")
+    if not isinstance(run_refs, list) or not run_refs or not isinstance(evidence_refs, list) or not evidence_refs:
+        findings.append(Finding("C14", "P0", rel(repo, path), 0, "认证必须绑定非空 Run 与 Evidence"))
+
+    threshold_results = certification.get("threshold_results")
+    thresholds_pass = (
+        isinstance(threshold_results, dict)
+        and set(threshold_results) == REVIEW_POLICY_METRICS
+        and all(result == "passed" for result in threshold_results.values())
+    )
+    active = activation.get("active") is True
+    decision = certification.get("certification_decision")
+    if active and (not thresholds_pass or decision not in {"certified", "certified_with_ceiling"}):
+        findings.append(Finding("C14", "P0", rel(repo, path), 0, "存在未通过阈值或无效认证结论时不得激活"))
+    if active and (
+        certification.get("certification_freshness") != "fresh"
+        or certification.get("scope_match") is not True
+    ):
+        findings.append(Finding("C14", "P0", rel(repo, path), 0, "过期或 scope 不匹配的认证不得激活"))
+
+    route = activation.get("requested_route")
+    eligible_routes = _c14_list(certification.get("eligible_activation_routes"))
+    inputs = _c14_mapping(activation.get("decision_inputs"))
+    if active and route not in eligible_routes:
+        findings.append(Finding("C14", "P0", rel(repo, path), 0, "激活路由不在认证允许范围内"))
+    if inputs.get("unresolved_unknown") is not False:
+        findings.append(Finding("C14", "P0", rel(repo, path), 0, "未决 Unknown 必须阻断激活路由"))
+    policy_safe = (
+        inputs.get("scope_change") in {"none", "reduced"}
+        and inputs.get("threshold_change") in {"unchanged", "stricter"}
+        and inputs.get("blocking_rule_change") in {"unchanged", "stronger"}
+        and inputs.get("permission_change") in {"none", "reduced"}
+        and inputs.get("objective_or_responsibility_change") is False
+        and inputs.get("residual_risk_acceptance") is False
+        and inputs.get("external_side_effect") in {"none", "read_external", "write_reversible"}
+    )
+    human_trigger = (
+        inputs.get("scope_change") == "expanded"
+        or inputs.get("threshold_change") == "reduced"
+        or inputs.get("blocking_rule_change") == "removed"
+        or inputs.get("permission_change") == "increased"
+        or inputs.get("objective_or_responsibility_change") is True
+        or inputs.get("residual_risk_acceptance") is True
+        or inputs.get("external_side_effect") == "write_irreversible"
+    )
+    if route == "policy_certified" and not policy_safe:
+        findings.append(Finding("C14", "P0", rel(repo, path), 0, "高风险变化与 policy_certified 激活路由不匹配"))
+    elif route == "human_signoff":
+        human_ref = activation.get("human_signoff_ref")
+        if not human_trigger or not isinstance(human_ref, str) or not human_ref.startswith("human-"):
+            findings.append(Finding("C14", "P0", rel(repo, path), 0, "human_signoff 路由必须有高风险触发和可验证人类引用"))
+    elif route == "blocked":
+        if active:
+            findings.append(Finding("C14", "P0", rel(repo, path), 0, "blocked 路由不得处于 active"))
+    elif route != "policy_certified":
+        findings.append(Finding("C14", "P0", rel(repo, path), 0, "未知激活路由必须 fail closed"))
+
+    if activation.get("external_action_authorization_granted") is not False:
+        findings.append(Finding("C14", "P0", rel(repo, path), 0, "审核策略认证不能签发或替代外部动作授权"))
+
+    recovery = scenario.get("recovery")
+    if recovery is not None:
+        recovery_fields = {
+            "previous_rule_gap_ref",
+            "superseded_bundle_ref",
+            "new_rule_set_ref",
+            "new_certification_ref",
+            "reopened_subject_refs",
+            "new_review_run_refs",
+        }
+        if not isinstance(recovery, dict) or not recovery_fields <= set(recovery):
+            findings.append(Finding("C14", "P0", rel(repo, path), 0, "Rule Gap 恢复必须绑定新规则、新认证、新 Run 与重开对象"))
+    return findings
+
+
+def check_c14_review_policy_certification(repo: Path, files: list[Path]) -> list[Finding]:
+    """C14: 审核策略模板与 synthetic certification fixture 必须静态闭合。"""
+    findings = _c14_template_findings(repo)
+    catalog = repo / "fixtures/review-policy-certification"
+    if catalog.is_dir():
+        scenario_paths = sorted((catalog / "positive").glob("*/scenario.yaml"))
+    else:
+        scenario_paths = sorted(
+            path for path in files if path.name == "scenario.yaml" and path.suffix in {".yaml", ".yml"}
+        )
+    for path in scenario_paths:
+        scenario, errors = _load_yaml(repo, path, "C14")
+        findings.extend(errors)
+        if errors:
+            continue
+        if not isinstance(scenario, dict) or scenario.get("fixture_kind") != "review_policy_certification_scenario":
+            findings.append(Finding("C14", "P0", rel(repo, path), 0, "认证 fixture 必须声明 review_policy_certification_scenario"))
+            continue
+        findings.extend(_c14_scenario_findings(repo, path, scenario))
+    return findings
+
+
 def check_l2_mode(repo: Path) -> list[Finding]:
     """L2 模式：额外检查 project-os.lock 是否存在。"""
     findings: list[Finding] = []
@@ -1048,6 +1410,7 @@ def main() -> int:
         all_findings += check_c10_terminology_authority(repo, files)
         all_findings += check_c11_authority_and_contract_references(repo, files)
     all_findings += check_c12_diagram_coverage(repo, files)
+    all_findings += check_c14_review_policy_certification(repo, files)
     if l2_mode:
         all_findings += check_l2_mode(repo)
 
@@ -1084,7 +1447,7 @@ def main() -> int:
     # 输出机器可读 JSON（供保存为 Evidence）
     report = {
         "checker": "check_controlled_objects",
-        "version": "0.4.0",
+        "version": "0.5.0",
         "repo": str(repo),
         "files_scanned": len(files),
         "p0_count": len(p0),

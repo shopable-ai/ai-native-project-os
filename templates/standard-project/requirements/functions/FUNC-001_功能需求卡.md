@@ -10,10 +10,13 @@ lifecycle_stage: S2
 priority: p1
 work_status: in_progress
 approval_status: pending
+approval_route: null
+decision_authority_ref: null
+certification_verdict_ref: null
 implementation_status: not_started
 owner: human-template-owner
 executor: ai-template-author
-approver: human-template-owner
+approver: null
 verifier: independent-template-reviewer
 capability_refs: [CAP-001]
 business_requirement_refs: [REQ-001]
@@ -24,6 +27,15 @@ intent:
   interpreted_intent: "{{ai_candidate_interpretation}}"
   approved_intent: null
   implementation_intent: "{{candidate_implementation_intent}}"
+decision_inputs:
+  scope_change: unknown
+  threshold_change: unknown
+  blocking_rule_change: unknown
+  permission_change: unknown
+  objective_or_responsibility_change: unknown
+  residual_risk_acceptance: unknown
+  external_side_effect: unknown
+  unresolved_unknown: true
 context_snapshot_ref: CTX-DRAFT-001
 baseline_ref: REQ-BASELINE-DRAFT-001
 content_hash: "{{functional_requirement_content_hash}}"
@@ -94,7 +106,7 @@ traceability_ref: REQ-FUNC-001
 | `available` | `completed` | 业务条件成立且执行完成 | 进入下游 |
 | `unavailable` | `not_attempted` | 业务条件本身不成立 | 正常终止 |
 | `available` | `failed` | 业务条件成立但执行失败 | 重试或修复 |
-| `unknown` | `blocked` | 无法安全判断 | fail closed / 人工确认 |
+| `unknown` | `blocked` | 无法安全判断 | fail closed / Rule Gap / 按风险转人工确认 |
 | `available` | `partial` | 只获得部分结果 | 按契约决定是否交接 |
 
 业务状态描述现实条件，执行状态描述本次动作结果，两者不得合并。
@@ -108,7 +120,7 @@ traceability_ref: REQ-FUNC-001
 ## 业务规则
 
 - `implementation_intent` 不得扩大 `approved_intent`；
-- 未批准需求不得进入 active Spec；
+- 未通过合法 Decision Gate 的需求不得进入 active Spec；
 - 输出必须符合指定 Contract；
 - 未知状态默认 fail closed；
 - 生成视图和示例不能替代本卡或输出 Contract。
@@ -150,6 +162,12 @@ traceability_ref: REQ-FUNC-001
 
 每个 Unknown 写明 owner、影响、是否 `blocks_decision`、研究入口和期限。
 
+## 决策门与批准路由
+
+在 `approval_status` 变为 `approved` 前，先固定结构化 `decision_inputs`。若 scope 不扩大、阈值不降低、阻断规则不减少、权限不增加、目标与责任不变化、无风险接受且阻断性 Unknown 已清零，可由当前审核策略认证和激活 Policy 选择 `policy_certified`。目标/责任变化、scope 扩大、阈值降低、风险接受、权限增加或不可逆副作用必须选择 `human_signoff` 或保持 blocked。
+
+`policy_certified` 必须填写当前 `certification_verdict_ref`，`approver` 保持 null；`human_signoff` 必须让 `approver` 与 `decision_authority_ref` 同时引用可验证人类 principal。生成本卡的 AI 不能把自己写成认证者或批准权威。
+
 ## 上下游影响
 
 上游：业务 Requirement、Chain、Capability、Function。下游：ADR、Spec、Task、Test、Workflow、Evidence、Verdict 和 Claim。
@@ -159,11 +177,11 @@ traceability_ref: REQ-FUNC-001
 - 缺少哪些必要信息；
 - 使用了哪些假设；
 - 哪些结论最可能错误；
-- 哪些内容需要人类确认；
+- 哪些内容可由已认证规则判定，哪些内容必须由人类确认；
 - 是否把内部判断步骤错误提升为顶层 Function；
 - 是否把候选方案冒充批准要求；
 - 是否与上游或已有功能冲突。
 
 ## Spec 映射
 
-人工批准并写入 Requirement Baseline 后，再记录一个或多个 Spec。Spec 必须精确引用本卡 `stable_id/version/content_hash` 与当前 baseline；本模板初始 `spec_refs: []`。
+通过合法 Decision Gate 并写入 Requirement Baseline 后，再记录一个或多个 Spec。Spec 必须精确引用本卡 `stable_id/version/content_hash`、当前 baseline 与批准路由证据；本模板初始 `spec_refs: []`。

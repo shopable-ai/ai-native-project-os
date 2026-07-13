@@ -8,6 +8,8 @@
 | 路由裁决怎样固定为可复核对象 | 结构化路由输入已经计算后 | 路由政策版本、输入、基础治理配置与 overlay 状态 | 版本化 route decision | `governance/route-decision-contract.yaml` | 将政策计算结果固定为 route v1 | 生成并绑定 control set |
 | 路由实际包含哪些控制 | 选定基础治理配置和 overlay 后 | route decision、控制引用、实现 Evidence 与兼容范围 | 可哈希 control set | `governance/control-set-contract.yaml` | standard 基础控制加 selected production overlay | 验证实现、授权和 overlay 激活条件 |
 | 人类维护的审核规则如何成为受控版本 | Markdown 规则准备批准或发布时 | 规则正文、scope、批准与版本信息 | 可校验 governance rule set | `governance/governance-rule-set-contract.yaml` | 发布一版内容与证据审核规则集 | 独立 AI 按固定版本审核 |
+| 审核策略激活前必须测试什么 | 规则、Prompt、模型、Schema 或 Context 策略准备认证时 | 策略包、测试 case、预期结果、重复次数、指标与阈值 | 版本化预注册测试集 | `governance/review-policy-test-suite-contract.yaml` | 固定正例、反例、边界和对抗测试 | 执行全部评测 Run 并收集 Evidence |
+| 审核策略是否具备受限激活资格 | 全部预注册测试和重复 Run 完成后 | 策略包/test suite hash、Run/Evidence、指标、阈值与 verifier | 有范围和期限的认证 Verdict | `governance/review-policy-certification-contract.yaml` | 低风险策略通过阈值并获得受限认证 | 交给激活 Policy 选择自动决策或人工确认 |
 | 独立 AI 审核怎样留下可重算裁决 | 生成对象进入自动内容或 Evidence 审核时 | 被审对象、生成/审核 Run、规则集与 Evidence | AI review verdict | `governance/ai-review-verdict-contract.yaml` | 审核结果要求有界改写 | 允许则进入后续门禁；规则不足则开 rule gap |
 | 规则缺口怎样异步治理 | 审核发现规则缺失、冲突或过期时 | 被审对象、审核裁决、规则版本与影响范围 | rule gap case | `governance/rule-gap-case-contract.yaml` | 当前对象阻断并登记规则修订责任人 | 新规则批准后用新 Run 重审 |
 | 授权引用怎样证明有效而非空壳 | 高风险动作或 overlay 激活前 | 主体绑定、Grant、Ticket、Lease、期限与验证 Evidence | authorization snapshot | `governance/authorization-snapshot-contract.yaml` | 固定一次有效且未撤销的授权快照 | 交给动作门禁或 overlay 激活裁决校验 |

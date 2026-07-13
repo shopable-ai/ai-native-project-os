@@ -14,6 +14,7 @@ SPEC.loader.exec_module(checker)
 
 FIXTURES = REPO_ROOT / "fixtures"
 VALID = FIXTURES / "checker-positive" / "valid"
+REVIEW_FIXTURES = REPO_ROOT / "fixtures" / "review-policy-certification"
 
 
 class OperationalSpineCheckerTests(unittest.TestCase):
@@ -240,6 +241,54 @@ class OperationalSpineCheckerTests(unittest.TestCase):
     def test_c12_ignores_non_chain_yaml_and_diagrams_outside_chain_package(self):
         root = FIXTURES / "checker-negative" / "diagram-scope-unrelated"
         self.assertEqual(self.findings("check_c12_diagram_coverage", root), [])
+
+    def test_c14_accepts_policy_human_and_rule_gap_recovery_scenarios(self):
+        for scenario in (
+            "policy-certified",
+            "human-signoff",
+            "rule-gap-recovery",
+        ):
+            with self.subTest(scenario=scenario):
+                root = REVIEW_FIXTURES / "positive" / scenario
+                self.assertEqual(
+                    self.findings("check_c14_review_policy_certification", root),
+                    [],
+                )
+
+    def test_c14_rejects_missing_core_categories(self):
+        root = REVIEW_FIXTURES / "negative" / "missing-core-categories"
+        findings = self.findings("check_c14_review_policy_certification", root)
+        self.assertTrue(any("类别" in finding.message for finding in findings))
+
+    def test_c14_rejects_insufficient_nondeterministic_repeats(self):
+        root = REVIEW_FIXTURES / "negative" / "insufficient-repeats"
+        findings = self.findings("check_c14_review_policy_certification", root)
+        self.assertTrue(any("重复" in finding.message for finding in findings))
+
+    def test_c14_rejects_self_certification(self):
+        root = REVIEW_FIXTURES / "negative" / "self-certification"
+        findings = self.findings("check_c14_review_policy_certification", root)
+        self.assertTrue(any("独立" in finding.message for finding in findings))
+
+    def test_c14_rejects_bundle_hash_drift(self):
+        root = REVIEW_FIXTURES / "negative" / "bundle-hash-drift"
+        findings = self.findings("check_c14_review_policy_certification", root)
+        self.assertTrue(any("hash" in finding.message for finding in findings))
+
+    def test_c14_rejects_scope_expansion_auto_activation(self):
+        root = REVIEW_FIXTURES / "negative" / "scope-expansion-auto"
+        findings = self.findings("check_c14_review_policy_certification", root)
+        self.assertTrue(any("路由" in finding.message for finding in findings))
+
+    def test_c14_rejects_failed_threshold_active_policy(self):
+        root = REVIEW_FIXTURES / "negative" / "failed-threshold-active"
+        findings = self.findings("check_c14_review_policy_certification", root)
+        self.assertTrue(any("阈值" in finding.message for finding in findings))
+
+    def test_c14_rejects_certification_as_external_authorization(self):
+        root = REVIEW_FIXTURES / "negative" / "authorization-escalation"
+        findings = self.findings("check_c14_review_policy_certification", root)
+        self.assertTrue(any("外部动作授权" in finding.message for finding in findings))
 
     def test_main_repository_scan_skips_checker_fixtures(self):
         scanned = {path.relative_to(REPO_ROOT).as_posix() for path in checker.iter_repo_files(REPO_ROOT)}

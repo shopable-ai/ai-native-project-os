@@ -1,0 +1,61 @@
+# 审核策略激活路由政策
+# 只决定何时允许策略自动激活、何时要求人工确认、何时阻断；记录结构由 contracts/ 定义。
+
+schema_version: 1
+policy_id: review-policy-activation-routing
+policy_version: 1
+
+route_input_required_fields:
+  - certification_decision
+  - certification_freshness
+  - scope_change
+  - threshold_change
+  - blocking_rule_change
+  - permission_change
+  - objective_or_responsibility_change
+  - residual_risk_acceptance
+  - external_side_effect
+  - unresolved_unknown
+
+routes:
+  policy_certified:
+    when_all:
+      certification_decision: [certified, certified_with_ceiling]
+      certification_freshness: [fresh]
+      scope_change: [none, reduced]
+      threshold_change: [unchanged, stricter]
+      blocking_rule_change: [unchanged, stronger]
+      permission_change: [none, reduced]
+      objective_or_responsibility_change: [false]
+      residual_risk_acceptance: [false]
+      external_side_effect: [none, read_external, write_reversible]
+      unresolved_unknown: [false]
+  human_signoff:
+    when_any:
+      scope_expansion: true
+      threshold_reduction: true
+      blocking_rule_removal: true
+      permission_increase: true
+      objective_or_responsibility_change: true
+      residual_risk_acceptance: true
+      irreversible_external_side_effect: true
+  blocked:
+    when_any:
+      unknown: true
+      certification_missing_stale_rejected_or_rule_gap: true
+      required_test_or_threshold_not_passed: true
+      verifier_independence_missing: true
+      subject_or_test_suite_hash_mismatch: true
+
+route_precedence: [blocked, human_signoff, policy_certified]
+missing_or_unknown: blocked
+external_action_authorization: always_independent
+
+invariants:
+  - blocked_route_has_highest_precedence
+  - human_signoff_conditions_cannot_be_downgraded_by_policy_certified
+  - policy_certified_requires_current_scope_matched_certification
+  - threshold_reduction_scope_expansion_or_permission_increase_never_auto_activates
+  - unresolved_unknown_never_defaults_to_low_risk
+  - certification_or_human_signoff_never_grants_external_action_authorization
+  - natural_language_keywords_cannot_select_route

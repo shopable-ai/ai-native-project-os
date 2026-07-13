@@ -1,0 +1,486 @@
+import hashlib
+import re
+import unittest
+from pathlib import Path
+
+import yaml
+
+
+ROOT = Path(__file__).parents[1]
+AUTHORITY = ROOT / "docs" / "governance" / "REVIEW_POLICY_CERTIFICATION.md"
+ADR = ROOT / "decisions" / "ADR-0005-certify-review-policy-before-activation.md"
+TEST_SUITE_CONTRACT = (
+    ROOT / "contracts" / "governance" / "review-policy-test-suite-contract.yaml"
+)
+CERTIFICATION_CONTRACT = (
+    ROOT / "contracts" / "governance" / "review-policy-certification-contract.yaml"
+)
+ACTIVATION_POLICY = ROOT / "policies" / "review-policy-activation-routing.yaml"
+TEMPLATE_ROOT = ROOT / "templates" / "standard-project" / "governance" / "review-certification"
+FIXTURE_ROOT = ROOT / "fixtures" / "review-policy-certification"
+STATIC_EVIDENCE = ROOT / "reviews" / "review-policy-certification-static-evidence.yaml"
+
+
+def load_yaml(path: Path) -> dict:
+    return yaml.safe_load(path.read_text(encoding="utf-8"))
+
+
+def fixture_integrity(root: Path) -> tuple[dict[str, str], str]:
+    files = {
+        path.relative_to(ROOT).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in sorted(root.rglob("*"))
+        if path.is_file()
+    }
+    manifest = "\n".join(f"{path}:{digest}" for path, digest in files.items())
+    return files, hashlib.sha256(manifest.encode("utf-8")).hexdigest()
+
+
+class ReviewPolicyCertificationAuthorityTests(unittest.TestCase):
+    def test_human_authority_is_registered_and_starts_with_reading_contract(self):
+        self.assertTrue(AUTHORITY.is_file())
+        text = AUTHORITY.read_text(encoding="utf-8")
+        for label in ("解决的问题", "何时阅读", "输入", "输出", "下一步"):
+            self.assertIn(label, text)
+
+        project = load_yaml(ROOT / "project-os.yaml")
+        self.assertEqual(
+            project["authority"]["review_policy_certification"],
+            "docs/governance/REVIEW_POLICY_CERTIFICATION.md",
+        )
+        self.assertIn(
+            "REVIEW_POLICY_CERTIFICATION.md",
+            (ROOT / "AGENTS.md").read_text(encoding="utf-8"),
+        )
+        self.assertIn(
+            "审核策略认证",
+            (ROOT / "README.zh-CN.md").read_text(encoding="utf-8"),
+        )
+
+    def test_terms_are_unique_and_registered_without_new_state_axis(self):
+        terminology = (ROOT / "docs" / "governance" / "TERMINOLOGY.md").read_text(
+            encoding="utf-8"
+        )
+        project = load_yaml(ROOT / "project-os.yaml")
+        expected = {
+            "approval-route",
+            "review-policy-bundle",
+            "review-policy-certification",
+        }
+        for term_id in expected:
+            self.assertEqual(
+                len(re.findall(rf"term-id: `{re.escape(term_id)}`", terminology)),
+                1,
+            )
+        self.assertTrue(expected <= set(project["terminology_manifest"]["required_term_ids"]))
+        self.assertEqual(project["project_governance_catalog"]["base_profiles"], ["lite", "standard"])
+        self.assertNotIn("critical", project["project_governance_catalog"]["base_profiles"])
+
+    def test_execution_model_certifies_the_bundle_and_keeps_prompt_non_authoritative(self):
+        text = (ROOT / "docs" / "architecture" / "AI_NATIVE_EXECUTION_MODEL.md").read_text(
+            encoding="utf-8"
+        )
+        for token in (
+            "审核策略包",
+            "规则集",
+            "Prompt",
+            "Schema",
+            "Context",
+            "模型 fingerprint",
+            "不是规则权威源",
+            "policy_certified",
+            "human_signoff",
+        ):
+            self.assertIn(token, text)
+
+    def test_stage_gates_use_a_decision_gate_and_keep_human_signoff_for_high_risk(self):
+        text = (ROOT / "docs" / "workflows" / "STAGE_EXIT_GATES.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("Decision Gate", text)
+        self.assertIn("policy_certified", text)
+        self.assertIn("human_signoff", text)
+        self.assertIn("不可逆外部动作", text)
+
+    def test_architecture_decision_records_why_blanket_human_approval_is_rejected(self):
+        self.assertTrue(ADR.is_file())
+        text = ADR.read_text(encoding="utf-8")
+        self.assertIn("状态：已接受", text)
+        self.assertIn("固定人工批准", text)
+        self.assertIn("policy_certified", text)
+        self.assertIn("human_signoff", text)
+        self.assertIn("AI 不能给自己的策略签发独立认证", text)
+
+
+class ReviewPolicyCertificationContractTests(unittest.TestCase):
+    def test_contracts_and_policy_are_registered_at_their_single_authorities(self):
+        for path in (TEST_SUITE_CONTRACT, CERTIFICATION_CONTRACT, ACTIVATION_POLICY):
+            self.assertTrue(path.is_file(), path)
+        project = load_yaml(ROOT / "project-os.yaml")
+        authority = project["authority"]
+        self.assertEqual(
+            authority["review_policy_test_suite_contract"],
+            "contracts/governance/review-policy-test-suite-contract.yaml",
+        )
+        self.assertEqual(
+            authority["review_policy_certification_contract"],
+            "contracts/governance/review-policy-certification-contract.yaml",
+        )
+        self.assertEqual(
+            authority["review_policy_activation_policy"],
+            "policies/review-policy-activation-routing.yaml",
+        )
+
+    def test_test_suite_contract_preregisters_complete_adversarial_coverage(self):
+        contract = load_yaml(TEST_SUITE_CONTRACT)
+        categories = set(contract["enums"]["case_category"])
+        self.assertTrue(
+            {
+                "positive",
+                "negative",
+                "boundary",
+                "adversarial",
+                "unknown",
+                "rule_conflict",
+                "stale_rule",
+                "cross_project",
+                "multilingual",
+                "rewrite_limit",
+                "recovery",
+            }
+            <= categories
+        )
+        self.assertTrue(
+            {
+                "input_ref",
+                "input_hash",
+                "expected_decision",
+                "expected_rule_refs",
+                "forbidden_decisions",
+                "required_evidence",
+                "risk_level",
+                "repeat_count",
+            }
+            <= set(contract["case_required_fields"])
+        )
+        self.assertIn(
+            "expectations_thresholds_and_repeat_counts_are_fixed_before_first_run",
+            contract["invariants"],
+        )
+        self.assertIn(
+            "nondeterministic_cases_require_repeat_count_at_least_configured_minimum",
+            contract["invariants"],
+        )
+
+    def test_certification_contract_requires_all_runs_metrics_and_independent_verifier(self):
+        contract = load_yaml(CERTIFICATION_CONTRACT)
+        required = set(contract["required_fields"])
+        self.assertTrue(
+            {
+                "subject_bundle_ref",
+                "subject_bundle_hash",
+                "test_suite_ref",
+                "test_suite_hash",
+                "run_refs",
+                "evidence_refs",
+                "metric_results",
+                "threshold_results",
+                "verifier_ref",
+                "certification_decision",
+                "eligible_activation_routes",
+                "claim_ceiling",
+                "invalidation_conditions",
+            }
+            <= required
+        )
+        self.assertEqual(
+            contract["enums"]["activation_route"],
+            ["policy_certified", "human_signoff"],
+        )
+        for invariant in (
+            "certified_requires_every_required_threshold_passed",
+            "all_attempts_must_be_included_or_excluded_with_reason",
+            "verifier_must_be_independent_from_bundle_generator_and_review_runs",
+            "ai_cannot_self_certify_its_own_policy_bundle",
+        ):
+            self.assertIn(invariant, contract["invariants"])
+
+    def test_activation_policy_routes_low_risk_human_signoff_and_unknown_fail_closed(self):
+        policy = load_yaml(ACTIVATION_POLICY)
+        routes = policy["routes"]
+        self.assertIn("policy_certified", routes)
+        self.assertIn("human_signoff", routes)
+        self.assertIn("blocked", routes)
+        self.assertIn("scope_expansion", routes["human_signoff"]["when_any"])
+        self.assertIn("threshold_reduction", routes["human_signoff"]["when_any"])
+        self.assertEqual(routes["blocked"]["when_any"]["unknown"], True)
+        self.assertEqual(policy["external_action_authorization"], "always_independent")
+
+    def test_rule_set_stage_gate_and_run_evidence_bind_conditional_certification(self):
+        rule_set = load_yaml(
+            ROOT / "contracts" / "governance" / "governance-rule-set-contract.yaml"
+        )
+        self.assertEqual(
+            rule_set["enums"]["approval_route"],
+            ["policy_certified", "human_signoff"],
+        )
+        for field in (
+            "approval_route",
+            "decision_authority_ref",
+            "certification_verdict_ref",
+        ):
+            self.assertIn(field, rule_set["required_fields"])
+        self.assertIn(
+            "policy_certified_requires_current_scope_matched_certification_verdict",
+            rule_set["invariants"],
+        )
+        self.assertIn(
+            "human_signoff_requires_verified_human_principal",
+            rule_set["invariants"],
+        )
+        self.assertNotIn("active_requires_verified_human_principal", rule_set["invariants"])
+
+        stage = load_yaml(ROOT / "contracts" / "governance" / "stage-exit-gates-contract.yaml")
+        self.assertNotIn("approval_route", stage["independent_axes"])
+        for field in (
+            "approval_route",
+            "decision_authority_ref",
+            "certification_verdict_ref",
+        ):
+            self.assertIn(field, stage["stage_gate_record"]["required_fields"])
+
+        run_evidence = load_yaml(
+            ROOT / "contracts" / "governance" / "run-evidence-contract.yaml"
+        )
+        conditional = run_evidence["run"]["conditional_required_fields"]
+        self.assertIn(
+            "review_policy_bundle_fingerprints",
+            conditional["independent_ai_review"],
+        )
+        self.assertIn(
+            "review_policy_certification_refs",
+            conditional["independent_ai_review"],
+        )
+        self.assertIn(
+            "review_policy_test_suite_refs",
+            conditional["review_policy_certification_run"],
+        )
+
+    def test_requirement_package_uses_conditional_decision_routes(self):
+        contract = load_yaml(
+            ROOT / "contracts" / "artifacts" / "requirement-design-package-contract.yaml"
+        )
+        function_fields = contract["required_frontmatter_fields"][
+            "functions/FUNC-001_功能需求卡.md"
+        ]
+        for field in (
+            "approval_route",
+            "decision_authority_ref",
+            "certification_verdict_ref",
+            "decision_inputs.scope_change",
+            "decision_inputs.unresolved_unknown",
+        ):
+            self.assertIn(field, function_fields)
+        for invariant in (
+            "approved_object_requires_exactly_one_valid_decision_route",
+            "policy_certified_requires_current_scope_matched_certification_verdict",
+            "human_signoff_requires_verified_human_principal",
+            "AI_cannot_self_certify_or_promote_without_a_valid_decision_gate",
+        ):
+            self.assertIn(invariant, contract["state_invariants"])
+
+
+class ReviewPolicyCertificationTemplateTests(unittest.TestCase):
+    def test_copyable_template_contains_bundle_test_suite_and_activation_policy(self):
+        required = {
+            "审核策略包说明.md",
+            "审核策略测试集.yaml",
+            "审核策略激活策略.yaml",
+        }
+        self.assertEqual(
+            {path.name for path in TEMPLATE_ROOT.iterdir() if path.is_file()},
+            required,
+        )
+
+        bundle_text = (TEMPLATE_ROOT / "审核策略包说明.md").read_text(encoding="utf-8")
+        self.assertTrue(bundle_text.startswith("---\n"))
+        bundle_end = bundle_text.find("\n---", 4)
+        bundle = yaml.safe_load(bundle_text[4:bundle_end])
+        fingerprints = bundle["component_fingerprints"]
+        self.assertEqual(
+            set(fingerprints),
+            {
+                "rule_set_hash",
+                "prompt_template_hash",
+                "input_schema_hash",
+                "output_schema_hash",
+                "context_policy_hash",
+                "model_fingerprint",
+                "tool_set_hash",
+                "permission_set_hash",
+            },
+        )
+        self.assertTrue(all(fingerprints.values()))
+
+    def test_template_preregisters_all_categories_repeats_metrics_and_thresholds(self):
+        suite = load_yaml(TEMPLATE_ROOT / "审核策略测试集.yaml")
+        contract = load_yaml(TEST_SUITE_CONTRACT)
+        categories = {case["category"] for case in suite["cases"]}
+        self.assertEqual(categories, set(contract["enums"]["case_category"]))
+        self.assertEqual(set(suite["required_categories"]), categories)
+        self.assertEqual(set(suite["metrics"]), set(contract["required_metrics"]))
+        for case in suite["cases"]:
+            minimum = suite["minimum_repeat_policy"][
+                "deterministic" if case["deterministic"] else "nondeterministic"
+            ]
+            if case["risk_level"] in {"high", "critical"}:
+                minimum = max(
+                    minimum,
+                    suite["minimum_repeat_policy"]["high_or_critical_risk"],
+                )
+            self.assertGreaterEqual(case["repeat_count"], minimum)
+
+    def test_template_activation_policy_extends_l1_and_keeps_authorization_independent(self):
+        activation = load_yaml(TEMPLATE_ROOT / "审核策略激活策略.yaml")
+        self.assertEqual(activation["extends"], "review-policy-activation-routing@1")
+        self.assertEqual(
+            activation["external_action_authorization"], "always_independent"
+        )
+        self.assertIn("policy_certified", activation["allowed_routes"])
+        self.assertIn("human_signoff", activation["allowed_routes"])
+        self.assertIn("blocked", activation["allowed_routes"])
+
+    def test_fixture_catalog_has_three_positive_and_seven_negative_scenarios(self):
+        positives = list((FIXTURE_ROOT / "positive").glob("*/scenario.yaml"))
+        negatives = list((FIXTURE_ROOT / "negative").glob("*/scenario.yaml"))
+        self.assertEqual(len(positives), 3)
+        self.assertEqual(len(negatives), 7)
+
+
+class ReviewPolicyCertificationInvalidationAndScoreTests(unittest.TestCase):
+    def test_invalidation_authority_covers_full_bundle_tests_thresholds_and_downstream(self):
+        text = (
+            ROOT / "docs" / "governance" / "STATE_TRANSITIONS_AND_INVALIDATION.md"
+        ).read_text(encoding="utf-8")
+        for token in (
+            "规则",
+            "Prompt",
+            "Schema",
+            "Context",
+            "模型",
+            "Tool",
+            "权限",
+            "测试集",
+            "指标",
+            "阈值",
+            "review_policy_certification",
+            "Requirement Baseline",
+            "Spec",
+            "Workflow",
+            "AI Review Verdict",
+            "Claim",
+        ):
+            self.assertIn(token, text)
+        self.assertIn("不改写历史 Run", text)
+
+    def test_run_evidence_authority_preserves_every_attempt_metric_and_certification_binding(self):
+        text = (
+            ROOT / "docs" / "governance" / "RUN_EVIDENCE_ACCEPTANCE.md"
+        ).read_text(encoding="utf-8")
+        for token in (
+            "review_policy_bundle_fingerprints",
+            "review_policy_test_suite_refs",
+            "review_policy_certification_refs",
+            "included_attempt_refs",
+            "excluded_attempts_and_reasons",
+            "metric_results",
+            "threshold_results",
+            "不能只保留最佳",
+            "policy_certified",
+            "human_signoff",
+        ):
+            self.assertIn(token, text)
+
+    def test_score_surfaces_static_certification_without_claiming_runtime_or_95_plus(self):
+        current = load_yaml(ROOT / "reviews" / "current-score-status.yaml")
+        project = load_yaml(ROOT / "project-os.yaml")
+        self.assertEqual(current["current_overall_score"], "not_evaluated")
+        self.assertEqual(project["score_summary"]["current_overall_score"], "not_evaluated")
+        self.assertEqual(
+            current["evidence_layers"]["review_policy_certification_static"],
+            "present_unscored",
+        )
+        self.assertEqual(
+            project["score_summary"]["review_policy_certification_static_evidence"],
+            "present_unscored",
+        )
+        for gate in (
+            "real_model_multi_run_evaluation",
+            "real_l2_policy_consumption",
+            "cross_project_isolation",
+            "second_heterogeneous_l2",
+        ):
+            self.assertEqual(current["hard_gates"][gate], "unmet")
+            self.assertEqual(project["score_summary"]["hard_gates"][gate], "unmet")
+        self.assertIn("general_95_plus", project["claim_limits"]["forbidden"])
+
+    def test_readme_reports_static_certification_and_explicit_unproven_layers(self):
+        text = (ROOT / "README.zh-CN.md").read_text(encoding="utf-8")
+        for token in (
+            "审核策略认证静态闭环",
+            "三条正例",
+            "七条反例",
+            "真实模型多轮评测",
+            "真实 L2 策略消费",
+            "当前总体评分继续是 `not_evaluated`",
+        ):
+            self.assertIn(token, text)
+
+
+class ReviewPolicyCertificationEvidenceTests(unittest.TestCase):
+    def test_static_evidence_is_registered_recomputable_and_claim_limited(self):
+        evidence = load_yaml(STATIC_EVIDENCE)
+        project = load_yaml(ROOT / "project-os.yaml")
+        current = load_yaml(ROOT / "reviews" / "current-score-status.yaml")
+        expected_files, expected_manifest = fixture_integrity(FIXTURE_ROOT)
+
+        self.assertEqual(
+            project["score_summary"]["review_policy_certification_static_evidence_ref"],
+            "reviews/review-policy-certification-static-evidence.yaml",
+        )
+        self.assertIn(
+            "reviews/review-policy-certification-static-evidence.yaml",
+            project["proof_evidence"],
+        )
+        self.assertEqual(
+            current["review_policy_certification_static_evidence_ref"],
+            "reviews/review-policy-certification-static-evidence.yaml",
+        )
+        self.assertEqual(
+            evidence["implementation_revision"],
+            "b69e1d1023d822f93d7ebea79dc08b45ce1a119e",
+        )
+        self.assertEqual(evidence["content_integrity"]["files"], expected_files)
+        self.assertEqual(
+            evidence["content_integrity"]["fixture_tree_manifest_sha256"],
+            expected_manifest,
+        )
+        expected_assets = {
+            path: hashlib.sha256((ROOT / path).read_bytes()).hexdigest()
+            for path in evidence["content_integrity"]["scoped_asset_hashes"]
+        }
+        self.assertEqual(
+            evidence["content_integrity"]["scoped_asset_hashes"],
+            expected_assets,
+        )
+        self.assertEqual(evidence["results"]["full"]["tests_run"], 174)
+        self.assertEqual(evidence["results"]["checker"]["version"], "0.5.0")
+        self.assertEqual(evidence["results"]["checker"]["p0_count"], 0)
+        self.assertEqual(evidence["results"]["checker"]["p1_count"], 0)
+        self.assertEqual(evidence["current_overall_score"], "not_evaluated")
+        self.assertEqual(evidence["proof_level_ceiling"], "contract_tests_ready")
+        self.assertFalse(evidence["claims_allowed"]["real_model_stability_proven"])
+        self.assertFalse(evidence["claims_allowed"]["general_95_plus"])
+
+
+if __name__ == "__main__":
+    unittest.main()

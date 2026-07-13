@@ -147,7 +147,7 @@ class OperationalSpineDocsTests(unittest.TestCase):
         text = read_text("docs/workflows/PROJECT_DELIVERY_WORKFLOW.md")
         expected_chain = (
             "来源/存量恢复 → 项目类型 → 治理路由 → 生命周期阶段 → 研究 → 业务链路 → 能力树 → "
-            "功能树 → 功能级需求 → 人工批准与需求基线 → ADR → 工程设计 → Spec/Task → Workflow → "
+            "功能树 → 功能级需求 → 决策门与需求基线 → ADR → 工程设计 → Spec/Task → Workflow → "
             "Skill/Tool → Run → Evidence → Verdict → Claim → 复盘/升格"
         )
         self.assertIn(expected_chain, text)

@@ -47,6 +47,124 @@ def _refs(value: Any) -> list[str]:
     return []
 
 
+DECISION_INPUT_FIELDS = {
+    "scope_change",
+    "threshold_change",
+    "blocking_rule_change",
+    "permission_change",
+    "objective_or_responsibility_change",
+    "residual_risk_acceptance",
+    "external_side_effect",
+    "unresolved_unknown",
+}
+
+
+def _non_empty_ref(value: Any) -> bool:
+    return isinstance(value, str) and bool(value.strip()) and not _is_placeholder(value)
+
+
+def _validate_approved_decision_gate(
+    requirement: dict[str, Any], path: str
+) -> list[Finding]:
+    findings: list[Finding] = []
+    intent = requirement.get("intent")
+    approved_intent = intent.get("approved_intent") if isinstance(intent, dict) else None
+    route = requirement.get("approval_route")
+    authority_ref = requirement.get("decision_authority_ref")
+    certification_ref = requirement.get("certification_verdict_ref")
+    decision_inputs = requirement.get("decision_inputs")
+
+    if (
+        not approved_intent
+        or route not in {"policy_certified", "human_signoff"}
+        or not _non_empty_ref(authority_ref)
+        or not isinstance(decision_inputs, dict)
+        or not DECISION_INPUT_FIELDS <= set(decision_inputs)
+    ):
+        findings.append(
+            Finding(
+                "P0",
+                "C13-INVALID-DECISION-GATE",
+                path,
+                "approved 功能需求必须绑定完整意图、合法批准路由、决策权威和结构化路由输入",
+            )
+        )
+        return findings
+
+    if decision_inputs.get("unresolved_unknown") is not False:
+        findings.append(
+            Finding(
+                "P0",
+                "C13-UNRESOLVED-UNKNOWN",
+                path,
+                "存在未解决 Unknown 时不得进入 approved Baseline",
+            )
+        )
+
+    approver = requirement.get("approver")
+    executor = requirement.get("executor")
+    verifier = requirement.get("verifier")
+    if route == "human_signoff":
+        if (
+            not isinstance(approver, str)
+            or not approver.startswith("human-")
+            or authority_ref != approver
+        ):
+            findings.append(
+                Finding(
+                    "P0",
+                    "C13-INVALID-HUMAN-SIGNOFF",
+                    path,
+                    "human_signoff 必须绑定可验证人类 approver，且与 decision_authority_ref 一致",
+                )
+            )
+        return findings
+
+    if not _non_empty_ref(certification_ref):
+        findings.append(
+            Finding(
+                "P0",
+                "C13-MISSING-CERTIFICATION",
+                path,
+                "policy_certified 必须引用当前审核策略认证 Verdict",
+            )
+        )
+    if (
+        approver not in (None, "")
+        or authority_ref == executor
+        or authority_ref == verifier
+    ):
+        findings.append(
+            Finding(
+                "P0",
+                "C13-AI-SELF-CERTIFICATION",
+                path,
+                "policy_certified 不得把生成者、审核者或 AI approver 作为决策权威",
+            )
+        )
+
+    policy_safe = (
+        decision_inputs.get("scope_change") in {"none", "reduced"}
+        and decision_inputs.get("threshold_change") in {"unchanged", "stricter"}
+        and decision_inputs.get("blocking_rule_change") in {"unchanged", "stronger"}
+        and decision_inputs.get("permission_change") in {"none", "reduced"}
+        and decision_inputs.get("objective_or_responsibility_change") is False
+        and decision_inputs.get("residual_risk_acceptance") is False
+        and decision_inputs.get("external_side_effect")
+        in {"none", "read_external", "write_reversible"}
+    )
+    if not policy_safe:
+        findings.append(
+            Finding(
+                "P0",
+                "C13-ROUTE-MISMATCH",
+                path,
+                "scope、阈值、阻断规则、权限、目标责任、风险接受或副作用变化不允许走 policy_certified",
+            )
+        )
+    return findings
+
+
 def load_records(root: Path) -> tuple[dict[str, dict[str, Any]], dict[str, Path], list[Finding]]:
     registry: dict[str, dict[str, Any]] = {}
     origins: dict[str, Path] = {}
@@ -133,12 +251,10 @@ def validate(root: Path) -> list[Finding]:
                 findings.append(Finding("P0", "C13-UNKNOWN-CAPABILITY", path, f"Capability 无法解析: {capability_ref}"))
         spec_refs = _refs(requirement.get("spec_refs"))
         approval = requirement.get("approval_status")
-        approved_intent = (requirement.get("intent") or {}).get("approved_intent") if isinstance(requirement.get("intent"), dict) else None
-        approver = str(requirement.get("approver") or "")
         if spec_refs and approval != "approved":
             findings.append(Finding("P0", "C13-UNAPPROVED-SPEC", path, "未批准功能需求不得被 active Spec 消费"))
-        if approval == "approved" and (not approved_intent or not approver.startswith("human-")):
-            findings.append(Finding("P0", "C13-INVALID-APPROVAL", path, "approved 功能需求必须具有 approved_intent 和可验证人类 approver"))
+        if approval == "approved":
+            findings.extend(_validate_approved_decision_gate(requirement, path))
         if requirement.get("candidate_solution_status") != "candidate":
             findings.append(Finding("P1", "C13-SOLUTION-PROMOTION", path, "候选方案不得在需求卡内自动升格"))
 

@@ -1,0 +1,123 @@
+# 审核策略测试集机器契约
+# 固定认证前必须执行的输入类别、预期结果、重复次数、指标和阈值；业务测试内容留在 L2/L3。
+
+schema_version: 1
+contract_id: review-policy-test-suite-contract
+contract_version: 1
+object_type: review_policy_test_suite
+governance_scope: l1_l2_l3
+
+required_fields:
+  - extends
+  - test_suite_id
+  - version
+  - canonical_path
+  - content_hash
+  - subject_bundle_ref
+  - subject_bundle_hash
+  - scope
+  - case_refs
+  - case_hashes
+  - required_categories
+  - metrics
+  - thresholds
+  - minimum_repeat_policy
+  - created_by
+  - created_at
+  - supersedes
+
+case_required_fields:
+  - case_id
+  - category
+  - input_ref
+  - input_hash
+  - expected_decision
+  - expected_rule_refs
+  - forbidden_decisions
+  - required_finding_codes
+  - required_evidence
+  - risk_level
+  - deterministic
+  - repeat_count
+
+enums:
+  case_category:
+    - positive
+    - negative
+    - boundary
+    - adversarial
+    - unknown
+    - rule_conflict
+    - stale_rule
+    - cross_project
+    - multilingual
+    - rewrite_limit
+    - recovery
+  risk_level: [low, medium, high, critical]
+  expected_decision: [allow, rewrite_required, blocked, rule_gap]
+
+required_metrics:
+  - false_allow_rate
+  - false_block_rate
+  - decision_stability
+  - rule_citation_accuracy
+  - schema_valid_rate
+  - rule_gap_detection_rate
+  - rewrite_success_rate
+  - cross_project_leakage_rate
+
+manifest_example:
+  extends: controlled_object_base/v1
+  test_suite_id: review-policy-test-suite-id
+  version: 1
+  canonical_path: governance/review-certification/审核策略测试集.yaml
+  content_hash: sha256
+  subject_bundle_ref: review-policy-bundle-id/version
+  subject_bundle_hash: sha256
+  scope:
+    governance_scope: l2
+    project_id: project-id
+    artifact_classes: [generated_content, evidence]
+  case_refs: [review-case-positive-001, review-case-adversarial-001]
+  case_hashes: [sha256, sha256]
+  required_categories: [positive, negative, boundary, adversarial]
+  metrics:
+    - false_allow_rate
+    - false_block_rate
+    - decision_stability
+    - rule_citation_accuracy
+    - schema_valid_rate
+    - rule_gap_detection_rate
+    - rewrite_success_rate
+    - cross_project_leakage_rate
+  thresholds:
+    false_allow_rate_max: 0.0
+    false_block_rate_max: 0.05
+    decision_stability_min: 0.95
+    rule_citation_accuracy_min: 1.0
+    schema_valid_rate_min: 1.0
+    rule_gap_detection_rate_min: 1.0
+    rewrite_success_rate_min: 0.8
+    cross_project_leakage_rate_max: 0.0
+  minimum_repeat_policy:
+    deterministic: 1
+    nondeterministic: 3
+    high_or_critical_risk: 5
+  created_by: governance-test-owner
+  created_at: timestamp
+  supersedes: null
+
+invariants:
+  - expectations_thresholds_and_repeat_counts_are_fixed_before_first_run
+  - positive_negative_boundary_and_adversarial_categories_are_always_required
+  - additional_categories_are_required_when_scope_or_failure_routes_apply
+  - case_refs_and_hashes_have_same_non_zero_cardinality
+  - every_case_has_all_case_required_fields
+  - every_required_metric_has_a_pre_registered_threshold
+  - nondeterministic_cases_require_repeat_count_at_least_configured_minimum
+  - high_or_critical_risk_cases_use_high_risk_repeat_minimum
+  - expected_and_forbidden_decisions_must_not_overlap
+  - test_cases_cannot_be_rewritten_after_observing_outputs
+  - member_or_threshold_change_requires_new_version_and_hash
+  - prompt_chat_or_generated_report_cannot_be_test_expectation_authority
+  - unknown_or_missing_field_fails_closed

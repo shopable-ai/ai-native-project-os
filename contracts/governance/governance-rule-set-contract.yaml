@@ -19,6 +19,9 @@ required_fields:
   - conflict_resolution
   - status
   - owner
+  - approval_route
+  - decision_authority_ref
+  - certification_verdict_ref
   - approved_by
   - approved_at
   - effective_from
@@ -28,6 +31,7 @@ required_fields:
 enums:
   status: [draft, approved, active, superseded, revoked]
   conflict_resolution: [explicit_priority_then_fail_closed]
+  approval_route: [policy_certified, human_signoff]
 
 rule_required_fields:
   - rule_id
@@ -53,6 +57,9 @@ manifest_example:
   conflict_resolution: explicit_priority_then_fail_closed
   status: draft
   owner: human-governance-role
+  approval_route: null
+  decision_authority_ref: null
+  certification_verdict_ref: null
   approved_by: null
   approved_at: null
   effective_from: null
@@ -65,7 +72,12 @@ hash_policy:
   mismatch: fail_closed
 
 invariants:
-  - active_requires_verified_human_principal
+  - active_requires_exactly_one_valid_approval_route
+  - policy_certified_requires_current_scope_matched_certification_verdict
+  - human_signoff_requires_verified_human_principal
+  - decision_authority_ref_must_match_selected_approval_route
+  - policy_certified_requires_approved_by_null_and_non_empty_certification_verdict_ref
+  - human_signoff_requires_non_empty_approved_by_and_allows_certification_as_evidence
   - approved_or_active_requires_non_empty_approved_at
   - active_requires_non_empty_effective_from
   - active_requires_non_empty_rule_refs_and_hashes
@@ -78,7 +90,8 @@ invariants:
   - scope_must_use_structured_fields_not_natural_language_keyword_matching
   - rule_priority_conflict_without_resolution_requires_rule_gap
   - expired_superseded_or_revoked_rule_set_cannot_drive_review
-  - only_verified_human_principal_may_approve_activate_supersede_or_revoke
+  - only_activation_policy_or_verified_human_principal_may_activate_supersede_or_revoke
   - ai_may_propose_but_must_not_publish_or_modify_authoritative_rules
-  - content_or_member_hash_change_requires_new_version_and_human_approval
+  - ai_cannot_self_certify_or_change_activation_policy_for_its_own_bundle
+  - content_or_member_hash_change_requires_new_version_and_new_decision_gate
   - unknown_or_missing_field_fails_closed
