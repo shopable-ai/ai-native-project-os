@@ -26,6 +26,17 @@ requirements/
 
 契约相对路径包含能力卡、功能需求卡、Draft/Approved Baseline 示例、Captured/Approved Context 示例和 `generated/README.md`。
 
+为便于复制器和检查器精确核对，完整相对路径为：
+
+```text
+capabilities/CAP-001_能力卡.md
+functions/FUNC-001_功能需求卡.md
+baselines/REQ-BASELINE-DRAFT-001.yaml
+baselines/REQ-BASELINE-001.yaml
+context/CTX-DRAFT-001.yaml
+context/CTX-001.yaml
+```
+
 ## 权威边界
 
 - `capabilities/*.md` 是业务能力树节点权威；复杂能力可以使用父级和子级 Capability，但不得把工程组件伪装成业务能力。
