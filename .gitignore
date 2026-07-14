@@ -8,3 +8,6 @@ temp/
 runs/
 .omx/
 .worktrees/
+
+# ShopMe local generated state
+.shopme/
