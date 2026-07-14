@@ -3,7 +3,12 @@
 
 schema_version: 1
 contract_id: stage-exit-gates-contract
-version: 1
+version: 2
+
+compatibility:
+  historical_read_contract_versions: [1, 2]
+  stage_exit_contract_versions: [2]
+  migration: v1_gate_records_remain_historical_but_cannot_satisfy_new_S2_to_S6_exit_criteria
 
 # 这些坐标独立记录；任何一个坐标都不能被另一个坐标的值推导或替代。
 independent_axes:
@@ -105,20 +110,38 @@ manifest_example:
   approval_route: human_signoff
   decision_authority_ref: architecture-approver-id
   certification_verdict_ref: null
-  stage_definition_ref: stage-exit-gates-contract@1#stages.S4
+  stage_definition_ref: stage-exit-gates-contract@2#stages.S4
   stage_definition_hash: "sha256:stage-S4-example"
   exit_criterion_results:
-    - criterion_ref: stage-exit-gates-contract@1#stages.S4.exit_criteria[0]
+    - criterion_ref: stage-exit-gates-contract@2#stages.S4.exit_criteria[0]
       criterion_hash: "sha256:S4-exit-criterion-0-example"
       status: passed
       evidence_refs:
         - evidence/S4-seam-and-failure-owner-review/v1
       waiver_ref: null
-    - criterion_ref: stage-exit-gates-contract@1#stages.S4.exit_criteria[1]
+    - criterion_ref: stage-exit-gates-contract@2#stages.S4.exit_criteria[1]
       criterion_hash: "sha256:S4-exit-criterion-1-example"
       status: passed
       evidence_refs:
         - evidence/S4-acceptance-exit-review/v1
+      waiver_ref: null
+    - criterion_ref: stage-exit-gates-contract@2#stages.S4.exit_criteria[2]
+      criterion_hash: "sha256:S4-exit-criterion-2-example"
+      status: passed
+      evidence_refs:
+        - evidence/S4-dynamic-coverage-review/v1
+      waiver_ref: null
+    - criterion_ref: stage-exit-gates-contract@2#stages.S4.exit_criteria[3]
+      criterion_hash: "sha256:S4-exit-criterion-3-example"
+      status: passed
+      evidence_refs:
+        - evidence/S4-pairwise-completeness-review/v1
+      waiver_ref: null
+    - criterion_ref: stage-exit-gates-contract@2#stages.S4.exit_criteria[4]
+      criterion_hash: "sha256:S4-exit-criterion-4-example"
+      status: passed
+      evidence_refs:
+        - evidence/S4-evidence-boundary-review/v1
       waiver_ref: null
   required_object_refs:
     - contract/checkout-boundary/v1
@@ -179,26 +202,26 @@ negative_examples:
     handling: fail_closed
   missing_criterion:
     description: one_stage_exit_criterion_has_no_result_item
-    stage_definition_ref: stage-exit-gates-contract@1#stages.S4
-    omitted_criterion_ref: stage-exit-gates-contract@1#stages.S4.exit_criteria[1]
+    stage_definition_ref: stage-exit-gates-contract@2#stages.S4
+    omitted_criterion_ref: stage-exit-gates-contract@2#stages.S4.exit_criteria[1]
     result: blocked
     handling: fail_closed
   failed_criterion:
     description: failed_exit_criterion_blocks_stage_exit
-    criterion_ref: stage-exit-gates-contract@1#stages.S4.exit_criteria[0]
+    criterion_ref: stage-exit-gates-contract@2#stages.S4.exit_criteria[0]
     criterion_status: failed
     result: blocked
     handling: fail_closed
   missing_evidence:
     description: passed_exit_criterion_has_no_evidence
-    criterion_ref: stage-exit-gates-contract@1#stages.S4.exit_criteria[0]
+    criterion_ref: stage-exit-gates-contract@2#stages.S4.exit_criteria[0]
     criterion_status: passed
     evidence_refs: []
     result: blocked
     handling: fail_closed
   stale_waiver:
     description: waived_exit_criterion_references_expired_or_scope_mismatched_waiver
-    criterion_ref: stage-exit-gates-contract@1#stages.S4.exit_criteria[1]
+    criterion_ref: stage-exit-gates-contract@2#stages.S4.exit_criteria[1]
     criterion_status: waived
     waiver_ref: waiver/S4-criterion-1/expired
     waiver_valid_until: "2026-07-10T00:00:00Z"
@@ -298,18 +321,23 @@ stages:
       - scenarios_trigger_profiles_and_business_chains
       - normal_exception_recovery_paths_capability_tree_and_function_tree
       - functional_requirement_cards_context_snapshots_and_updated_requirement_baseline
+      - behavior_specification_and_stable_behavior_case_registry
+      - optional_as_is_to_be_gap_analysis_only_for_brownfield_or_requirement_change
     exit_criteria:
       - every_P0_or_P1_requirement_has_scenario_trigger_chain_failure_terminal_and_recovery_exit
       - business_capabilities_are_not_prematurely_bound_to_engineering_implementation
       - every_P0_or_P1_function_has_a_functional_requirement_with_intent_alignment_AI_self_review_and_valid_decision_gate
       - decision_gate_selects_policy_certified_or_human_signoff_and_blocks_unresolved_unknowns
       - functional_requirements_separate_approved_constraints_from_candidate_solutions
+      - every_P0_or_P1_requirement_has_behavior_problem_user_observable_goal_rules_non_goals_owner_approver_assumptions_unknowns_and_applicability
+      - behavior_cases_use_stable_ids_and_contain_no_actual_result_passed_or_evidence_ref
     evidence_requirements:
       - requirement_to_scenario_and_chain_coverage_with_branch_terminal_and_owner_review
       - chain_capability_function_and_functional_requirement_coverage
       - context_snapshot_AI_self_review_approval_route_decision_authority_certification_or_human_signoff_version_hash_and_baseline_manifest
+      - requirement_to_behavior_specification_and_case_registry_structure_and_approval_review
     invalidation_triggers:
-      - user_trigger_business_policy_fact_or_requirement_denominator_changes
+      - user_goal_expected_behavior_trigger_business_policy_fact_or_requirement_denominator_changes
       - chain_capability_function_intent_context_or_requirement_baseline_changes
     reopen_targets:
       - S2
@@ -317,16 +345,16 @@ stages:
       - S1_when_fact_basis_is_invalidated
   S3:
     required_inputs:
-      - business_chains_quality_attributes_constraints_and_research_verdicts
-      - candidate_solutions
+      - business_chains_behavior_specifications_quality_attributes_constraints_and_research_verdicts_when_architecture_choice_exists
+      - candidate_solutions_or_auditable_not_applicable_reason
     required_artifacts:
-      - solution_comparison_and_adversarial_report
-      - accepted_and_rejected_ADRs_with_consequences_exit_and_fallback_conditions
+      - solution_comparison_and_adversarial_report_when_architecture_choice_exists
+      - architecture_decision_or_auditable_not_applicable_reason
     exit_criteria:
-      - critical_choices_have_recomputable_bases
-      - risks_costs_exit_conditions_fallbacks_and_blocking_research_are_explicit
+      - architecture_choice_presence_is_explicit_and_does_not_force_an_empty_ADR
+      - critical_choices_when_present_have_recomputable_bases_risks_costs_exit_fallback_and_reopen_conditions
     evidence_requirements:
-      - candidate_scoring_inputs_experiment_evidence_independent_challenge_and_ADR_approval
+      - candidate_scoring_experiment_independent_challenge_and_ADR_approval_or_not_applicable_review
     invalidation_triggers:
       - critical_constraint_candidate_capability_risk_threshold_or_business_chain_changes
     reopen_targets:
@@ -335,17 +363,25 @@ stages:
       - S2_when_business_chain_changes
   S4:
     required_inputs:
-      - accepted_ADRs_business_capabilities_quality_attributes_and_boundary_constraints
+      - behavior_specifications_behavior_cases_approved_semantic_inventory_quality_attributes_and_boundary_constraints
+      - accepted_ADRs_when_architecture_choice_exists
     required_artifacts:
       - engineering_chain_component_responsibilities_and_IO_failure_contracts
       - authorization_isolation_acceptance_and_compatibility_design
+      - test_space_model_and_acceptance_coverage_matrix
+      - inventory_member_obligations_and_derived_combination_registry
+      - failure_recovery_oracles_minimum_proof_scopes_and_uncovered_scope
     exit_criteria:
       - seams_failure_states_unknown_side_effects_permissions_data_recovery_and_compatibility_have_owners
       - every_design_boundary_has_an_acceptance_exit
+      - every_behavior_case_and_profile_defined_per_partition_or_per_member_obligation_has_dynamic_coverage_or_owned_not_applicable_reason
+      - allowed_pairwise_combinations_are_complete_and_risk_triggers_upgrade_to_constrained_full_cartesian
+      - coverage_status_does_not_claim_execution_pass_fail_or_fresh_evidence
     evidence_requirements:
       - schema_parse_contract_test_design_threat_failure_review_and_diagram_coverage
+      - inventory_hash_derivation_diff_pairwise_completeness_and_claim_ceiling_review
     invalidation_triggers:
-      - ADR_contract_data_permission_external_interface_or_compatibility_scope_changes
+      - behavior_specification_semantic_inventory_combination_ADR_contract_data_permission_interface_resource_or_compatibility_changes
     reopen_targets:
       - S4
       - S3_when_architecture_assumption_is_invalidated
@@ -353,14 +389,17 @@ stages:
     required_inputs:
       - engineering_design_acceptance_criteria_approved_spec_baseline_dependencies_and_authorization_constraints
       - approved_functional_requirement_version_and_hash_current_requirement_baseline_and_accepted_ADR
+      - acceptance_coverage_stable_behavior_case_ids_and_resolvable_criterion_refs
     required_artifacts:
-      - spec_package_derived_task_tree_workflow_and_local_skills_or_tools
+      - spec_package_derived_task_tree_BDD_ATDD_TDD_workflow_and_local_skills_or_tools
       - minimum_vertical_implementation_and_recovery_plan
     exit_criteria:
       - work_packages_are_executable_pausable_and_recoverable
       - tasks_have_no_orphans_and_tools_do_not_hide_control_flow_or_claim_authority
       - spec_binds_exact_decision_gate_approved_functional_requirement_version_and_hash_in_current_requirement_baseline
       - invalid_decision_gate_stale_certification_intent_mismatched_or_out_of_baseline_requirements_fail_closed
+      - spec_tasks_and_tests_reference_stable_behavior_case_ids
+      - behavior_case_coverage_and_criterion_references_are_resolvable_and_fail_closed
     evidence_requirements:
       - static_checks_contract_tests_task_coverage_dependency_authorization_checks_and_recovery_plan
       - spec_functional_requirement_baseline_and_ADR_binding_evidence
@@ -373,13 +412,15 @@ stages:
       - S3_when_solution_is_invalidated
   S6:
     required_inputs:
-      - implementation_test_plan_predeclared_criteria_authorization_snapshot_and_release_candidate
+      - implementation_test_plan_predeclared_coverage_criteria_authorization_snapshot_and_release_candidate
     required_artifacts:
       - immutable_run_and_evidence_package
       - acceptance_verdict_release_decision_failure_record_and_bounded_claim
     exit_criteria:
       - structure_semantics_traceability_separation_freshness_and_claim_proof_all_pass
       - unknown_side_effects_remain_blocking
+      - actual_results_pass_fail_and_evidence_are_only_recorded_in_run_evidence_verdict_and_claim
+      - fixture_local_UI_simulation_readonly_real_and_production_proof_are_not_substituted
     evidence_requirements:
       - criterion_level_evidence_independent_verdict_fingerprints_uncovered_scope_and_reproduction_commands
     invalidation_triggers:

@@ -28,6 +28,7 @@
 from __future__ import annotations
 
 import json
+import itertools
 import re
 import sys
 from pathlib import Path
@@ -532,6 +533,940 @@ def _load_markdown_frontmatter_for_c9(
     return document, []
 
 
+def _markdown_table_cell(value: str) -> str:
+    value = value.strip()
+    if len(value) >= 2 and value.startswith("`") and value.endswith("`"):
+        return value[1:-1].strip()
+    return value
+
+
+def _parse_markdown_table(
+    text: str,
+    section: str,
+) -> tuple[list[str], list[dict[str, str]], str | None]:
+    """解析指定 Markdown section 中的首个标准 pipe table。"""
+    lines = text.splitlines()
+    section_indexes: list[int] = []
+    heading = re.compile(rf"^#+\s+{re.escape(section)}\s*$")
+    for index, line in enumerate(lines):
+        if heading.match(line):
+            section_indexes.append(index)
+    if not section_indexes:
+        return [], [], "missing section"
+    if len(section_indexes) > 1:
+        return [], [], "duplicate section"
+    section_index = section_indexes[0]
+
+    table_index = None
+    for index in range(section_index + 1, len(lines)):
+        line = lines[index]
+        if line.startswith("#"):
+            break
+        if line.strip().startswith("|"):
+            table_index = index
+            break
+    if table_index is None or table_index + 1 >= len(lines):
+        return [], [], "missing table"
+
+    def cells(line: str) -> list[str]:
+        return [
+            _markdown_table_cell(cell)
+            for cell in line.strip().strip("|").split("|")
+        ]
+
+    columns = cells(lines[table_index])
+    separator = cells(lines[table_index + 1])
+    if len(separator) != len(columns) or any(
+        not re.fullmatch(r":?-{3,}:?", cell) for cell in separator
+    ):
+        return columns, [], "invalid table separator"
+
+    rows: list[dict[str, str]] = []
+    for line in lines[table_index + 2 :]:
+        if not line.strip().startswith("|"):
+            break
+        values = cells(line)
+        if len(values) != len(columns):
+            return columns, rows, "row width does not match columns"
+        rows.append(dict(zip(columns, values)))
+    return columns, rows, None
+
+
+def _contains_placeholder(value: object) -> bool:
+    if isinstance(value, str):
+        return "{{" in value and "}}" in value
+    if isinstance(value, dict):
+        return any(_contains_placeholder(key) or _contains_placeholder(item) for key, item in value.items())
+    if isinstance(value, list):
+        return any(_contains_placeholder(item) for item in value)
+    return False
+
+
+def _profile_chain(contract: dict, validation_profile: str) -> tuple[list[str], list[str]]:
+    profiles = contract.get("validation_profiles")
+    if not isinstance(profiles, dict):
+        return [], ["validation_profiles must be a mapping"]
+    chain: list[str] = []
+    visited: set[str] = set()
+    current: object = validation_profile
+    while isinstance(current, str):
+        if current in visited:
+            return chain, [f"profile_inheritance_cycle: {current}"]
+        visited.add(current)
+        profile = profiles.get(current)
+        if not isinstance(profile, dict):
+            return chain, [f"unknown_profile: {current}"]
+        chain.append(current)
+        current = profile.get("inherits")
+        if current is not None and not isinstance(current, str):
+            return chain, [f"invalid_profile_inheritance: {chain[-1]}"]
+    return chain, []
+
+
+def _package_path(package_root: Path, raw: object) -> Path | None:
+    if not isinstance(raw, str) or not raw:
+        return None
+    relative = Path(raw)
+    if relative.is_absolute() or ".." in relative.parts:
+        return None
+    resolved = (package_root / relative).resolve()
+    try:
+        resolved.relative_to(package_root.resolve())
+    except ValueError:
+        return None
+    return resolved
+
+
+def _load_package_yaml(path: Path) -> tuple[object | None, str | None]:
+    try:
+        return yaml.safe_load(path.read_text(encoding="utf-8")), None
+    except (OSError, yaml.YAMLError) as exc:
+        return None, f"YAML cannot be parsed: {path.name}: {exc}"
+
+
+def _parse_fenced_yaml(text: str, section: str) -> tuple[object | None, str | None]:
+    lines = text.splitlines()
+    indexes = [
+        index
+        for index, line in enumerate(lines)
+        if re.fullmatch(rf"#+\s+{re.escape(section)}\s*", line)
+    ]
+    if not indexes:
+        return None, f"embedded_yaml missing section: {section}"
+    if len(indexes) > 1:
+        return None, f"embedded_yaml duplicate section: {section}"
+    start = indexes[0] + 1
+    end = len(lines)
+    for index in range(start, len(lines)):
+        if lines[index].startswith("#"):
+            end = index
+            break
+    block = "\n".join(lines[start:end])
+    match = re.search(r"```ya?ml\s*\n(.*?)\n```", block, re.S)
+    if not match:
+        return None, f"embedded_yaml missing yaml fence: {section}"
+    try:
+        return yaml.safe_load(match.group(1)), None
+    except yaml.YAMLError as exc:
+        return None, f"embedded_yaml invalid YAML: {section}: {exc}"
+
+
+def _parse_contract_tables(
+    contract: dict,
+    package_root: Path,
+    required_table_names: set[str] | None = None,
+) -> tuple[dict[str, tuple[list[str], list[dict[str, str]]]], list[str]]:
+    errors: list[str] = []
+    parsed: dict[str, tuple[list[str], list[dict[str, str]]]] = {}
+    table_specs = contract.get("markdown_tables", {})
+    if not isinstance(table_specs, dict):
+        return parsed, ["markdown_tables must be a mapping"]
+    known_tables = {
+        section
+        for section_specs in table_specs.values()
+        if isinstance(section_specs, dict)
+        for section in section_specs
+        if isinstance(section, str)
+    }
+    if required_table_names is not None:
+        for missing in sorted(required_table_names - known_tables):
+            errors.append(f"required table is not declared: {missing}")
+    for filename, section_specs in table_specs.items():
+        if not isinstance(filename, str) or not isinstance(section_specs, dict):
+            errors.append("markdown_tables file rule must be a mapping")
+            continue
+        path = _package_path(package_root, filename)
+        if path is None or not path.is_file():
+            errors.append(f"missing table file: {filename}")
+            continue
+        text = read_text(path)
+        for section, rule in section_specs.items():
+            if required_table_names is not None and section not in required_table_names:
+                continue
+            if not isinstance(rule, dict):
+                errors.append(f"invalid table rule: {section}")
+                continue
+            columns, rows, parse_error = _parse_markdown_table(text, section)
+            if parse_error:
+                errors.append(f"Markdown table {section}: {parse_error}")
+                continue
+            expected = rule.get("columns")
+            if columns != expected:
+                errors.append(f"Markdown table {section} columns mismatch")
+                continue
+            minimum_rows = rule.get("minimum_rows", 0)
+            if isinstance(minimum_rows, bool) or not isinstance(minimum_rows, int):
+                errors.append(f"Markdown table {section} minimum_rows invalid")
+            elif len(rows) < minimum_rows:
+                errors.append(f"Markdown table {section} has fewer than minimum_rows")
+            primary_key = rule.get("primary_key")
+            if not isinstance(primary_key, str) or primary_key not in columns:
+                errors.append(f"Markdown table {section} primary_key invalid")
+            else:
+                keys = [row.get(primary_key, "") for row in rows]
+                if any(not key for key in keys):
+                    errors.append(f"Markdown table {section} primary key is empty")
+                if len(keys) != len(set(keys)):
+                    errors.append(f"Markdown table {section} duplicate primary key")
+            allowed_enums = rule.get("allowed_enums", {})
+            if not isinstance(allowed_enums, dict):
+                errors.append(f"Markdown table {section} allowed_enums invalid")
+            else:
+                for field, allowed in allowed_enums.items():
+                    if field not in columns or not isinstance(allowed, list):
+                        errors.append(f"Markdown table {section} allowed enum {field} invalid")
+                        continue
+                    for row in rows:
+                        value = row.get(field, "")
+                        if not _contains_placeholder(value) and value not in allowed:
+                            errors.append(f"Markdown table {section} field {field} violates allowed enum")
+            parsed[section] = (columns, rows)
+    return parsed, errors
+
+
+def _is_forbidden_assignment(
+    assignment: dict[str, object],
+    forbidden_assignments: list[dict[str, object]],
+) -> bool:
+    return any(
+        all(assignment.get(dimension) == value for dimension, value in forbidden.items())
+        for forbidden in forbidden_assignments
+    )
+
+
+def validate_strength_two_coverage(
+    dimensions: dict[str, list[object]],
+    rows: list[dict[str, object]],
+    forbidden_assignments: list[dict[str, object]] | None = None,
+    max_cartesian_size: int = 100_000,
+) -> list[str]:
+    """重算受约束 strength-2 覆盖；维度和值完全由调用方 inventory 提供。"""
+    errors: list[str] = []
+    forbidden = forbidden_assignments or []
+    if not isinstance(dimensions, dict) or len(dimensions) < 2:
+        return ["strength_two requires at least two dimensions"]
+    if not isinstance(rows, list) or not isinstance(forbidden, list):
+        return ["strength_two rows and forbidden_assignments must be lists"]
+    for name, values in dimensions.items():
+        if not isinstance(name, str) or not name or not isinstance(values, list) or not values:
+            errors.append(f"invalid dimension domain: {name!r}")
+            continue
+        serialized = [json.dumps(value, ensure_ascii=False, sort_keys=True) for value in values]
+        if len(serialized) != len(set(serialized)):
+            errors.append(f"duplicate dimension member: {name}")
+    if errors:
+        return errors
+    if any(not isinstance(item, dict) or not item for item in forbidden):
+        return ["forbidden assignment must be a non-empty mapping"]
+    for forbidden_index, forbidden_item in enumerate(forbidden):
+        for name, value in forbidden_item.items():
+            if name not in dimensions:
+                errors.append(
+                    f"forbidden assignment {forbidden_index} references unknown dimension: {name}"
+                )
+            elif value not in dimensions[name]:
+                errors.append(
+                    f"forbidden assignment {forbidden_index} contains out-of-domain value: {name}"
+                )
+    if errors:
+        return errors
+    names = list(dimensions)
+    cartesian_size = 1
+    for values in dimensions.values():
+        cartesian_size *= len(values)
+    if cartesian_size > max_cartesian_size:
+        return [f"cartesian space {cartesian_size} exceeds declared validation budget {max_cartesian_size}"]
+
+    allowed_full_rows = [
+        dict(zip(names, values))
+        for values in itertools.product(*(dimensions[name] for name in names))
+        if not _is_forbidden_assignment(dict(zip(names, values)), forbidden)
+    ]
+    if not allowed_full_rows:
+        return ["constraints remove every assignment from the test space"]
+    valid_rows: list[dict[str, object]] = []
+    serialized_rows: set[str] = set()
+    for index, row in enumerate(rows):
+        if not isinstance(row, dict) or set(row) != set(names):
+            errors.append(f"covering row {index} dimensions mismatch")
+            continue
+        if any(row[name] not in dimensions[name] for name in names):
+            errors.append(f"covering row {index} contains out-of-domain value")
+            continue
+        if _is_forbidden_assignment(row, forbidden):
+            errors.append(f"covering row {index} violates forbidden assignment")
+            continue
+        serialized = json.dumps(row, ensure_ascii=False, sort_keys=True)
+        if serialized in serialized_rows:
+            errors.append(f"duplicate covering assignment at row {index}")
+            continue
+        serialized_rows.add(serialized)
+        valid_rows.append(row)
+
+    for left_index, left in enumerate(names):
+        for right in names[left_index + 1 :]:
+            expected = {
+                (
+                    json.dumps(row[left], ensure_ascii=False, sort_keys=True),
+                    json.dumps(row[right], ensure_ascii=False, sort_keys=True),
+                )
+                for row in allowed_full_rows
+            }
+            observed = {
+                (
+                    json.dumps(row[left], ensure_ascii=False, sort_keys=True),
+                    json.dumps(row[right], ensure_ascii=False, sort_keys=True),
+                )
+                for row in valid_rows
+            }
+            for pair in sorted(expected - observed):
+                errors.append(f"missing allowed pair: {left}={pair[0]}, {right}={pair[1]}")
+    return errors
+
+
+def _validate_package_shape(shape: dict, package_root: Path) -> list[str]:
+    errors: list[str] = []
+    required_files = shape.get("required_files")
+    if not isinstance(required_files, list) or not required_files:
+        return ["package shape required_files must be a non-empty list"]
+    for filename in required_files:
+        path = _package_path(package_root, filename)
+        if path is None or not path.is_file():
+            errors.append(f"missing required file: {filename}")
+    yaml_cache: dict[str, object] = {}
+    required_fields = shape.get("required_fields", {})
+    if not isinstance(required_fields, dict):
+        errors.append("package shape required_fields must be a mapping")
+        required_fields = {}
+    for filename, fields in required_fields.items():
+        path = _package_path(package_root, filename)
+        if path is None or not path.is_file() or not isinstance(fields, list):
+            errors.append(f"invalid required_fields declaration: {filename}")
+            continue
+        document, parse_error = _load_package_yaml(path)
+        if parse_error:
+            errors.append(parse_error)
+            continue
+        yaml_cache[filename] = document
+        for field in fields:
+            exists, _ = _dotted_value(document, field) if isinstance(field, str) else (False, None)
+            if not exists:
+                errors.append(f"missing required field: {filename}#{field}")
+    required_values = shape.get("required_values", {})
+    if not isinstance(required_values, dict):
+        errors.append("package shape required_values must be a mapping")
+        required_values = {}
+    for filename, expected_values in required_values.items():
+        path = _package_path(package_root, filename)
+        if path is None or not path.is_file() or not isinstance(expected_values, dict):
+            errors.append(f"invalid required_values declaration: {filename}")
+            continue
+        document = yaml_cache.get(filename)
+        if document is None:
+            document, parse_error = _load_package_yaml(path)
+            if parse_error:
+                errors.append(parse_error)
+                continue
+        for field, expected in expected_values.items():
+            exists, actual = _dotted_value(document, field)
+            if not exists or actual != expected:
+                errors.append(f"required value mismatch: {filename}#{field}")
+    required_sections = shape.get("required_sections", {})
+    if not isinstance(required_sections, dict):
+        errors.append("package shape required_sections must be a mapping")
+        required_sections = {}
+    for filename, sections in required_sections.items():
+        path = _package_path(package_root, filename)
+        if path is None or not path.is_file() or not isinstance(sections, list):
+            errors.append(f"invalid required_sections declaration: {filename}")
+            continue
+        text = read_text(path)
+        for section in sections:
+            if not isinstance(section, str) or not _markdown_has_section(text, section):
+                errors.append(f"missing required section: {filename}#{section}")
+    return errors
+
+
+def _validate_embedded_yaml(contract: dict, package_root: Path) -> tuple[dict[str, object], list[str]]:
+    documents: dict[str, object] = {}
+    errors: list[str] = []
+    rules = contract.get("embedded_yaml", {})
+    if not isinstance(rules, dict):
+        return documents, ["embedded_yaml must be a mapping"]
+    for filename, rule in rules.items():
+        path = _package_path(package_root, filename)
+        if path is None or not path.is_file() or not isinstance(rule, dict):
+            errors.append(f"invalid embedded_yaml rule: {filename}")
+            continue
+        section = rule.get("section")
+        if not isinstance(section, str):
+            errors.append(f"embedded_yaml section invalid: {filename}")
+            continue
+        document, parse_error = _parse_fenced_yaml(read_text(path), section)
+        if parse_error:
+            errors.append(f"{filename}: {parse_error}")
+            continue
+        documents[filename] = document
+        for field in rule.get("required_fields", []):
+            exists, value = _dotted_value(document, field) if isinstance(field, str) else (False, None)
+            if not exists or value in (None, [], ""):
+                errors.append(f"{filename} missing embedded field: {field}")
+        list_field = rule.get("list_field")
+        if list_field is not None:
+            exists, items = _dotted_value(document, list_field) if isinstance(list_field, str) else (False, None)
+            if not exists or not isinstance(items, list) or not items:
+                errors.append(f"{filename} missing embedded list: {list_field}")
+                continue
+            required = rule.get("item_required_fields", [])
+            for index, item in enumerate(items):
+                if not isinstance(item, dict):
+                    errors.append(f"{filename} {list_field}[{index}] must be a mapping")
+                    continue
+                for field in required:
+                    exists, value = _dotted_value(item, field) if isinstance(field, str) else (False, None)
+                    if not exists or value in (None, [], ""):
+                        errors.append(f"{filename} {list_field}[{index}] missing field: {field}")
+    return documents, errors
+
+
+def _reference_key(value: object) -> str | None:
+    if not isinstance(value, str) or not value or _contains_placeholder(value) or value == "*":
+        return None
+    if value.endswith(":*"):
+        return None
+    return value.rsplit(":", 1)[-1] if "#" in value and ":" in value else value
+
+
+def _validate_chain_profile_tables(
+    tables: dict[str, tuple[list[str], list[dict[str, str]]]],
+) -> list[str]:
+    errors: list[str] = []
+    behavior_specs = {row["behavior_spec_id"] for row in tables.get("Behavior Specification", ([], []))[1]}
+    behavior_rows = tables.get("Behavior Case Registry", ([], []))[1]
+    behavior_cases = {row["case_id"]: row for row in behavior_rows}
+    test_spaces = {row["test_space_id"]: row for row in tables.get("Test Space Model", ([], []))[1]}
+    coverage_rows = tables.get("Acceptance Coverage Matrix", ([], []))[1]
+    coverage = {row["coverage_id"]: row for row in coverage_rows}
+    combination_rows = tables.get("Derived Combination Registry", ([], []))[1]
+    oracle_rows = tables.get("Failure Recovery Oracle", ([], []))[1]
+
+    for test_space_id, row in test_spaces.items():
+        ref = _reference_key(row.get("behavior_spec_ref"))
+        if ref is not None and ref not in behavior_specs:
+            errors.append(f"unresolved Behavior Specification reference: {ref}")
+        inventory_fields = (
+            row.get("inventory_members_json"),
+            row.get("coverage_obligations_json"),
+        )
+        if not any(_contains_placeholder(item) for item in inventory_fields):
+            try:
+                inventory_members = json.loads(row["inventory_members_json"])
+                obligations = json.loads(row["coverage_obligations_json"])
+            except (KeyError, TypeError, json.JSONDecodeError) as exc:
+                errors.append(f"test space {test_space_id} inventory obligations invalid: {exc}")
+            else:
+                if not isinstance(inventory_members, dict) or not inventory_members:
+                    errors.append(f"test space {test_space_id} inventory_members_json must be a non-empty mapping")
+                    inventory_members = {}
+                if not isinstance(obligations, list) or not obligations:
+                    errors.append(f"test space {test_space_id} coverage_obligations_json must be a non-empty list")
+                    obligations = []
+                all_members = {
+                    member
+                    for members in inventory_members.values()
+                    if isinstance(members, list)
+                    for member in members
+                }
+                inventory_ref = row.get("semantic_inventory_ref")
+                applicable_coverage: list[tuple[dict[str, str], list[object], list[object], list[object]]] = []
+                for coverage_row in coverage_rows:
+                    if coverage_row.get("semantic_inventory_ref") != inventory_ref:
+                        continue
+                    try:
+                        partition_refs = json.loads(coverage_row["inventory_partition_refs_json"])
+                        member_refs = json.loads(coverage_row["inventory_member_refs_json"])
+                        obligation_refs = json.loads(coverage_row["obligation_refs_json"])
+                    except (KeyError, TypeError, json.JSONDecodeError) as exc:
+                        errors.append(
+                            f"coverage {coverage_row.get('coverage_id')} inventory refs invalid: {exc}"
+                        )
+                        continue
+                    if not all(isinstance(item, list) for item in (partition_refs, member_refs, obligation_refs)):
+                        errors.append(
+                            f"coverage {coverage_row.get('coverage_id')} inventory refs must be JSON lists"
+                        )
+                        continue
+                    unknown_partitions = set(partition_refs) - set(inventory_members)
+                    unknown_members = set(member_refs) - all_members
+                    if unknown_partitions:
+                        errors.append(
+                            f"coverage {coverage_row.get('coverage_id')} references unknown inventory partition"
+                        )
+                    if unknown_members:
+                        errors.append(
+                            f"coverage {coverage_row.get('coverage_id')} references unknown inventory member"
+                        )
+                    applicable_coverage.append(
+                        (coverage_row, partition_refs, member_refs, obligation_refs)
+                    )
+                obligation_ids: set[str] = set()
+                for obligation in obligations:
+                    if not isinstance(obligation, dict):
+                        errors.append(f"test space {test_space_id} obligation must be a mapping")
+                        continue
+                    obligation_id = obligation.get("obligation_id")
+                    scope = obligation.get("scope")
+                    partitions = obligation.get("partition_refs")
+                    relation = obligation.get("required_relation")
+                    if (
+                        not isinstance(obligation_id, str)
+                        or not obligation_id
+                        or obligation_id in obligation_ids
+                        or scope not in {"per_partition", "per_member"}
+                        or not isinstance(partitions, list)
+                        or not partitions
+                        or relation
+                        not in {
+                            "positive",
+                            "boundary",
+                            "negative",
+                            "failure_recovery",
+                            "contrastive",
+                            "metamorphic",
+                        }
+                    ):
+                        errors.append(f"test space {test_space_id} obligation schema invalid")
+                        continue
+                    obligation_ids.add(obligation_id)
+                    if set(partitions) - set(inventory_members):
+                        errors.append(
+                            f"test space {test_space_id} obligation {obligation_id} references unknown partition"
+                        )
+                        continue
+                    if scope == "per_partition":
+                        expected_items = partitions
+                        item_index = 1
+                    else:
+                        expected_items = [
+                            member
+                            for partition in partitions
+                            for member in inventory_members.get(partition, [])
+                        ]
+                        item_index = 2
+                    for expected_item in expected_items:
+                        if not any(
+                            obligation_id in coverage_item[3]
+                            and expected_item in coverage_item[item_index]
+                            and coverage_item[0].get("case_relation") == relation
+                            for coverage_item in applicable_coverage
+                        ):
+                            errors.append(
+                                f"test space {test_space_id} missing obligation coverage: "
+                                f"{obligation_id}/{expected_item}/{relation}"
+                            )
+                for coverage_row, _, _, obligation_refs in applicable_coverage:
+                    unknown_obligations = set(obligation_refs) - obligation_ids
+                    if unknown_obligations:
+                        errors.append(
+                            f"coverage {coverage_row.get('coverage_id')} references unknown obligation"
+                        )
+
+        concrete_fields = (
+            row.get("dimension_domains_json"),
+            row.get("forbidden_assignments_json"),
+            row.get("interaction_strength"),
+            row.get("generation_budget"),
+        )
+        if any(_contains_placeholder(item) for item in concrete_fields):
+            continue
+        try:
+            domains = json.loads(row["dimension_domains_json"])
+            forbidden = json.loads(row["forbidden_assignments_json"])
+            strength = int(row["interaction_strength"])
+            budget = int(row["generation_budget"])
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+            errors.append(f"test space {test_space_id} machine fields invalid: {exc}")
+            continue
+        if strength != 2:
+            errors.append(f"test space {test_space_id} unsupported interaction_strength: {strength}")
+            continue
+        assignments: list[dict[str, object]] = []
+        for combination in combination_rows:
+            ref = _reference_key(combination.get("test_space_ref"))
+            if ref != test_space_id:
+                continue
+            try:
+                assignments.append(json.loads(combination["dimension_assignment_json"]))
+            except (KeyError, TypeError, json.JSONDecodeError) as exc:
+                errors.append(f"combination {combination.get('combination_id')} assignment invalid: {exc}")
+        if len(assignments) > budget:
+            errors.append(
+                f"test space {test_space_id}: covering rows exceed generation_budget {budget}"
+            )
+        for error in validate_strength_two_coverage(domains, assignments, forbidden):
+            errors.append(f"test space {test_space_id}: {error}")
+
+    for combination in combination_rows:
+        ref = _reference_key(combination.get("test_space_ref"))
+        if ref is not None and ref not in test_spaces:
+            errors.append(f"unresolved Test Space reference: {ref}")
+    for coverage_id, row in coverage.items():
+        ref = _reference_key(row.get("behavior_case_ref"))
+        if ref is not None and ref not in behavior_cases:
+            errors.append(f"unresolved Behavior Case reference: {ref}")
+
+    oracle_refs = {_reference_key(row.get("coverage_ref")) for row in oracle_rows}
+    for ref in sorted(item for item in oracle_refs if item is not None and item not in coverage):
+        errors.append(f"unresolved Failure Recovery coverage reference: {ref}")
+    failure_case_ids = {
+        case_id
+        for case_id, row in behavior_cases.items()
+        if row.get("case_type") == "failure_recovery"
+    }
+    for case_id in sorted(failure_case_ids):
+        related = [
+            coverage_id
+            for coverage_id, row in coverage.items()
+            if _reference_key(row.get("behavior_case_ref")) == case_id
+        ]
+        if not related:
+            errors.append(f"failure_recovery case has no coverage: {case_id}")
+        for coverage_id in related:
+            if coverage_id not in oracle_refs:
+                errors.append(f"failure_recovery coverage has no oracle: {coverage_id}")
+    return errors
+
+
+def _table_keys(
+    contract: dict,
+    package_root: Path,
+    table_name: str,
+    key_column: str,
+) -> tuple[set[str], list[str]]:
+    tables, errors = _parse_contract_tables(contract, package_root, {table_name})
+    if table_name not in tables:
+        return set(), errors
+    return {row.get(key_column, "") for row in tables[table_name][1]}, errors
+
+
+def _validate_spec_cross_package_refs(
+    contract: dict,
+    package_root: Path,
+    tables: dict[str, tuple[list[str], list[dict[str, str]]]],
+    embedded: dict[str, object],
+    related_packages: dict[str, tuple[dict, Path]],
+) -> list[str]:
+    errors: list[str] = []
+    rules = contract.get("cross_package_reference_rules", {})
+    source_ref = rules.get("source_contract_ref") if isinstance(rules, dict) else None
+    source = related_packages.get(source_ref) if isinstance(source_ref, str) else None
+    if source is None:
+        return [f"missing related package for cross-package validation: {source_ref}"]
+    source_contract, source_root = source
+    behavior_keys, source_errors = _table_keys(
+        source_contract, source_root, "Behavior Case Registry", "case_id"
+    )
+    errors.extend(source_errors)
+    coverage_keys, source_errors = _table_keys(
+        source_contract, source_root, "Acceptance Coverage Matrix", "coverage_id"
+    )
+    errors.extend(source_errors)
+    behavior_spec_keys, source_errors = _table_keys(
+        source_contract, source_root, "Behavior Specification", "behavior_spec_id"
+    )
+    errors.extend(source_errors)
+
+    spec_yaml, parse_error = _load_package_yaml(package_root / "spec.yaml")
+    if parse_error:
+        errors.append(parse_error)
+        spec_yaml = {}
+    if isinstance(spec_yaml, dict):
+        ref = _reference_key(spec_yaml.get("behavior_specification_ref"))
+        if ref is not None and ref not in behavior_spec_keys:
+            errors.append(f"unresolved Behavior Specification reference: {ref}")
+
+    behavior_refs: list[object] = []
+    coverage_refs: list[object] = []
+    spec_document = embedded.get("spec.md")
+    if isinstance(spec_document, dict):
+        behavior_refs.extend(spec_document.get("behavior_case_refs", []))
+        coverage_refs.extend(spec_document.get("acceptance_coverage_refs", []))
+    tasks_document = embedded.get("tasks.md")
+    tasks = tasks_document.get("task_declarations", []) if isinstance(tasks_document, dict) else []
+    criteria = {row["Criterion"] for row in tables.get("验收判据", ([], []))[1]}
+    for task in tasks:
+        if not isinstance(task, dict):
+            continue
+        behavior_refs.extend(task.get("behavior_case_refs", []))
+        coverage_refs.extend(task.get("acceptance_coverage_refs", []))
+        criterion = _reference_key(task.get("criterion_ref"))
+        if criterion is not None and criterion not in criteria:
+            errors.append(f"unresolved criterion reference: {criterion}")
+    for row in tables.get("验收判据", ([], []))[1]:
+        behavior_refs.append(row.get("Behavior Case Ref"))
+        coverage_refs.append(row.get("Coverage Ref"))
+    for row in tables.get("追溯", ([], []))[1]:
+        if row.get("关系") == "implements_behavior":
+            behavior_refs.append(row.get("上游批准对象"))
+            coverage_refs.append(row.get("验收出口"))
+    for value in behavior_refs:
+        ref = _reference_key(value)
+        if ref is not None and ref not in behavior_keys:
+            errors.append(f"unresolved Behavior Case reference: {ref}")
+    for value in coverage_refs:
+        ref = _reference_key(value)
+        if ref is not None and ref not in coverage_keys:
+            errors.append(f"unresolved Coverage reference: {ref}")
+    return errors
+
+
+def validate_package_profile(
+    contract: dict,
+    package_root: Path,
+    contract_ref: str,
+    validation_profile: str,
+    related_packages: dict[str, tuple[dict, Path]] | None = None,
+    allow_placeholders: bool = False,
+) -> list[str]:
+    """按显式 profile 读取并验证真实 package；v1 只读 shape 与 v2 阶段退出分离。"""
+    errors = validate_profile_dispatch(contract, contract_ref, validation_profile)
+    if errors:
+        return errors
+    version = int(contract_ref.rsplit("@", 1)[1])
+    if version != contract.get("version"):
+        historical = contract.get("historical_package_shapes")
+        shape = historical.get(version) if isinstance(historical, dict) else None
+        if not isinstance(shape, dict):
+            return [f"missing historical package shape for version {version}"]
+        errors.extend(_validate_package_shape(shape, package_root))
+        return errors
+
+    chain, chain_errors = _profile_chain(contract, validation_profile)
+    errors.extend(chain_errors)
+    profiles = contract.get("validation_profiles", {})
+    if errors:
+        return errors
+
+    if contract.get("contract_id") == "spec-package-contract":
+        delegated_to = next(
+            (
+                profiles[profile_name].get("delegated_to")
+                for profile_name in chain
+                if isinstance(profiles.get(profile_name), dict)
+                and isinstance(profiles[profile_name].get("delegated_to"), str)
+            ),
+            None,
+        )
+        if delegated_to is not None:
+            source_ref, separator, source_profile = delegated_to.partition("#")
+            source = (related_packages or {}).get(source_ref)
+            if not separator or not source_profile or source is None:
+                errors.append(f"unresolved delegated profile: {delegated_to}")
+            else:
+                source_contract, source_root = source
+                errors.extend(
+                    validate_package_profile(
+                        source_contract,
+                        source_root,
+                        source_ref,
+                        source_profile,
+                        allow_placeholders=allow_placeholders,
+                    )
+                )
+        if validation_profile != "s5_exit":
+            return errors
+
+    errors.extend(_validate_package_shape(contract, package_root))
+    if errors:
+        return errors
+
+    required_tables: set[str] = set()
+    required_root_references: set[str] = set()
+    for profile_name in chain:
+        profile = profiles.get(profile_name, {})
+        required_tables.update(profile.get("required_tables", []))
+        required_root_references.update(profile.get("required_root_references", []))
+    tables, table_errors = _parse_contract_tables(contract, package_root, required_tables or None)
+    errors.extend(table_errors)
+    embedded, embedded_errors = _validate_embedded_yaml(contract, package_root)
+    errors.extend(embedded_errors)
+    if not allow_placeholders:
+        for table_name, (_, rows) in tables.items():
+            if _contains_placeholder(rows):
+                errors.append(f"unresolved template placeholder in table: {table_name}")
+        for filename, document in embedded.items():
+            if _contains_placeholder(document):
+                errors.append(f"unresolved template placeholder in embedded YAML: {filename}")
+
+    dispatch = contract.get("profile_dispatch", {})
+    root_source = dispatch.get("contract_ref_source") if isinstance(dispatch, dict) else None
+    root_filename = root_source.split("#", 1)[0] if isinstance(root_source, str) else None
+    root_document: object = None
+    if required_root_references:
+        root_path = _package_path(package_root, root_filename)
+        if root_path is None or not root_path.is_file():
+            errors.append(f"missing profile root document: {root_filename}")
+        else:
+            root_document, parse_error = _load_package_yaml(root_path)
+            if parse_error:
+                errors.append(parse_error)
+            for field in sorted(required_root_references):
+                exists, value = _dotted_value(root_document, field)
+                if not exists or not isinstance(value, str) or not value:
+                    errors.append(f"missing profile root reference: {field}")
+                elif not allow_placeholders and _contains_placeholder(value):
+                    errors.append(f"unresolved template placeholder in root reference: {field}")
+
+    root_rules = contract.get("root_references", {})
+    if isinstance(root_document, dict) and isinstance(root_rules, dict) and root_filename in root_rules:
+        for field in sorted(required_root_references):
+            rule = root_rules[root_filename].get(field)
+            exists, reference = _dotted_value(root_document, field)
+            if not exists or not isinstance(reference, str) or not isinstance(rule, dict):
+                continue
+            if allow_placeholders and _contains_placeholder(reference):
+                continue
+            target_file = rule.get("target_file")
+            canonical_section = rule.get("canonical_section")
+            table_section = rule.get("table_section")
+            key_column = rule.get("key_column")
+            prefix = f"{target_file}#{canonical_section}:"
+            key = reference[len(prefix):] if reference.startswith(prefix) else None
+            table = tables.get(table_section)
+            if key == "*" and rule.get("allow_wildcard") is True:
+                continue
+            if (
+                key is None
+                or table is None
+                or not isinstance(key_column, str)
+                or key not in {row.get(key_column) for row in table[1]}
+            ):
+                errors.append(f"unresolved profile root reference: {field}")
+
+    if contract.get("contract_id") == "chain-package-contract" and "s4_exit" in chain:
+        errors.extend(_validate_chain_profile_tables(tables))
+    if contract.get("contract_id") == "spec-package-contract" and "s5_exit" in chain:
+        errors.extend(
+            _validate_spec_cross_package_refs(
+                contract,
+                package_root,
+                tables,
+                embedded,
+                related_packages or {},
+            )
+        )
+    return errors
+
+
+def validate_profile_dispatch(
+    contract: dict,
+    contract_ref: str,
+    validation_profile: str,
+) -> list[str]:
+    """验证显式 profile 与 contract major 的确定性绑定；不做隐式选择。"""
+    profiles = contract.get("validation_profiles")
+    if not isinstance(profiles, dict) or validation_profile not in profiles:
+        return [f"unknown_profile: {validation_profile}"]
+    if not isinstance(contract_ref, str) or "@" not in contract_ref:
+        return [f"profile_contract_mismatch: invalid contract_ref {contract_ref!r}"]
+    contract_id, raw_version = contract_ref.rsplit("@", 1)
+    try:
+        version = int(raw_version)
+    except ValueError:
+        return [f"profile_contract_mismatch: invalid contract version {raw_version!r}"]
+    if contract_id != contract.get("contract_id"):
+        return [f"profile_contract_mismatch: expected {contract.get('contract_id')}, got {contract_id}"]
+
+    errors: list[str] = []
+    dispatch = contract.get("profile_dispatch")
+    required_profile_fields = (
+        dispatch.get("required_profile_fields") if isinstance(dispatch, dict) else None
+    )
+    if not isinstance(required_profile_fields, dict):
+        errors.append("profile_dispatch.required_profile_fields must be a mapping")
+        required_profile_fields = {}
+    for profile_name, required_fields in required_profile_fields.items():
+        profile = profiles.get(profile_name)
+        if not isinstance(profile, dict) or not isinstance(required_fields, list):
+            errors.append(f"invalid required_profile_fields declaration: {profile_name}")
+            continue
+        for field in required_fields:
+            if not isinstance(field, str) or field not in profile:
+                errors.append(f"validation_profile {profile_name} missing required field: {field}")
+    all_table_names = {
+        section
+        for section_specs in contract.get("markdown_tables", {}).values()
+        if isinstance(section_specs, dict)
+        for section in section_specs
+    } if isinstance(contract.get("markdown_tables", {}), dict) else set()
+    for profile_name, profile in profiles.items():
+        if not isinstance(profile, dict):
+            continue
+        required_tables = profile.get("required_tables", [])
+        if not isinstance(required_tables, list) or any(
+            not isinstance(table, str) for table in required_tables
+        ):
+            errors.append(f"validation_profile {profile_name} required_tables must be list[str]")
+        else:
+            for table in required_tables:
+                if table not in all_table_names:
+                    errors.append(f"validation_profile {profile_name} references unknown required_table: {table}")
+        if profile_name == "historical_read_v1":
+            shapes = contract.get("historical_package_shapes")
+            historical_versions = profile.get("allowed_contract_versions", [])
+            for historical_version in historical_versions:
+                if not isinstance(shapes, dict) or historical_version not in shapes:
+                    errors.append(
+                        f"historical_read_v1 missing package shape for version {historical_version}"
+                    )
+    visited: set[str] = set()
+    current = validation_profile
+    while current:
+        if current in visited:
+            errors.append(f"profile_inheritance_cycle: {current}")
+            break
+        visited.add(current)
+        profile = profiles.get(current)
+        if not isinstance(profile, dict):
+            errors.append(f"unknown_profile: {current}")
+            break
+        allowed = profile.get("allowed_contract_versions")
+        if not isinstance(allowed, list) or any(
+            isinstance(item, bool) or not isinstance(item, int) for item in allowed
+        ):
+            errors.append(f"invalid_profile_versions: {current}")
+        elif version not in allowed:
+            errors.append(
+                f"profile_contract_mismatch: {current} does not allow {contract_ref}"
+            )
+        inherited = profile.get("inherits")
+        if inherited is not None and not isinstance(inherited, str):
+            errors.append(f"invalid_profile_inheritance: {current}")
+            break
+        current = inherited
+    return errors
+
+
 def check_c9_template_packages(repo: Path, files: list[Path]) -> list[Finding]:
     """C9: template_root 契约声明的包必须满足全部机器约束。"""
     findings: list[Finding] = []
@@ -680,6 +1615,192 @@ def check_c9_template_packages(repo: Path, files: list[Path]) -> list[Finding]:
             for section in sections:
                 if not _markdown_has_section(text, section):
                     findings.append(Finding("C9", "P1", rel(repo, target), 0, f"缺少 required_section: {section}"))
+
+        table_specs = contract.get("markdown_tables")
+        parsed_tables: dict[tuple[str, str], tuple[list[str], list[dict[str, str]]]] = {}
+        if table_specs is not None and not isinstance(table_specs, dict):
+            findings.append(Finding("C9", "P0", rel(repo, contract_path), 0, "markdown_tables 必须是 mapping"))
+        elif isinstance(table_specs, dict):
+            expected_parsing = {
+                "dialect": "commonmark_pipe_table_subset",
+                "heading_match": "exact_text",
+                "table_selection": "first_pipe_table_after_heading_before_next_heading",
+                "cell_normalization": "trim_whitespace_and_single_backtick_wrapper",
+                "unescaped_pipe_or_row_width_mismatch": "invalid_package",
+                "duplicate_section": "invalid_package",
+            }
+            if contract.get("markdown_parsing") != expected_parsing:
+                findings.append(Finding("C9", "P0", rel(repo, contract_path), 0, "markdown_parsing 必须声明统一受支持子集"))
+            forbidden_fields = contract.get("forbidden_execution_fields", [])
+            if not isinstance(forbidden_fields, list) or any(
+                not isinstance(field, str) for field in forbidden_fields
+            ):
+                findings.append(Finding("C9", "P0", rel(repo, contract_path), 0, "forbidden_execution_fields 必须是 list[str]"))
+                forbidden_fields = []
+            for filename, section_specs in table_specs.items():
+                if not isinstance(filename, str) or not isinstance(section_specs, dict):
+                    findings.append(Finding("C9", "P0", rel(repo, contract_path), 0, "markdown_tables 文件规则必须是 mapping"))
+                    continue
+                target, errors = resolve_repo_path(
+                    repo,
+                    str(Path(template_root_value) / filename),
+                    "C9",
+                    f"markdown_tables filename {filename!r}",
+                )
+                findings.extend(errors)
+                if errors or target is None or not target.is_file():
+                    continue
+                text = read_text(target)
+                for section, table_rule in section_specs.items():
+                    if not isinstance(section, str) or not isinstance(table_rule, dict):
+                        findings.append(Finding("C9", "P0", rel(repo, contract_path), 0, f"markdown_tables[{filename}] section rule 必须是 mapping"))
+                        continue
+                    expected_columns = table_rule.get("columns")
+                    if not isinstance(expected_columns, list) or any(
+                        not isinstance(column, str) for column in expected_columns
+                    ):
+                        findings.append(Finding("C9", "P0", rel(repo, contract_path), 0, f"markdown_tables[{filename}][{section}].columns 必须是 list[str]"))
+                        continue
+                    columns, rows, parse_error = _parse_markdown_table(text, section)
+                    if parse_error:
+                        findings.append(Finding("C9", "P0", rel(repo, target), 0, f"Markdown table {section}: {parse_error}"))
+                        continue
+                    parsed_tables[(filename, section)] = (columns, rows)
+                    if columns != expected_columns:
+                        findings.append(Finding("C9", "P0", rel(repo, target), 0, f"Markdown table {section} columns 不匹配"))
+                        continue
+                    if set(columns) & set(forbidden_fields):
+                        findings.append(Finding("C9", "P0", rel(repo, target), 0, f"Markdown table {section} 包含执行后 forbidden field"))
+                    minimum_rows = table_rule.get("minimum_rows", 0)
+                    if isinstance(minimum_rows, bool) or not isinstance(minimum_rows, int) or minimum_rows < 0:
+                        findings.append(Finding("C9", "P0", rel(repo, contract_path), 0, f"markdown_tables[{filename}][{section}].minimum_rows 必须是非负整数"))
+                    elif len(rows) < minimum_rows:
+                        findings.append(Finding("C9", "P0", rel(repo, target), 0, f"Markdown table {section} rows 少于 minimum_rows"))
+                    primary_key = table_rule.get("primary_key")
+                    if not isinstance(primary_key, str) or primary_key not in columns:
+                        findings.append(Finding("C9", "P0", rel(repo, contract_path), 0, f"Markdown table {section} primary_key 无效"))
+                    else:
+                        keys = [row.get(primary_key, "") for row in rows]
+                        if any(not key for key in keys):
+                            findings.append(Finding("C9", "P0", rel(repo, target), 0, f"Markdown table {section} primary key 为空"))
+                        if len(keys) != len(set(keys)):
+                            findings.append(Finding("C9", "P0", rel(repo, target), 0, f"Markdown table {section} duplicate primary key"))
+                    allowed_enums = table_rule.get("allowed_enums", {})
+                    if not isinstance(allowed_enums, dict):
+                        findings.append(Finding("C9", "P0", rel(repo, contract_path), 0, f"Markdown table {section} allowed_enums 必须是 mapping"))
+                    else:
+                        for field, allowed_values in allowed_enums.items():
+                            if field not in columns or not isinstance(allowed_values, list) or any(not isinstance(value, str) for value in allowed_values):
+                                findings.append(Finding("C9", "P0", rel(repo, contract_path), 0, f"Markdown table {section} allowed enum {field} 无效"))
+                                continue
+                            for row in rows:
+                                value = row.get(field, "")
+                                if "{{" in value and "}}" in value:
+                                    continue
+                                if value not in allowed_values:
+                                    findings.append(Finding("C9", "P0", rel(repo, target), 0, f"Markdown table {section} field {field} violates allowed enum"))
+
+        root_references = contract.get("root_references")
+        if root_references is not None and not isinstance(root_references, dict):
+            findings.append(Finding("C9", "P0", rel(repo, contract_path), 0, "root_references 必须是 mapping"))
+        elif isinstance(root_references, dict):
+            for filename, reference_specs in root_references.items():
+                if not isinstance(filename, str) or not isinstance(reference_specs, dict):
+                    findings.append(Finding("C9", "P0", rel(repo, contract_path), 0, "root_references 文件规则必须是 mapping"))
+                    continue
+                target, errors = resolve_repo_path(repo, str(Path(template_root_value) / filename), "C9", f"root_references filename {filename!r}")
+                findings.extend(errors)
+                if errors or target is None or not target.is_file():
+                    continue
+                document = yaml_cache.get(filename)
+                if filename not in yaml_cache:
+                    document, errors = _load_yaml(repo, target, "C9")
+                    findings.extend(errors)
+                for field, reference_rule in reference_specs.items():
+                    exists, reference = _dotted_value(document, field)
+                    if not exists or not isinstance(reference, str) or not isinstance(reference_rule, dict):
+                        findings.append(Finding("C9", "P0", rel(repo, target), 0, f"unresolved canonical reference: {field}"))
+                        continue
+                    target_file = reference_rule.get("target_file")
+                    canonical_section = reference_rule.get("canonical_section")
+                    table_section = reference_rule.get("table_section")
+                    key_column = reference_rule.get("key_column")
+                    expected_prefix = f"{target_file}#{canonical_section}:"
+                    key = reference[len(expected_prefix):] if reference.startswith(expected_prefix) else None
+                    table = parsed_tables.get((target_file, table_section))
+                    if key is None or table is None or not isinstance(key_column, str):
+                        findings.append(Finding("C9", "P0", rel(repo, target), 0, f"unresolved canonical reference: {field}"))
+                        continue
+                    if key == "*" and reference_rule.get("allow_wildcard") is True:
+                        continue
+                    _, rows = table
+                    if key not in {row.get(key_column) for row in rows}:
+                        findings.append(Finding("C9", "P0", rel(repo, target), 0, f"unresolved canonical reference: {field}"))
+
+        profiles = contract.get("validation_profiles")
+        if profiles is not None:
+            if not isinstance(profiles, dict):
+                findings.append(Finding("C9", "P0", rel(repo, contract_path), 0, "validation_profiles 必须是 mapping"))
+            else:
+                for profile_name, profile in profiles.items():
+                    if not isinstance(profile_name, str) or not isinstance(profile, dict):
+                        findings.append(Finding("C9", "P0", rel(repo, contract_path), 0, "validation_profile 定义无效"))
+                        continue
+                    for version in profile.get("allowed_contract_versions", []):
+                        contract_ref = f"{contract.get('contract_id')}@{version}"
+                        for error in validate_profile_dispatch(contract, contract_ref, profile_name):
+                            findings.append(Finding("C9", "P0", rel(repo, contract_path), 0, error))
+
+                related_packages: dict[str, tuple[dict, Path]] = {}
+                cross_rules = contract.get("cross_package_reference_rules")
+                source_contract_ref = (
+                    cross_rules.get("source_contract_ref")
+                    if isinstance(cross_rules, dict)
+                    else None
+                )
+                if isinstance(source_contract_ref, str) and "@" in source_contract_ref:
+                    source_contract_id = source_contract_ref.rsplit("@", 1)[0]
+                    for candidate_path in contract_files:
+                        candidate, candidate_errors = _load_yaml(repo, candidate_path, "C9")
+                        if candidate_errors or not isinstance(candidate, dict):
+                            continue
+                        if candidate.get("contract_id") != source_contract_id:
+                            continue
+                        source_template = _package_path(
+                            repo, candidate.get("template_root")
+                        )
+                        if source_template is not None and source_template.is_dir():
+                            related_packages[source_contract_ref] = (
+                                candidate,
+                                source_template,
+                            )
+                        break
+
+                current_version = contract.get("version")
+                if isinstance(current_version, int) and not isinstance(current_version, bool):
+                    current_ref = f"{contract.get('contract_id')}@{current_version}"
+                    for profile_name, profile in profiles.items():
+                        if not isinstance(profile_name, str) or not isinstance(profile, dict):
+                            continue
+                        if current_version not in profile.get("allowed_contract_versions", []):
+                            continue
+                        for error in validate_package_profile(
+                            contract,
+                            template_root,
+                            current_ref,
+                            profile_name,
+                            related_packages,
+                            allow_placeholders=True,
+                        ):
+                            findings.append(
+                                Finding(
+                                    "C9",
+                                    "P0",
+                                    rel(repo, contract_path),
+                                    0,
+                                    f"profile {profile_name}: {error}",
+                                )
+                            )
 
         task_authority = contract.get("task_authority")
         if "task_authority" in contract and not isinstance(task_authority, dict):
@@ -839,6 +1960,7 @@ def check_c11_authority_and_contract_references(repo: Path, files: list[Path]) -
             findings.append(Finding("C11", "P0", rel(repo, project_path), 0, f"authority.{name} 路径不存在: {value}"))
 
     registry: dict[str, tuple[int, Path]] = {}
+    readable_versions: dict[str, set[int]] = {}
     contracts_root = repo / "contracts"
     for path in files:
         if contracts_root not in path.parents or path.suffix not in {".yaml", ".yml"}:
@@ -856,6 +1978,19 @@ def check_c11_authority_and_contract_references(repo: Path, files: list[Path]) -
             findings.append(Finding("C11", "P0", rel(repo, path), 0, f"contract_id 重复: {contract_id}"))
         else:
             registry[contract_id] = (version, path)
+            compatibility = contract.get("compatibility")
+            historical = (
+                compatibility.get("historical_read_contract_versions", [])
+                if isinstance(compatibility, dict)
+                else []
+            )
+            if not isinstance(historical, list) or any(
+                isinstance(item, bool) or not isinstance(item, int) or item <= 0
+                for item in historical
+            ):
+                findings.append(Finding("C11", "P0", rel(repo, path), 0, "compatibility.historical_read_contract_versions 必须是正整数列表"))
+                historical = []
+            readable_versions[contract_id] = {version, *historical}
 
     for name, value in authority.items():
         path = authority_paths.get(name)
@@ -880,7 +2015,7 @@ def check_c11_authority_and_contract_references(repo: Path, files: list[Path]) -
             for match in CONTRACT_REFERENCE.finditer(line):
                 contract_id, version_text = match.groups()
                 registered = registry.get(contract_id)
-                if registered is None or registered[0] != int(version_text):
+                if registered is None or int(version_text) not in readable_versions.get(contract_id, {registered[0]}):
                     findings.append(Finding("C11", "P1", rel(repo, path), line_number, f"契约引用无法唯一解析: {match.group(0)}"))
     policies_root = repo / "policies"
     if policies_root.exists():

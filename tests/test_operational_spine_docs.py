@@ -51,6 +51,9 @@ TERM_IDS = {
     "capability-tree",
     "function-tree",
     "task-tree",
+    "behavior-specification",
+    "behavior-case",
+    "test-space-modeling",
     "workflow",
     "skill",
     "tool",
@@ -147,8 +150,9 @@ class OperationalSpineDocsTests(unittest.TestCase):
         text = read_text("docs/workflows/PROJECT_DELIVERY_WORKFLOW.md")
         expected_chain = (
             "来源/存量恢复 → 项目类型 → 治理路由 → 生命周期阶段 → 研究 → 业务链路 → 能力树 → "
-            "功能树 → 功能级需求 → 决策门与需求基线 → ADR → 工程设计 → Spec/Task → Workflow → "
-            "Skill/Tool → Run → Evidence → Verdict → Claim → 复盘/升格"
+            "功能树 → 功能级需求 → 决策门与需求基线 → 行为规格 → 按需 ADR → "
+            "测试空间/工程链路 → Spec/Task → Workflow → Skill/Tool → Run → Evidence → "
+            "Verdict → Claim → 复盘/升格"
         )
         self.assertIn(expected_chain, text)
         self.assertIn("能力树从业务链路推导", text)
@@ -157,6 +161,27 @@ class OperationalSpineDocsTests(unittest.TestCase):
         self.assertIn("任务树从已批准的 Spec 与验收判据推导", text)
         self.assertIn("Workflow 编排 Task", text)
         self.assertIn("Skill 是局部、可复用的能力", text)
+
+    def test_behavior_and_test_space_stay_before_run_evidence(self) -> None:
+        delivery = read_text("docs/workflows/PROJECT_DELIVERY_WORKFLOW.md")
+        gates = read_text("docs/workflows/STAGE_EXIT_GATES.md")
+        invalidation = read_text("docs/governance/STATE_TRANSITIONS_AND_INVALIDATION.md")
+
+        for term in (
+            "Behavior Specification",
+            "Behavior Case",
+            "Test Space Modeling",
+            "semantic_inventory_ref",
+        ):
+            self.assertIn(term, delivery + gates)
+        self.assertIn("只有存在架构选择", delivery)
+        self.assertIn("actual_result", delivery + gates)
+        self.assertIn("passed", delivery + gates)
+        self.assertIn("evidence_ref", delivery + gates)
+        self.assertIn("impact_classification", invalidation)
+        self.assertIn("Evidence.stale_status", invalidation)
+        self.assertIn("review_required", invalidation)
+        self.assertIn("fresh/stale/expired/invalidated", invalidation)
 
     def test_stage_exit_gates_cover_all_nine_stages(self) -> None:
         text = read_text("docs/workflows/STAGE_EXIT_GATES.md")

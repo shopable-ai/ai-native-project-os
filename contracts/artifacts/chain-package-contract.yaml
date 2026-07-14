@@ -1,7 +1,7 @@
-# 业务链包的机器结构契约；业务优先级和内容由 L2 批准事实决定。
+# 业务链包 v2 机器契约；S2 行为语义和 S4 测试空间均保存在现有 chain package。
 schema_version: 1
 contract_id: chain-package-contract
-version: 1
+version: 2
 template_root: templates/chain-package
 required_files:
   - README.md
@@ -19,12 +19,17 @@ required_files:
 required_fields:
   chain.yaml:
     - schema_version
+    - contract_ref
     - chain_id
     - priority
     - owners
     - path_types
     - scenario_refs
     - trigger_refs
+    - behavior_specification_ref
+    - behavior_case_registry_ref
+    - test_space_model_ref
+    - acceptance_coverage_ref
     - diagram_policy.required_priorities
     - diagram_policy.requirement
   triggers.yaml:
@@ -38,20 +43,170 @@ required_fields:
     - consumer
     - inputs
     - outputs
+required_values:
+  chain.yaml:
+    contract_ref: chain-package-contract@2
 required_sections:
-  scenarios.md: [场景, 非目标]
+  scenarios.md: [Behavior Specification, Behavior Case Registry, 场景, 非目标]
   business-flow.md: [正常路径]
   exceptions.md: [异常路径]
   recovery.md: [恢复路径]
   responsibility-map.md: [责任映射]
   traceability.md: [追溯]
-  acceptance.md: [验收判据]
+  acceptance.md: [Test Space Model, Acceptance Coverage Matrix, Failure Recovery Oracle, 验收判据]
+markdown_parsing:
+  dialect: commonmark_pipe_table_subset
+  heading_match: exact_text
+  table_selection: first_pipe_table_after_heading_before_next_heading
+  cell_normalization: trim_whitespace_and_single_backtick_wrapper
+  unescaped_pipe_or_row_width_mismatch: invalid_package
+  duplicate_section: invalid_package
+markdown_tables:
+  scenarios.md:
+    Behavior Specification:
+      columns: [behavior_spec_id, version, requirement_refs, problem_statement, user_observable_goals, behavior_rules, non_goals, owner_ref, approver_ref, assumptions, unknowns, applicability]
+      primary_key: behavior_spec_id
+      minimum_rows: 1
+    Behavior Case Registry:
+      columns: [case_id, requirement_ref, case_type, representative_scenario_or_trigger, expected_user_observable_behavior, coverage_target]
+      primary_key: case_id
+      minimum_rows: 1
+      allowed_enums:
+        case_type: [main_path, boundary, negative, failure_recovery]
+  acceptance.md:
+    Test Space Model:
+      columns: [test_space_id, behavior_spec_ref, semantic_inventory_ref, inventory_hash, inventory_partition_refs, inventory_members_json, coverage_obligations_json, dimension_refs, dimension_domains_json, forbidden_assignments_json, constraints, generator_kind, interaction_strength, generation_budget, upgrade_triggers, uncovered_scope]
+      primary_key: test_space_id
+      minimum_rows: 1
+    Derived Combination Registry:
+      columns: [combination_id, test_space_ref, dimension_assignment_json, source_inventory_members, derivation_status]
+      primary_key: combination_id
+      minimum_rows: 1
+      allowed_enums:
+        derivation_status: [planned, derived, blocked]
+    Acceptance Coverage Matrix:
+      columns: [coverage_id, behavior_case_ref, semantic_inventory_ref, inventory_partition_refs_json, inventory_member_refs_json, obligation_refs_json, equivalence_class_or_boundary, combination_constraints, case_relations, case_relation, input_boundary, governed_intermediate_boundary, expected_transition_or_decision, observable_output_boundary, boundary_binding_profile, verification_method, minimum_proof_scope, coverage_status]
+      primary_key: coverage_id
+      minimum_rows: 1
+      allowed_enums:
+        case_relation: [positive, boundary, negative, failure_recovery, contrastive, metamorphic]
+        coverage_status: [planned, implemented_unverified, verification_mapped, not_applicable, blocked]
+    Failure Recovery Oracle:
+      columns: [coverage_ref, pre_failure_state, failure_terminal, recovery_action, post_recovery_invariants, idempotency_or_side_effect_oracle, compensation_ref]
+      primary_key: coverage_ref
+      minimum_rows: 0
+forbidden_execution_fields: [actual_result, passed, evidence_ref]
+failure_recovery_oracle:
+  required_for_case_type: failure_recovery
+  required_fields: [pre_failure_state, failure_terminal, recovery_action, post_recovery_invariants, idempotency_or_side_effect_oracle]
+  optional_fields: [compensation_ref]
+derivation_rules:
+  source_refs: [behavior_case_ref, semantic_inventory_ref, inventory_partition_ref, dimension_refs]
+  generator_kind: covering_array
+  interaction_strength: 2
+  required_dimensions: [equivalence_classes, boundaries, positive_negative_recovery_relations, boundary_roles, verification_surfaces]
+  completeness_invariants:
+    - every_in_scope_inventory_partition_has_profile_defined_obligations
+    - every_applicable_inventory_member_instantiates_each_profile_defined_obligation
+    - required_positive_boundary_negative_and_failure_recovery_relations_are_covered
+    - all_allowed_pairs
+    - uncovered_or_not_applicable_scope_is_explicit
+  machine_validator: validate_strength_two_coverage
+  machine_inputs:
+    inventory_members: Test Space Model.inventory_members_json
+    coverage_obligations: Test Space Model.coverage_obligations_json
+    dimension_domains: Test Space Model.dimension_domains_json
+    forbidden_assignments: Test Space Model.forbidden_assignments_json
+    covering_rows: Derived Combination Registry.dimension_assignment_json
+    coverage_partition_refs: Acceptance Coverage Matrix.inventory_partition_refs_json
+    coverage_member_refs: Acceptance Coverage Matrix.inventory_member_refs_json
+    coverage_obligation_refs: Acceptance Coverage Matrix.obligation_refs_json
+  upgrade_to_full_cartesian_when: [safety_or_authorization_risk, irreversible_side_effect, known_interaction_defect, unknown_or_conflicting_constraint, within_approved_generation_budget]
+  inventory_change_requires: [rederive_cases, diff_coverage, review_affected_surfaces, invalidate_overstated_claims]
+validation_profiles:
+  historical_read_v1:
+    allowed_contract_versions: [1]
+    stage_exit_allowed: false
+    package_shape_ref: historical_package_shapes.1
+  s2_exit:
+    allowed_contract_versions: [2]
+    required_tables: [Behavior Specification, Behavior Case Registry]
+    required_root_references: [behavior_specification_ref, behavior_case_registry_ref]
+  s4_exit:
+    allowed_contract_versions: [2]
+    inherits: s2_exit
+    required_tables: [Test Space Model, Derived Combination Registry, Acceptance Coverage Matrix, Failure Recovery Oracle]
+    required_root_references: [test_space_model_ref, acceptance_coverage_ref]
+  s5_exit:
+    allowed_contract_versions: [2]
+    inherits: s4_exit
+    cross_contract_refs: [spec-package-contract@2]
+profile_dispatch:
+  contract_ref_source: chain.yaml#contract_ref
+  validation_profile_source: stage_gate_invocation
+  implicit_profile_selection: forbidden
+  unknown_profile: invalid_package
+  profile_contract_mismatch: invalid_package
+  required_profile_fields:
+    historical_read_v1: [allowed_contract_versions, stage_exit_allowed, package_shape_ref]
+    s2_exit: [allowed_contract_versions, required_tables, required_root_references]
+    s4_exit: [allowed_contract_versions, inherits, required_tables, required_root_references]
+    s5_exit: [allowed_contract_versions, inherits, cross_contract_refs]
+reference_integrity:
+  canonical_form: path#section:key
+  unresolved_reference: invalid_package
+  duplicate_primary_key: invalid_package
+  missing_table_or_column: invalid_package
+root_references:
+  chain.yaml:
+    behavior_specification_ref:
+      target_file: scenarios.md
+      canonical_section: behavior-specification
+      table_section: Behavior Specification
+      key_column: behavior_spec_id
+    behavior_case_registry_ref:
+      target_file: scenarios.md
+      canonical_section: behavior-case-registry
+      table_section: Behavior Case Registry
+      key_column: case_id
+      allow_wildcard: true
+    test_space_model_ref:
+      target_file: acceptance.md
+      canonical_section: test-space-model
+      table_section: Test Space Model
+      key_column: test_space_id
+    acceptance_coverage_ref:
+      target_file: acceptance.md
+      canonical_section: acceptance-coverage-matrix
+      table_section: Acceptance Coverage Matrix
+      key_column: coverage_id
+      allow_wildcard: true
 failure_semantics:
   mode: fail_closed
   missing_required_file: invalid_package
   missing_required_field: invalid_package
+  missing_required_table: invalid_package
   invalid_yaml: invalid_package
+  incomplete_derivation: blocked
 compatibility:
   minimum_project_os_schema_version: 3
-  template_contract_version: 1
+  template_contract_version: 2
+  historical_read_contract_versions: [1, 2]
+  stage_exit_contract_versions: [2]
   breaking_change_requires_major_version: true
+  migration: v1_packages_are_historical_read_only_and_require_v2_revision_for_new_stage_exit
+historical_package_shapes:
+  1:
+    required_files: [README.md, chain.yaml, scenarios.md, triggers.yaml, business-flow.md, exceptions.md, recovery.md, responsibility-map.md, io-map.yaml, traceability.md, acceptance.md, diagrams/README.md]
+    required_fields:
+      chain.yaml: [schema_version, chain_id, priority, owners, path_types, scenario_refs, trigger_refs, diagram_policy.required_priorities, diagram_policy.requirement]
+      triggers.yaml: [schema_version, chain_ref, trigger_profiles]
+      io-map.yaml: [schema_version, chain_ref, producer, consumer, inputs, outputs]
+    required_sections:
+      scenarios.md: [场景, 非目标]
+      business-flow.md: [正常路径]
+      exceptions.md: [异常路径]
+      recovery.md: [恢复路径]
+      responsibility-map.md: [责任映射]
+      traceability.md: [追溯]
+      acceptance.md: [验收判据]

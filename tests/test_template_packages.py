@@ -1,4 +1,5 @@
 import re
+import importlib.util
 import shutil
 import tempfile
 import unittest
@@ -8,6 +9,13 @@ import yaml
 
 
 ROOT = Path(__file__).parents[1]
+CHECKER_SPEC = importlib.util.spec_from_file_location(
+    "check_controlled_objects_for_template_tests",
+    ROOT / "linters/check_controlled_objects.py",
+)
+checker = importlib.util.module_from_spec(CHECKER_SPEC)
+assert CHECKER_SPEC.loader is not None
+CHECKER_SPEC.loader.exec_module(checker)
 
 PACKAGE_CONTRACTS = {
     "chain-package-contract": (
@@ -51,7 +59,16 @@ PACKAGE_AUTHORITY = {
 }
 
 PACKAGE_VERSIONS = {
-    contract_id: (2 if contract_id == "requirement-design-package-contract" else 1)
+    contract_id: (
+        2
+        if contract_id
+        in {
+            "chain-package-contract",
+            "spec-package-contract",
+            "requirement-design-package-contract",
+        }
+        else 1
+    )
     for contract_id in PACKAGE_CONTRACTS
 }
 
@@ -93,6 +110,20 @@ def nested_value(document, dotted_path: str):
             raise KeyError(dotted_path)
         current = current[part]
     return current
+
+
+def markdown_table_header(path: Path, section: str) -> list[str]:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    heading = re.compile(rf"^#+\s+{re.escape(section)}\s*$")
+    for index, line in enumerate(lines):
+        if not heading.match(line):
+            continue
+        for candidate in lines[index + 1 :]:
+            if candidate.startswith("#"):
+                break
+            if candidate.strip().startswith("|"):
+                return [cell.strip().strip("`") for cell in candidate.strip().strip("|").split("|")]
+    raise AssertionError(f"missing markdown table: {path}:{section}")
 
 
 def validate_package(contract: dict, package_root: Path) -> list[str]:
@@ -332,6 +363,154 @@ class TemplatePackageTests(unittest.TestCase):
             }
             <= required_files
         )
+
+    def test_chain_v2_defines_behavior_registry_and_test_space_matrix(self):
+        contract = load_yaml(ROOT / PACKAGE_CONTRACTS["chain-package-contract"][0])
+        chain = load_yaml(ROOT / "templates/chain-package/chain.yaml")
+
+        self.assertEqual(contract["version"], 2)
+        self.assertEqual(chain["contract_ref"], "chain-package-contract@2")
+        self.assertEqual(
+            set(contract["validation_profiles"]),
+            {"historical_read_v1", "s2_exit", "s4_exit", "s5_exit"},
+        )
+        self.assertEqual(contract["validation_profiles"]["s4_exit"]["inherits"], "s2_exit")
+        self.assertEqual(contract["validation_profiles"]["s5_exit"]["inherits"], "s4_exit")
+        self.assertEqual(contract["compatibility"]["stage_exit_contract_versions"], [2])
+        self.assertEqual(contract["compatibility"]["historical_read_contract_versions"], [1, 2])
+        self.assertEqual(contract["markdown_parsing"]["heading_match"], "exact_text")
+        self.assertEqual(
+            contract["markdown_parsing"]["table_selection"],
+            "first_pipe_table_after_heading_before_next_heading",
+        )
+        self.assertEqual(contract["markdown_parsing"]["duplicate_section"], "invalid_package")
+
+        scenarios = ROOT / "templates/chain-package/scenarios.md"
+        acceptance = ROOT / "templates/chain-package/acceptance.md"
+        expected_tables = {
+            ("scenarios.md", "Behavior Specification"): [
+                "behavior_spec_id", "version", "requirement_refs", "problem_statement",
+                "user_observable_goals", "behavior_rules", "non_goals", "owner_ref",
+                "approver_ref", "assumptions", "unknowns", "applicability",
+            ],
+            ("scenarios.md", "Behavior Case Registry"): [
+                "case_id", "requirement_ref", "case_type",
+                "representative_scenario_or_trigger", "expected_user_observable_behavior",
+                "coverage_target",
+            ],
+            ("acceptance.md", "Test Space Model"): [
+                "test_space_id", "behavior_spec_ref", "semantic_inventory_ref",
+                "inventory_hash", "inventory_partition_refs", "inventory_members_json",
+                "coverage_obligations_json", "dimension_refs",
+                "dimension_domains_json", "forbidden_assignments_json", "constraints",
+                "generator_kind", "interaction_strength", "generation_budget",
+                "upgrade_triggers", "uncovered_scope",
+            ],
+            ("acceptance.md", "Derived Combination Registry"): [
+                "combination_id", "test_space_ref", "dimension_assignment_json",
+                "source_inventory_members", "derivation_status",
+            ],
+            ("acceptance.md", "Acceptance Coverage Matrix"): [
+                "coverage_id", "behavior_case_ref", "semantic_inventory_ref",
+                "inventory_partition_refs_json", "inventory_member_refs_json",
+                "obligation_refs_json",
+                "equivalence_class_or_boundary", "combination_constraints", "case_relations",
+                "case_relation",
+                "input_boundary", "governed_intermediate_boundary",
+                "expected_transition_or_decision", "observable_output_boundary",
+                "boundary_binding_profile", "verification_method", "minimum_proof_scope",
+                "coverage_status",
+            ],
+        }
+        paths = {"scenarios.md": scenarios, "acceptance.md": acceptance}
+        for (filename, section), columns in expected_tables.items():
+            with self.subTest(filename=filename, section=section):
+                self.assertEqual(markdown_table_header(paths[filename], section), columns)
+                self.assertEqual(contract["markdown_tables"][filename][section]["columns"], columns)
+
+        scenarios_text = scenarios.read_text(encoding="utf-8")
+        forbidden_execution_fields = {"actual_result", "passed", "evidence_ref"}
+        for table in ("Behavior Specification", "Behavior Case Registry"):
+            self.assertTrue(
+                forbidden_execution_fields.isdisjoint(markdown_table_header(scenarios, table))
+            )
+        self.assertEqual(
+            set(contract["forbidden_execution_fields"]), forbidden_execution_fields
+        )
+        self.assertIn("failure_recovery_oracle", contract)
+        self.assertIn("derivation_rules", contract)
+        self.assertNotIn("actual_result", scenarios_text)
+
+    def test_spec_v2_requires_stable_behavior_case_refs(self):
+        contract = load_yaml(ROOT / PACKAGE_CONTRACTS["spec-package-contract"][0])
+        spec = (ROOT / "templates/spec-package/spec.md").read_text(encoding="utf-8")
+        tasks = (ROOT / "templates/spec-package/tasks.md").read_text(encoding="utf-8")
+        acceptance = (ROOT / "templates/spec-package/acceptance.md").read_text(encoding="utf-8")
+        traceability = (ROOT / "templates/spec-package/traceability.md").read_text(encoding="utf-8")
+
+        self.assertEqual(contract["version"], 2)
+        self.assertIn("behavior_case_refs", spec)
+        self.assertIn("behavior_case_refs", tasks)
+        self.assertIn("behavior_case_ref", acceptance)
+        self.assertIn("behavior_case_ref", traceability)
+        self.assertIn("criterion_ref", tasks)
+        self.assertEqual(contract["reference_integrity"]["unresolved_reference"], "invalid_package")
+
+    def test_strength_two_coverage_is_dynamic_across_inventory_shapes(self):
+        fixtures = (
+            (
+                {"locale": ["a", "b"], "surface": ["api", "ui"]},
+                [
+                    {"locale": "a", "surface": "api"},
+                    {"locale": "a", "surface": "ui"},
+                    {"locale": "b", "surface": "api"},
+                    {"locale": "b", "surface": "ui"},
+                ],
+            ),
+            (
+                {
+                    "partition": ["p0", "p1", "p2"],
+                    "position": ["start", "end"],
+                    "state": ["fresh", "repeat"],
+                },
+                [
+                    {"partition": partition, "position": position, "state": state}
+                    for partition in ("p0", "p1", "p2")
+                    for position in ("start", "end")
+                    for state in ("fresh", "repeat")
+                ],
+            ),
+        )
+        for dimensions, rows in fixtures:
+            with self.subTest(dimensions=dimensions):
+                self.assertEqual(checker.validate_strength_two_coverage(dimensions, rows), [])
+
+        incomplete_rows = fixtures[0][1][:-1]
+        self.assertTrue(
+            any(
+                "missing allowed pair" in message
+                for message in checker.validate_strength_two_coverage(
+                    fixtures[0][0], incomplete_rows
+                )
+            )
+        )
+
+        contract = load_yaml(ROOT / PACKAGE_CONTRACTS["chain-package-contract"][0])
+        derivation = contract["derivation_rules"]
+        self.assertEqual(derivation["generator_kind"], "covering_array")
+        self.assertEqual(derivation["interaction_strength"], 2)
+        self.assertIn("semantic_inventory_ref", derivation["source_refs"])
+        self.assertIn("all_allowed_pairs", derivation["completeness_invariants"])
+
+    def test_l1_completeness_invariants_are_project_neutral(self):
+        contract = load_yaml(ROOT / PACKAGE_CONTRACTS["chain-package-contract"][0])
+        rendered = "\n".join(contract["derivation_rules"]["completeness_invariants"])
+        for project_specific_concept in (
+            "blocking_partition",
+            "lightweight_then_substantive",
+            "later_boundary_negative",
+        ):
+            self.assertNotIn(project_specific_concept, rendered)
 
     def test_spec_tasks_are_authority_and_plans_only_order_task_refs(self):
         self.existing_contracts()

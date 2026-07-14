@@ -185,7 +185,9 @@ class ContractPolicyBoundaryTests(unittest.TestCase):
 
         self.assertEqual(contract["schema_version"], 1)
         self.assertEqual(contract["contract_id"], "stage-exit-gates-contract")
-        self.assertEqual(contract["version"], 1)
+        self.assertEqual(contract["version"], 2)
+        self.assertEqual(contract["compatibility"]["historical_read_contract_versions"], [1, 2])
+        self.assertEqual(contract["compatibility"]["stage_exit_contract_versions"], [2])
         self.assertEqual(list(contract["stages"]), STAGES)
         for stage, definition in contract["stages"].items():
             self.assertEqual(set(definition), STAGE_SECTIONS, stage)
@@ -221,6 +223,27 @@ class ContractPolicyBoundaryTests(unittest.TestCase):
         self.assertIn(
             "failed_unknown_or_missing_criterion_blocks_stage_exit",
             record["invariants"],
+        )
+
+        self.assertIn(
+            "behavior_specification_and_stable_behavior_case_registry",
+            contract["stages"]["S2"]["required_artifacts"],
+        )
+        self.assertIn(
+            "architecture_decision_or_auditable_not_applicable_reason",
+            contract["stages"]["S3"]["required_artifacts"],
+        )
+        self.assertIn(
+            "test_space_model_and_acceptance_coverage_matrix",
+            contract["stages"]["S4"]["required_artifacts"],
+        )
+        self.assertIn(
+            "spec_tasks_and_tests_reference_stable_behavior_case_ids",
+            contract["stages"]["S5"]["exit_criteria"],
+        )
+        self.assertIn(
+            "actual_results_pass_fail_and_evidence_are_only_recorded_in_run_evidence_verdict_and_claim",
+            contract["stages"]["S6"]["exit_criteria"],
         )
         self.assertIn(
             "stage_definition_ref_and_hash_must_exactly_match_evaluated_stage_definition",

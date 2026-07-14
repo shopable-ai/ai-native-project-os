@@ -1,0 +1,73 @@
+# 行为规格与测试空间建模设计的独立自动专家审计记录。
+schema_version: 1
+review_id: behavior-specification-test-space-design-audit-2026-07-14
+reviewer_type: independent_ai_subagent
+external_expert: false
+reviewed_at: "2026-07-14"
+subject:
+  path: docs/superpowers/specs/2026-07-14-行为规格与测试空间建模设计.md
+  sha256: 1619704d7d52a27b5810c7cda9415737d33a79182e0a9ab6bf1dbbd0de55c0ae
+  scope: 本次变更设计与其明确引用的当前事实
+reproducible_inputs: true
+rubric:
+  professional_correctness: {score: 12, maximum: 12}
+  workflow_integration: {score: 12, maximum: 12}
+  requirement_traceability: {score: 10, maximum: 10}
+  test_space_completeness: {score: 16, maximum: 16}
+  negative_and_failure_recovery: {score: 10, maximum: 10}
+  l1_neutrality: {score: 10, maximum: 10}
+  contract_compatibility: {score: 6, maximum: 8}
+  invalidation_propagation: {score: 7, maximum: 8}
+  execution_cost: {score: 6, maximum: 6}
+  evidence_boundary: {score: 8, maximum: 8}
+result:
+  total_score: 97
+  maximum_score: 100
+  p0_open: 0
+  p1_open: 2
+  p2_open: 1
+  all_core_dimensions_pass: true
+  meets_95_plus_gate: true
+closed_p0:
+  - L1 只定义通用 boundary role、inventory partition 与组合协议；项目选择器字段只属于 L2 binding。
+  - CA2 使用可检查二元覆盖，不再用固定倍数冒充 pairwise。
+findings:
+  p1:
+    - id: AUD-BS-001
+      finding: v2 profile 调度、继承和跨 package 引用必须机器化且确定性失败关闭。
+      resolution: 设计已锁定显式 contract_ref、validation_profile、继承顺序、canonical reference 与稳定错误码。
+    - id: AUD-BS-002
+      finding: 影响分类 review_required 不得写入 Evidence.stale_status。
+      resolution: 依赖闭包保存 impact_classification；Evidence 只使用既有 stale_status 枚举。
+  p2:
+    - id: AUD-BS-003
+      finding: v2 Contract 应固定 Markdown 解析、canonical reference 和 profile 错误语义。
+      resolution: 纳入 Contract v2 和 checker 的 TDD 验收范围。
+deductions:
+  - dimension: contract_compatibility
+    points: 2
+    reason: 审计输入版本尚未把 profile 调度全部机器化。
+  - dimension: invalidation_propagation
+    points: 1
+    reason: 审计输入版本对 impact classification 与 Evidence.stale_status 表述有歧义。
+claim_limits:
+  - 本记录只支持“本次变更设计的独立 AI 专家审计达到 97/100”。
+  - 不代表外部专家评分、AI Project OS 总分、实现完成或生产就绪。
+  - 审计后的 P1 解决方案仍须由测试、Contract 和 checker 实现验证。
+reproducible_commands:
+  - shasum -a 256 docs/superpowers/specs/2026-07-14-行为规格与测试空间建模设计.md
+  - python3 -m unittest tests.test_template_packages tests.test_operational_spine_checker -v
+pairwise_reproduction:
+  dimensions: {a: 10, p: 3, k: 3}
+  row_formula: "(a, p, (p + a) % 3)"
+  expected_rows: 30
+  expected_pair_counts: {a_p: 30, a_k: 30, p_k: 9}
+  expected_base_count: 50
+post_review_fact_check:
+  checked_at: "2026-07-14"
+  affected_observation: expected_base_count
+  prior_interpretation: three_replacement_mode_categories_were_counted_as_allowed_leading_combinations
+  current_repository_fact: only_one_category_has_asset_level_leading_combination_permission
+  current_base_count: 48
+  audit_input_status: numeric_observation_superseded_core_formula_unchanged
+  requires_final_implementation_reaudit: true

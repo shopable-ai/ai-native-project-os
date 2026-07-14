@@ -40,45 +40,45 @@
 ## S2 — 场景与业务链路
 
 - **输入**：批准业务需求、领域事实、触发条件、角色和当前 Requirement Baseline。
-- **产物**：场景、触发档案、业务链路、正常/异常/恢复路径、能力树、功能树、功能需求卡和上下文快照。
-- **退出门禁**：P0/P1 功能都有需求卡；四段意图一致；AI 自检已报告缺口/假设/可能错误/待确认项；Decision Gate 按风险选择 `policy_certified` 或 `human_signoff` 并形成新需求基线；业务能力不预绑工程实现。
-- **Evidence**：链路到能力/功能/需求覆盖、AI 自检、上下文快照、批准路由、认证 Verdict 或人工确认、需求版本/hash 和 baseline manifest。
+- **产物**：场景、触发档案、业务链路、正常/异常/恢复路径、能力树、功能树、功能需求卡、上下文快照、父级 Behavior Specification、稳定 Behavior Case 总表，以及 brownfield/变更场景下可选的 As-Is/To-Be 差距表。
+- **退出门禁**：P0/P1 功能都有需求卡，四段意图一致，AI 自检已报告缺口/假设/可能错误/待确认项，Decision Gate 按风险选择 `policy_certified` 或 `human_signoff` 并形成新需求基线；对应 Requirement 有问题/用户可观察目标、行为规则、非目标、owner/approver、假设/未知和适用性，行为案例按主路径、边界、反例、失败恢复分类并有稳定 ID。案例不得包含 `actual_result`、`passed`、`evidence_ref`。
+- **Evidence**：链路到能力/功能/需求/Behavior Specification/Behavior Case 的覆盖，AI 自检、上下文快照、批准路由、认证 Verdict 或人工确认、需求版本/hash、baseline manifest、结构与批准记录；这是规格审核 Evidence，不是行为执行结果。
 - **失效条件**：用户、触发、业务政策、关键事实或需求分母变化。
 - **重开目标**：重开 S2；目标被推翻时回 S0，事实被推翻时回 S1。
 
 ## S3 — 方案与架构决策
 
-- **输入**：业务链路、质量属性、约束、研究 Verdict 和候选方案。
-- **产物**：方案比较、反方报告、已接受/拒绝 ADR、后果、退出条件和替代关系。
-- **退出门禁**：关键选择有可重算依据，风险、代价、退出与回退条件明确，未决研究只阻断具体决策。
+- **输入**：存在架构选择时，使用业务链路、Behavior Specification、质量属性、约束、研究 Verdict 和候选方案；没有架构选择时只需 N/A 理由。
+- **产物**：有选择时为方案比较、反方报告、已接受/拒绝 ADR、后果、退出条件和替代关系；无选择时不产生空 ADR。
+- **退出门禁**：有选择时关键选择有可重算依据，风险、代价、退出与回退条件明确；无选择时 N/A 可审计。未决研究只阻断具体决策。
 - **Evidence**：候选评分输入、实验/研究 Evidence、独立反方意见和 ADR 批准记录。
 - **失效条件**：关键约束、候选能力、风险阈值或上游业务链变化。
 - **重开目标**：重开 S3；需要新认知时回 S1，需要重画业务链时回 S2。
 
 ## S4 — 工程设计
 
-- **输入**：已接受 ADR、业务能力、质量属性和边界约束。
-- **产物**：工程链路、组件职责、I/O 与失败契约、权限/隔离设计、验收判据和兼容策略。
-- **退出门禁**：所有接缝、失败态、未知副作用、权限、数据分类、恢复和兼容条件有明确 owner 与验收出口。
-- **Evidence**：Schema/契约解析、正反例契约测试设计、威胁/失败路径审查和图覆盖记录。
-- **失效条件**：ADR、契约、数据、权限、外部接口或兼容范围变化。
-- **重开目标**：重开 S4；架构假设错误时回 S3。
+- **输入**：Behavior Specification、Behavior Case 总表、批准的 `semantic_inventory_ref`、质量属性、边界约束及适用时的已接受 ADR。
+- **产物**：Test Space Modeling、验收覆盖矩阵、等价类/边界维度、组合约束、正例/反例/失败恢复关系、通用输入/治理中间对象/预期决策/可观察输出边界、验证方法、最低证明范围，以及工程链路、I/O/失败契约、权限/隔离和兼容策略。
+- **退出门禁**：每个 Behavior Case 和启用 inventory 分区/成员都履行 profile 声明的 `per_partition/per_member` 覆盖义务，或有带 owner/重开条件的 N/A；pairwise 从 domain、通用禁配和派生 combination registry 重算并证明全部允许二元组合，风险触发时升级全组合。所有接缝、失败态、恢复 oracle、权限、数据分类、证明上限和未覆盖空间明确。
+- **Evidence**：Test Space 与 Contract 静态解析、派生完整性、正反例/失败恢复设计、威胁/失败路径审查和图覆盖记录；覆盖状态不是执行 pass/fail。
+- **失效条件**：Behavior Specification、semantic inventory、组合规则、ADR、契约、数据、权限、外部接口、资源约束或兼容范围变化。
+- **重开目标**：重开 S4 并重算受影响测试空间；行为期望错误回 S2，架构假设错误且需要新选择时回 S3。
 
 ## S5 — 计划与最小执行
 
-- **输入**：批准功能需求及其 `version/content_hash`、当前需求基线、工程设计、验收判据、批准 Spec 基线、依赖和授权约束。
-- **产物**：Spec 包、从 Spec 推导的任务树、Workflow、局部 Skill/Tool、最小纵向实现和恢复计划。
-- **退出门禁**：Spec 精确绑定已通过合法 Decision Gate 且仍在当前需求基线中的功能需求 `version/content_hash`；`policy_certified` 必须引用当前认证，`human_signoff` 必须引用可验证人类决定。工作包可执行、可暂停、可恢复；Task 无孤儿，Workflow 编排 Task，Skill/Tool 不隐藏控制流或声明权限。未批准、认证失效、意图不一致或不在 baseline 的需求必须 fail closed。
+- **输入**：批准功能需求及其 `version/content_hash`、当前需求基线、工程设计、验收覆盖矩阵、稳定 Behavior Case ID、批准 Spec 基线、依赖和授权约束。
+- **产物**：精确绑定功能需求、baseline、Behavior Case 和 coverage/criterion 的 Spec 包、任务树、BDD/ATDD/TDD、Workflow、局部 Skill/Tool、最小纵向实现和恢复计划。
+- **退出门禁**：Spec 精确绑定已通过合法 Decision Gate 且仍在当前需求基线中的功能需求 `version/content_hash`；`policy_certified` 必须引用当前认证，`human_signoff` 必须引用可验证人类决定；Spec/Task/Test/criterion 引用均可解析。工作包可执行、可暂停、可恢复，Task 无孤儿，Workflow 编排 Task，Skill/Tool 不隐藏控制流或声明权限。未批准、认证失效、意图不一致或不在 baseline 的需求必须 fail closed。
 - **Evidence**：静态实现检查、契约测试、Task 覆盖、依赖/授权校验和恢复演练计划；静态通过不自动提升为运行证明。
 - **失效条件**：Spec、判据、依赖、实现反证、权限或执行计划变化。
 - **重开目标**：实现或计划问题重开 S5；契约问题回 S4；方案问题回 S3。
 
 ## S6 — 验证与发布
 
-- **输入**：实现、测试计划、事前判据、审核策略包、认证测试集、授权快照和候选发布版本。
+- **输入**：实现、测试计划、事前验收覆盖矩阵与判据、审核策略包、认证测试集、授权快照和候选发布版本。
 - **产物**：测试 Run/Evidence、审核策略认证 Verdict、业务 Run/Evidence 包、Acceptance Verdict、发布/拒绝决定、失败与恢复记录、受限 Claim。
 - **退出门禁**：结构、语义、追溯、职责分离、新鲜度和声明所需证明边界全部通过；使用自动决策的审核策略认证当前有效；不可逆外部动作仍有独立人工授权；未知副作用保持阻断。
-- **Evidence**：不可改写 Run、逐判据 Evidence、独立 Verdict、环境/内容指纹、未覆盖范围和复现命令。
+- **Evidence**：不可改写 Run、实际 observation 与 pass/fail、逐判据 Evidence、独立 Verdict、环境/内容指纹、未覆盖范围和复现命令；不得把结果回填进 Behavior Case 或事前覆盖矩阵。
 - **失效条件**：测试失败、Evidence 过期、Verdict 撤销、发布拒绝、版本或环境指纹变化。
 - **重开目标**：实现失败回 S5，契约失败回 S4，架构错误回 S3，目标错误回 S0。
 

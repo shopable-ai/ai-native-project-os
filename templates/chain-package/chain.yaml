@@ -1,4 +1,5 @@
 schema_version: 1
+contract_ref: chain-package-contract@2
 chain_id: "{{chain_id}}"
 display_name: "{{chain_name}}"
 priority: "{{priority}}"
@@ -10,6 +11,10 @@ owners:
 path_types: [normal, exception, recovery]
 scenario_refs:
   - "{{scenario_ref}}"
+behavior_specification_ref: "scenarios.md#behavior-specification:{{behavior_spec_id}}"
+behavior_case_registry_ref: "scenarios.md#behavior-case-registry:*"
+test_space_model_ref: "acceptance.md#test-space-model:{{test_space_id}}"
+acceptance_coverage_ref: "acceptance.md#acceptance-coverage-matrix:*"
 trigger_refs:
   - "{{trigger_ref}}"
 diagram_policy:

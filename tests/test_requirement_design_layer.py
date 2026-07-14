@@ -210,7 +210,7 @@ class RequirementDesignAuthorityTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn(
-            "业务链路 → 能力树 → 功能树 → 功能级需求 → 决策门与需求基线 → ADR → 工程设计 → Spec",
+            "业务链路 → 能力树 → 功能树 → 功能级需求 → 决策门与需求基线 → 行为规格 → 按需 ADR → 测试空间/工程链路 → Spec",
             delivery,
         )
         self.assertIn("AI 生成的 draft 不能自行升格", delivery)

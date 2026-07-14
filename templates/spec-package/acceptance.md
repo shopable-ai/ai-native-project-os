@@ -2,6 +2,6 @@
 
 ## 验收判据
 
-| Criterion | Subject | Expected | Verification | Required proof level |
-|---|---|---|---|---|
-| `{{criterion_ref}}` | `{{subject_ref}}` | `{{expected_result}}` | `{{verification_command}}` | `{{required_proof_level}}` |
+| Criterion | Behavior Case Ref | Coverage Ref | Subject | Expected | Verification | Required proof level |
+|---|---|---|---|---|---|---|
+| `{{criterion_ref}}` | `{{behavior_case_ref}}` | `{{acceptance_coverage_ref}}` | `{{subject_ref}}` | `{{expected_result}}` | `{{verification_command}}` | `{{required_proof_level}}` |

@@ -37,6 +37,20 @@ class L2ProgressionDocumentTests(unittest.TestCase):
         )
         self.assertIn("docs/workflows/L2_PROGRESSION.md", readme)
 
+    def test_progression_places_behavior_specification_and_test_space_without_new_stages(self):
+        text = (ROOT / "docs/workflows/L2_PROGRESSION.md").read_text(encoding="utf-8")
+
+        self.assertIn("Behavior Specification", text)
+        self.assertIn("Behavior Case", text)
+        self.assertIn("Test Space Modeling", text)
+        self.assertIn("S3 只在存在架构选择时", text)
+        self.assertIn("稳定 Behavior Case ID", text)
+        self.assertIn("actual_result", text)
+        self.assertIn("Run/Evidence/Verdict/Claim", text)
+        self.assertIn("As-Is/To-Be", text)
+        self.assertNotIn("S2.5", text)
+        self.assertNotIn("S4.5", text)
+
 
 if __name__ == "__main__":
     unittest.main()

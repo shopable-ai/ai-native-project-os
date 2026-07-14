@@ -1,32 +1,127 @@
-# Spec 五件套的机器结构契约；任务内容只在每个 Spec 的 tasks.md 中维护。
+# Spec package v2 机器契约；S5 必须消费稳定 Behavior Case 与 S4 Coverage 引用。
 schema_version: 1
 contract_id: spec-package-contract
-version: 1
+version: 2
 template_root: templates/spec-package
 required_files:
   - README.md
+  - spec.yaml
   - spec.md
   - plan.md
   - tasks.md
   - acceptance.md
   - traceability.md
+required_fields:
+  spec.yaml:
+    - schema_version
+    - contract_ref
+    - spec_id
+    - behavior_specification_ref
+    - behavior_case_registry_ref
+    - acceptance_coverage_ref
+    - traceability_ref
+required_values:
+  spec.yaml:
+    contract_ref: spec-package-contract@2
 required_sections:
-  spec.md: [范围, 非目标, 约束, 失败状态]
+  spec.md: [Behavior Case References, 范围, 非目标, 约束, 失败状态]
   plan.md: [task_refs, 排序规则]
   tasks.md: [单个 Spec 任务的唯一权威, 任务]
   acceptance.md: [验收判据]
   traceability.md: [追溯]
+markdown_parsing:
+  dialect: commonmark_pipe_table_subset
+  heading_match: exact_text
+  table_selection: first_pipe_table_after_heading_before_next_heading
+  cell_normalization: trim_whitespace_and_single_backtick_wrapper
+  unescaped_pipe_or_row_width_mismatch: invalid_package
+  duplicate_section: invalid_package
+markdown_tables:
+  acceptance.md:
+    验收判据:
+      columns: [Criterion, Behavior Case Ref, Coverage Ref, Subject, Expected, Verification, Required proof level]
+      primary_key: Criterion
+      minimum_rows: 1
+  traceability.md:
+    追溯:
+      columns: [下游对象, 上游批准对象, 关系, 验收出口]
+      primary_key: 关系
+      minimum_rows: 1
+embedded_yaml:
+  spec.md:
+    section: Behavior Case References
+    required_fields: [behavior_case_refs, acceptance_coverage_refs]
+  tasks.md:
+    section: 任务
+    list_field: task_declarations
+    item_required_fields: [task_ref, source_ref, behavior_case_refs, acceptance_coverage_refs, owner_ref, output_ref, completion_condition, criterion_ref]
 task_authority:
   declaration_marker: task_declarations
   declarations_allowed_only_in: tasks.md
   reference_marker: task_refs
   references_allowed_in: plan.md
+behavior_reference_requirements:
+  spec_required_markers: [behavior_case_refs, acceptance_coverage_refs]
+  task_required_fields: [behavior_case_refs, acceptance_coverage_refs, criterion_ref]
+  acceptance_required_columns: [Behavior Case Ref, Coverage Ref]
+  traceability_required_relations: [implements_behavior]
+validation_profiles:
+  historical_read_v1:
+    allowed_contract_versions: [1]
+    stage_exit_allowed: false
+    package_shape_ref: historical_package_shapes.1
+  s2_exit:
+    allowed_contract_versions: [2]
+    delegated_to: chain-package-contract@2#s2_exit
+  s4_exit:
+    allowed_contract_versions: [2]
+    inherits: s2_exit
+    delegated_to: chain-package-contract@2#s4_exit
+  s5_exit:
+    allowed_contract_versions: [2]
+    inherits: s4_exit
+    required_markers: [behavior_case_refs, acceptance_coverage_refs, criterion_ref]
+    required_root_references: [behavior_specification_ref, behavior_case_registry_ref, acceptance_coverage_ref]
+profile_dispatch:
+  contract_ref_source: spec.yaml#contract_ref
+  validation_profile_source: stage_gate_invocation
+  implicit_profile_selection: forbidden
+  unknown_profile: invalid_package
+  profile_contract_mismatch: invalid_package
+  required_profile_fields:
+    historical_read_v1: [allowed_contract_versions, stage_exit_allowed, package_shape_ref]
+    s2_exit: [allowed_contract_versions, delegated_to]
+    s4_exit: [allowed_contract_versions, inherits, delegated_to]
+    s5_exit: [allowed_contract_versions, inherits, required_markers, required_root_references]
+reference_integrity:
+  canonical_form: path#section:key
+  unresolved_reference: invalid_package
+  duplicate_reference: invalid_package
+  orphan_task_or_test: blocked
+cross_package_reference_rules:
+  source_contract_ref: chain-package-contract@2
+  behavior_case_source: scenarios.md#Behavior Case Registry.case_id
+  coverage_source: acceptance.md#Acceptance Coverage Matrix.coverage_id
+  behavior_specification_source: scenarios.md#Behavior Specification.behavior_spec_id
 failure_semantics:
   mode: fail_closed
   missing_required_file: invalid_package
   missing_required_section: invalid_package
   unresolved_task_ref: blocked
+  unresolved_behavior_or_coverage_ref: invalid_package
 compatibility:
   minimum_project_os_schema_version: 3
-  template_contract_version: 1
+  template_contract_version: 2
+  historical_read_contract_versions: [1, 2]
+  stage_exit_contract_versions: [2]
   breaking_change_requires_major_version: true
+  migration: v1_packages_are_historical_read_only_and_require_v2_revision_for_new_stage_exit
+historical_package_shapes:
+  1:
+    required_files: [README.md, spec.md, plan.md, tasks.md, acceptance.md, traceability.md]
+    required_sections:
+      spec.md: [范围, 非目标, 约束, 失败状态]
+      plan.md: [task_refs, 排序规则]
+      tasks.md: [单个 Spec 任务的唯一权威, 任务]
+      acceptance.md: [验收判据]
+      traceability.md: [追溯]

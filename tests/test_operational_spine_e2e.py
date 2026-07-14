@@ -119,7 +119,15 @@ def build_registry(root: Path) -> tuple[dict[str, dict[str, Any]], dict[str, Pat
             version = record.get("contract_version") or record.get("policy_version") or record.get("version")
             if not isinstance(authority_id, str) or not isinstance(version, int):
                 continue
-            for alias in (authority_id, f"{authority_id}@{version}"):
+            compatibility = record.get("compatibility")
+            historical_versions = (
+                compatibility.get("historical_read_contract_versions", [])
+                if isinstance(compatibility, dict)
+                else []
+            )
+            readable_versions = {version, *historical_versions}
+            aliases = [authority_id, *(f"{authority_id}@{item}" for item in sorted(readable_versions))]
+            for alias in aliases:
                 if alias in registry:
                     raise AssertionError(f"duplicate authority alias: {alias}")
                 registry[alias] = record
@@ -914,6 +922,8 @@ class OperationalSpineFixtureTests(unittest.TestCase):
         cls.registry, cls.origins = build_registry(POSITIVE)
 
     def test_positive_registry_resolves_every_reference_and_closes_spine(self) -> None:
+        self.assertIn("chain-package-contract@1", self.registry)
+        self.assertIn("spec-package-contract@1", self.registry)
         unresolved = sorted(
             (key, ref)
             for path in sorted(POSITIVE.rglob("*.yaml"))

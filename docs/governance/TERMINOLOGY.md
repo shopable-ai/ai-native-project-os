@@ -156,6 +156,21 @@ term-id: `task-tree`
 
 从已批准 Spec 与验收判据生成的执行依赖图。单个 Spec 的 `tasks.md` 是该 Spec 的任务权威，跨 Spec 总树只能是可重建视图。
 
+### 行为规格
+term-id: `behavior-specification`
+
+在 S2 从已批准 Requirement、场景和业务链路形成的执行前规格，说明为什么做、用户或调用方应观察到什么、行为规则、非目标、责任、假设与未知。Specification by Example 和 Example Mapping 可用于消除歧义；它们不把行为规格变成测试结果，也不替代 S5 的 TDD。
+
+### 行为案例
+term-id: `behavior-case`
+
+隶属于父级行为规格、具有稳定 `case_id` 的代表性主路径、边界、反例或失败恢复目标。案例只保存执行前的用户可观察期望和覆盖目标；代码、测试、原因假设或实际结果变化不改变 `case_id`，只有批准的用户目标、范围或期望行为变化才升级父级行为规格版本。
+
+### 测试空间建模
+term-id: `test-space-modeling`
+
+在 S4 从已批准语义清单、行为规则、等价类、边界、决策条件、组合约束和失败恢复系统派生验收覆盖的活动。它可使用 Equivalence Partitioning、Boundary Value Analysis、Decision Table、Pairwise/Combinatorial、Contrastive/Metamorphic Testing；产物是事前覆盖设计与证明上限，不是 Run、Evidence 或通过结论。
+
 ## 3. 执行资产
 
 ### Workflow

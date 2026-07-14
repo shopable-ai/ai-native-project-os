@@ -1,5 +1,14 @@
 # {{spec_id}} 规格
 
+## Behavior Case References
+
+```yaml
+behavior_case_refs:
+  - "{{behavior_case_ref}}"
+acceptance_coverage_refs:
+  - "{{acceptance_coverage_ref}}"
+```
+
 ## 范围
 
 `{{scope_statement}}`

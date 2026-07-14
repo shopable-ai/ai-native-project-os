@@ -1,4 +1,7 @@
 import importlib.util
+import re
+import shutil
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -23,6 +26,134 @@ class OperationalSpineCheckerTests(unittest.TestCase):
 
     def assert_rule(self, findings, rule):
         self.assertIn(rule, {finding.rule for finding in findings})
+
+    def mutated_chain_package_findings(self, mutate):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            contract_dir = root / "contracts" / "artifacts"
+            contract_dir.mkdir(parents=True)
+            shutil.copy2(
+                REPO_ROOT / "contracts/artifacts/chain-package-contract.yaml",
+                contract_dir / "chain-package-contract.yaml",
+            )
+            shutil.copytree(
+                REPO_ROOT / "templates/chain-package",
+                root / "templates/chain-package",
+            )
+            mutate(root)
+            return self.findings("check_c9_template_packages", root)
+
+    def mutated_spec_package_findings(self, mutate):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            contract_dir = root / "contracts" / "artifacts"
+            contract_dir.mkdir(parents=True)
+            for filename in (
+                "chain-package-contract.yaml",
+                "spec-package-contract.yaml",
+            ):
+                shutil.copy2(
+                    REPO_ROOT / "contracts/artifacts" / filename,
+                    contract_dir / filename,
+                )
+            shutil.copytree(
+                REPO_ROOT / "templates/chain-package",
+                root / "templates/chain-package",
+            )
+            shutil.copytree(
+                REPO_ROOT / "templates/spec-package",
+                root / "templates/spec-package",
+            )
+            mutate(root)
+            return self.findings("check_c9_template_packages", root)
+
+    def render_chain_package(self, package, *, case_type="main_path", include_oracle=False):
+        shutil.copytree(REPO_ROOT / "templates/chain-package", package)
+        values = {
+            "behavior_spec_id": "BS-1",
+            "behavior_spec_version": "1",
+            "behavior_case_id": "BC-1",
+            "behavior_case_type": case_type,
+            "behavior_case_ref": "BC-1",
+            "test_space_id": "TS-1",
+            "coverage_id": "COV-1",
+            "coverage_ref": "COV-1",
+            "combination_id": "COMB-1",
+            "dimension_id": "dimension",
+            "dimension_value": "member",
+            "generator_kind": "covering_array",
+            "interaction_strength": "2",
+            "generation_budget": "16",
+            "coverage_status": "planned",
+            "derivation_status": "derived",
+            "case_relation": "positive",
+            "inventory_partition_ref": "PART-1",
+            "inventory_member_ref": "MEMBER-1",
+            "coverage_obligation_id": "OBL-1",
+            "case_type": case_type,
+            "requirement_ref": "REQ-1",
+            "semantic_inventory_ref": "INV-1@hash",
+            "behavior_spec_ref": "BS-1",
+            "acceptance_coverage_ref": "COV-1",
+            "pre_failure_state": "PRE",
+            "failure_terminal": "FAILED",
+            "recovery_action": "RECOVER",
+            "post_recovery_invariants": "STABLE",
+            "idempotency_or_side_effect_oracle": "IDEMPOTENT",
+            "compensation_ref": "NONE",
+        }
+        pattern = re.compile(r"{{([a-zA-Z0-9_]+)}}")
+        for path in package.rglob("*"):
+            if not path.is_file():
+                continue
+            text = path.read_text(encoding="utf-8")
+            text = pattern.sub(lambda match: values.get(match.group(1), "value"), text)
+            path.write_text(text, encoding="utf-8")
+
+        acceptance = package / "acceptance.md"
+        text = acceptance.read_text(encoding="utf-8")
+        text = text.replace(
+            '{"dimension":["member"]}',
+            '{"locale":["a","b"],"surface":["api","ui"]}',
+            1,
+        )
+        source_row = (
+            '| `COMB-1` | `TS-1` | `{"dimension":"member"}` | `value` | `derived` |'
+        )
+        combination_rows = "\n".join(
+            f'| `COMB-{index}` | `TS-1` | `{{"locale":"{locale}","surface":"{surface}"}}` | `INV-1@hash` | `derived` |'
+            for index, (locale, surface) in enumerate(
+                (("a", "api"), ("a", "ui"), ("b", "api"), ("b", "ui")),
+                1,
+            )
+        )
+        text = text.replace(source_row, combination_rows, 1)
+        oracle_row = (
+            "| `COV-1` | `PRE` | `FAILED` | `RECOVER` | `STABLE` | `IDEMPOTENT` | `NONE` |"
+        )
+        if not include_oracle:
+            text = text.replace(oracle_row + "\n", "", 1)
+        acceptance.write_text(text, encoding="utf-8")
+
+    def render_spec_package(self, package):
+        shutil.copytree(REPO_ROOT / "templates/spec-package", package)
+        values = {
+            "spec_id": "SPEC-1",
+            "behavior_specification_ref": "BS-1",
+            "behavior_case_registry_ref": "scenarios.md#behavior-case-registry:*",
+            "behavior_case_ref": "BC-1",
+            "acceptance_coverage_ref": "COV-1",
+            "criterion_ref": "CRIT-1",
+            "requirement_ref": "REQ-1",
+            "task_ref": "TASK-1",
+        }
+        pattern = re.compile(r"{{([a-zA-Z0-9_]+)}}")
+        for path in package.rglob("*"):
+            if not path.is_file():
+                continue
+            text = path.read_text(encoding="utf-8")
+            text = pattern.sub(lambda match: values.get(match.group(1), "value"), text)
+            path.write_text(text, encoding="utf-8")
 
     def test_c8_accepts_complete_stage_gate_contract(self):
         self.assertEqual(self.findings("check_c8_stage_gate_contract", VALID), [])
@@ -121,6 +252,336 @@ class OperationalSpineCheckerTests(unittest.TestCase):
         files = contract_files + [path for path in (REPO_ROOT / "templates").rglob("*") if path.is_file()]
         self.assertEqual(checker.check_c9_template_packages(REPO_ROOT, files), [])
 
+    def test_c9_rejects_markdown_table_column_drift(self):
+        def mutate(root):
+            path = root / "templates/chain-package/scenarios.md"
+            text = path.read_text(encoding="utf-8")
+            path.write_text(text.replace(" | `coverage_target` |", " |", 1), encoding="utf-8")
+
+        findings = self.mutated_chain_package_findings(mutate)
+        self.assertTrue(
+            any(
+                "Behavior Case Registry" in item.message
+                and ("columns" in item.message or "separator" in item.message)
+                for item in findings
+            )
+        )
+
+    def test_c9_rejects_duplicate_markdown_primary_key(self):
+        def mutate(root):
+            path = root / "templates/chain-package/scenarios.md"
+            text = path.read_text(encoding="utf-8")
+            row = "| `{{behavior_case_id}}` | `{{requirement_ref}}` | `{{behavior_case_type}}` | `{{representative_scenario_or_trigger}}` | `{{expected_user_observable_behavior}}` | `{{coverage_target}}` |"
+            path.write_text(text.replace(row, f"{row}\n{row}", 1), encoding="utf-8")
+
+        findings = self.mutated_chain_package_findings(mutate)
+        self.assertTrue(any("duplicate primary key" in item.message for item in findings))
+
+    def test_c9_rejects_duplicate_declared_markdown_section(self):
+        def mutate(root):
+            path = root / "templates/chain-package/scenarios.md"
+            path.write_text(
+                path.read_text(encoding="utf-8") + "\n## Behavior Case Registry\n",
+                encoding="utf-8",
+            )
+
+        findings = self.mutated_chain_package_findings(mutate)
+        self.assertTrue(any("duplicate section" in item.message for item in findings))
+
+    def test_c9_rejects_invalid_markdown_enum_value(self):
+        def mutate(root):
+            path = root / "templates/chain-package/scenarios.md"
+            text = path.read_text(encoding="utf-8")
+            path.write_text(text.replace("`{{behavior_case_type}}`", "`unsupported_type`", 1), encoding="utf-8")
+
+        findings = self.mutated_chain_package_findings(mutate)
+        self.assertTrue(any("case_type" in item.message and "allowed enum" in item.message for item in findings))
+
+    def test_c9_rejects_unresolved_canonical_root_reference(self):
+        def mutate(root):
+            path = root / "templates/chain-package/chain.yaml"
+            text = path.read_text(encoding="utf-8")
+            path.write_text(text.replace("scenarios.md#behavior-specification", "scenarios.md#missing-section", 1), encoding="utf-8")
+
+        findings = self.mutated_chain_package_findings(mutate)
+        self.assertTrue(any("unresolved canonical reference" in item.message for item in findings))
+
+    def test_c9_profile_dispatch_is_explicit_and_contract_versioned(self):
+        contract = yaml.safe_load(
+            (REPO_ROOT / "contracts/artifacts/chain-package-contract.yaml").read_text(encoding="utf-8")
+        )
+        self.assertEqual(
+            checker.validate_profile_dispatch(contract, "chain-package-contract@2", "s4_exit"),
+            [],
+        )
+        mismatch = checker.validate_profile_dispatch(
+            contract, "chain-package-contract@2", "historical_read_v1"
+        )
+        unknown = checker.validate_profile_dispatch(
+            contract, "chain-package-contract@2", "implicit_default"
+        )
+        self.assertTrue(any("profile_contract_mismatch" in message for message in mismatch))
+        self.assertTrue(any("unknown_profile" in message for message in unknown))
+
+    def test_c9_profile_schema_rejects_removed_stage_required_tables(self):
+        def mutate(root):
+            path = root / "contracts/artifacts/chain-package-contract.yaml"
+            contract = yaml.safe_load(path.read_text(encoding="utf-8"))
+            del contract["validation_profiles"]["s4_exit"]["required_tables"]
+            path.write_text(
+                yaml.safe_dump(contract, allow_unicode=True, sort_keys=False),
+                encoding="utf-8",
+            )
+
+        findings = self.mutated_chain_package_findings(mutate)
+        self.assertTrue(
+            any("s4_exit" in item.message and "required_tables" in item.message for item in findings)
+        )
+
+    def test_c9_spec_rejects_task_without_behavior_case_refs(self):
+        def mutate(root):
+            path = root / "templates/spec-package/tasks.md"
+            text = path.read_text(encoding="utf-8")
+            path.write_text(
+                text.replace(
+                    '    behavior_case_refs:\n      - "{{behavior_case_ref}}"\n',
+                    "",
+                    1,
+                ),
+                encoding="utf-8",
+            )
+
+        findings = self.mutated_spec_package_findings(mutate)
+        self.assertTrue(any("behavior_case_refs" in item.message for item in findings))
+
+    def test_c9_spec_rejects_orphan_cross_package_coverage_ref(self):
+        def mutate(root):
+            path = root / "templates/spec-package/acceptance.md"
+            text = path.read_text(encoding="utf-8")
+            path.write_text(
+                text.replace("`{{acceptance_coverage_ref}}`", "`COV-ORPHAN`", 1),
+                encoding="utf-8",
+            )
+
+        findings = self.mutated_spec_package_findings(mutate)
+        self.assertTrue(
+            any("COV-ORPHAN" in item.message and "unresolved" in item.message for item in findings)
+        )
+
+    def test_package_profile_reads_real_v1_shape_but_blocks_stage_exit(self):
+        contract = yaml.safe_load(
+            (REPO_ROOT / "contracts/artifacts/chain-package-contract.yaml").read_text(encoding="utf-8")
+        )
+        with tempfile.TemporaryDirectory() as temp_dir:
+            package = Path(temp_dir)
+            shape = contract["historical_package_shapes"][1]
+            for filename in shape["required_files"]:
+                path = package / filename
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("", encoding="utf-8")
+            (package / "chain.yaml").write_text(
+                "schema_version: 1\nchain_id: CHAIN-V1\npriority: p1\nowners: {}\n"
+                "path_types: [normal, exception, recovery]\nscenario_refs: [SC-1]\n"
+                "trigger_refs: [TR-1]\ndiagram_policy:\n  required_priorities: [p0, p1]\n"
+                "  requirement: required\n",
+                encoding="utf-8",
+            )
+            (package / "triggers.yaml").write_text(
+                "schema_version: 1\nchain_ref: CHAIN-V1\ntrigger_profiles: []\n",
+                encoding="utf-8",
+            )
+            (package / "io-map.yaml").write_text(
+                "schema_version: 1\nchain_ref: CHAIN-V1\nproducer: P\nconsumer: C\ninputs: []\noutputs: []\n",
+                encoding="utf-8",
+            )
+            for filename, sections in shape["required_sections"].items():
+                (package / filename).write_text(
+                    "\n".join(f"## {section}" for section in sections) + "\n",
+                    encoding="utf-8",
+                )
+
+            self.assertEqual(
+                checker.validate_package_profile(
+                    contract,
+                    package,
+                    "chain-package-contract@1",
+                    "historical_read_v1",
+                ),
+                [],
+            )
+            errors = checker.validate_package_profile(
+                contract, package, "chain-package-contract@1", "s2_exit"
+            )
+            self.assertTrue(any("profile_contract_mismatch" in message for message in errors))
+
+    def test_spec_profile_reads_real_v1_shape_but_blocks_stage_exit(self):
+        contract = yaml.safe_load(
+            (REPO_ROOT / "contracts/artifacts/spec-package-contract.yaml").read_text(encoding="utf-8")
+        )
+        with tempfile.TemporaryDirectory() as temp_dir:
+            package = Path(temp_dir)
+            shape = contract["historical_package_shapes"][1]
+            for filename in shape["required_files"]:
+                path = package / filename
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("", encoding="utf-8")
+            for filename, sections in shape["required_sections"].items():
+                (package / filename).write_text(
+                    "\n".join(f"## {section}" for section in sections) + "\n",
+                    encoding="utf-8",
+                )
+            self.assertEqual(
+                checker.validate_package_profile(
+                    contract,
+                    package,
+                    "spec-package-contract@1",
+                    "historical_read_v1",
+                ),
+                [],
+            )
+            errors = checker.validate_package_profile(
+                contract, package, "spec-package-contract@1", "s5_exit"
+            )
+            self.assertTrue(any("profile_contract_mismatch" in message for message in errors))
+
+    def test_real_package_profile_rejects_unresolved_template_placeholders(self):
+        contract = yaml.safe_load(
+            (REPO_ROOT / "contracts/artifacts/chain-package-contract.yaml").read_text(encoding="utf-8")
+        )
+        with tempfile.TemporaryDirectory() as temp_dir:
+            package = Path(temp_dir) / "chain"
+            shutil.copytree(REPO_ROOT / "templates/chain-package", package)
+            errors = checker.validate_package_profile(
+                contract, package, "chain-package-contract@2", "s2_exit"
+            )
+            self.assertTrue(any("unresolved template placeholder" in message for message in errors))
+
+    def test_s4_profile_recomputes_pair_obligations_when_dimension_domain_changes(self):
+        contract = yaml.safe_load(
+            (REPO_ROOT / "contracts/artifacts/chain-package-contract.yaml").read_text(encoding="utf-8")
+        )
+        with tempfile.TemporaryDirectory() as temp_dir:
+            package = Path(temp_dir) / "chain"
+            self.render_chain_package(package)
+            self.assertEqual(
+                checker.validate_package_profile(
+                    contract, package, "chain-package-contract@2", "s4_exit"
+                ),
+                [],
+            )
+            acceptance = package / "acceptance.md"
+            text = acceptance.read_text(encoding="utf-8").replace(
+                '"locale":["a","b"]',
+                '"locale":["a","b","c"]',
+                1,
+            )
+            acceptance.write_text(text, encoding="utf-8")
+            errors = checker.validate_package_profile(
+                contract, package, "chain-package-contract@2", "s4_exit"
+            )
+            self.assertTrue(any("locale=\"c\"" in message for message in errors))
+
+    def test_s4_profile_recomputes_per_member_obligations_when_inventory_changes(self):
+        contract = yaml.safe_load(
+            (REPO_ROOT / "contracts/artifacts/chain-package-contract.yaml").read_text(encoding="utf-8")
+        )
+        with tempfile.TemporaryDirectory() as temp_dir:
+            package = Path(temp_dir) / "chain"
+            self.render_chain_package(package)
+            acceptance = package / "acceptance.md"
+            text = acceptance.read_text(encoding="utf-8").replace(
+                '{"PART-1":["MEMBER-1"]}',
+                '{"PART-1":["MEMBER-1","MEMBER-2"]}',
+                1,
+            )
+            acceptance.write_text(text, encoding="utf-8")
+            errors = checker.validate_package_profile(
+                contract, package, "chain-package-contract@2", "s4_exit"
+            )
+            self.assertTrue(
+                any("OBL-1/MEMBER-2/positive" in message for message in errors)
+            )
+
+    def test_s5_spec_profile_executes_chain_prerequisite_and_cross_package_refs(self):
+        chain_contract = yaml.safe_load(
+            (REPO_ROOT / "contracts/artifacts/chain-package-contract.yaml").read_text(encoding="utf-8")
+        )
+        spec_contract = yaml.safe_load(
+            (REPO_ROOT / "contracts/artifacts/spec-package-contract.yaml").read_text(encoding="utf-8")
+        )
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            chain_package = root / "chain"
+            spec_package = root / "spec"
+            self.render_chain_package(chain_package)
+            self.render_spec_package(spec_package)
+            related = {"chain-package-contract@2": (chain_contract, chain_package)}
+            self.assertEqual(
+                checker.validate_package_profile(
+                    spec_contract,
+                    spec_package,
+                    "spec-package-contract@2",
+                    "s5_exit",
+                    related,
+                ),
+                [],
+            )
+
+            tasks = spec_package / "tasks.md"
+            tasks.write_text(
+                tasks.read_text(encoding="utf-8").replace("BC-1", "BC-ORPHAN", 1),
+                encoding="utf-8",
+            )
+            errors = checker.validate_package_profile(
+                spec_contract,
+                spec_package,
+                "spec-package-contract@2",
+                "s5_exit",
+                related,
+            )
+            self.assertTrue(
+                any("unresolved Behavior Case reference: BC-ORPHAN" in message for message in errors)
+            )
+
+    def test_failure_recovery_oracle_is_conditional_and_cross_table_checked(self):
+        contract = yaml.safe_load(
+            (REPO_ROOT / "contracts/artifacts/chain-package-contract.yaml").read_text(encoding="utf-8")
+        )
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            main_path_package = root / "main"
+            self.render_chain_package(main_path_package, case_type="main_path", include_oracle=False)
+            self.assertEqual(
+                checker.validate_package_profile(
+                    contract, main_path_package, "chain-package-contract@2", "s4_exit"
+                ),
+                [],
+            )
+
+            recovery_package = root / "recovery"
+            self.render_chain_package(
+                recovery_package,
+                case_type="failure_recovery",
+                include_oracle=False,
+            )
+            errors = checker.validate_package_profile(
+                contract, recovery_package, "chain-package-contract@2", "s4_exit"
+            )
+            self.assertTrue(any("failure_recovery coverage has no oracle" in message for message in errors))
+
+            complete_package = root / "complete"
+            self.render_chain_package(
+                complete_package,
+                case_type="failure_recovery",
+                include_oracle=True,
+            )
+            self.assertEqual(
+                checker.validate_package_profile(
+                    contract, complete_package, "chain-package-contract@2", "s4_exit"
+                ),
+                [],
+            )
+
     def test_c10_accepts_exact_terminology_manifest(self):
         self.assertEqual(self.findings("check_c10_terminology_authority", VALID), [])
 
@@ -174,6 +635,12 @@ class OperationalSpineCheckerTests(unittest.TestCase):
         root = FIXTURES / "checker-negative" / "contract-version-mismatch"
         findings = self.findings("check_c11_authority_and_contract_references", root)
         self.assertTrue(any("sample-contract@1" in finding.message for finding in findings))
+
+    def test_c11_accepts_versions_explicitly_declared_historical_read_only(self):
+        findings = self.findings("check_c11_authority_and_contract_references", REPO_ROOT)
+        messages = [finding.message for finding in findings]
+        self.assertFalse(any("chain-package-contract@1" in message for message in messages))
+        self.assertFalse(any("spec-package-contract@1" in message for message in messages))
 
     def test_c11_rejects_duplicate_contract_id(self):
         root = FIXTURES / "checker-negative" / "contract-id-duplicate"

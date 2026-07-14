@@ -10,6 +10,10 @@
 task_declarations:
   - task_ref: "{{task_ref}}"
     source_ref: "{{requirement_ref}}"
+    behavior_case_refs:
+      - "{{behavior_case_ref}}"
+    acceptance_coverage_refs:
+      - "{{acceptance_coverage_ref}}"
     owner_ref: "{{owner_ref}}"
     output_ref: "{{output_ref}}"
     completion_condition: "{{completion_condition}}"

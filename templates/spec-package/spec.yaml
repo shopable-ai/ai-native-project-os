@@ -1,0 +1,7 @@
+schema_version: 1
+contract_ref: spec-package-contract@2
+spec_id: "{{spec_id}}"
+behavior_specification_ref: "{{behavior_specification_ref}}"
+behavior_case_registry_ref: "{{behavior_case_registry_ref}}"
+acceptance_coverage_ref: "{{acceptance_coverage_ref}}"
+traceability_ref: traceability.md
