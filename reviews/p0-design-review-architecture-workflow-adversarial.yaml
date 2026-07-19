@@ -21,7 +21,7 @@ records:
   - review_id: ARCH-002
     reviewer_role: 总体架构师
     attacked_assumption: "写出层级契约文档后，L1/L2/L3 边界、兼容和资产升格就自然成为权威规则。"
-    affected_artifact: "project-os.yaml；README.zh-CN.md；docs/architecture/REPOSITORY_AND_LAYER_CONTRACT.md"
+    affected_artifact: "project-os.yaml；README.md；docs/architecture/REPOSITORY_AND_LAYER_CONTRACT.md"
     severity: P0
     evidence: "project-os.yaml 尚未登记新层级契约；README 把 projects/{project_id}/ 表述为本仓通用落点；层级契约示例与顶层 schema_version 不一致。这些会使消费者无法确定真实层级、落点和兼容语义。"
     proposed_change: "先统一 schema/协议版本和真实目录事实，再将层级契约登记为唯一权威；README 改为 L3 位于 L2 定义的项目 namespace。保留 L3→L2→L1 单向依赖，并把 project-os.lock、迁移失败关闭、资产升格/降级/过期/替代规则纳入兼容契约；不得为未来职责预建空目录。"

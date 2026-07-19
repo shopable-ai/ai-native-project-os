@@ -13,7 +13,7 @@ scope:
   - tests/test_requirement_design_layer.py
   - reviews/current-score-status.yaml
   - project-os.yaml
-  - README.zh-CN.md
+  - README.md
 commands:
   focused: python3 -m unittest tests.test_requirement_design_layer -v
   full: python3 -m unittest discover -s tests -v

@@ -57,7 +57,7 @@
 ### Task 4: 修正入口、决策和研究语义
 
 **Files:**
-- Modify: `README.zh-CN.md`
+- Modify: `README.md`
 - Modify: `decisions/ADR-0001-standard-profile-thin-kernel.md`
 - Create: `decisions/ADR-0002-separate-framework-edition-and-project-governance.md`
 - Modify: `docs/research/RESEARCH_WORKFLOW.md`

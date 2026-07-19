@@ -12,7 +12,7 @@
 
 ## 阅读顺序
 
-1. `README.zh-CN.md`
+1. `README.md`
 2. `project-os.yaml`
 3. 本次任务对应的唯一权威文件
 4. 必要时再读取其直接引用

@@ -195,7 +195,7 @@ class RequirementDesignAuthorityTests(unittest.TestCase):
             "docs/workflows/REQUIREMENT_DESIGN_WORKFLOW.md",
         )
         self.assertIn("REQUIREMENT_DESIGN_WORKFLOW.md", (ROOT / "AGENTS.md").read_text(encoding="utf-8"))
-        self.assertIn("需求设计工作流", (ROOT / "README.zh-CN.md").read_text(encoding="utf-8"))
+        self.assertIn("需求设计工作流", (ROOT / "README.md").read_text(encoding="utf-8"))
 
     def test_human_ai_reasoning_flow_uses_decision_gate_before_spec_and_execution(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
@@ -397,7 +397,7 @@ class RequirementDesignEvidenceTests(unittest.TestCase):
             self.assertEqual(current["hard_gates"][gate], "unmet")
 
     def test_readme_separates_static_requirement_proof_from_real_capability(self):
-        readme = (ROOT / "README.zh-CN.md").read_text(encoding="utf-8")
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
         for token in ("86.4", "96.4", "97.6", "非官方"):
             self.assertIn(token, readme)
         for token in (

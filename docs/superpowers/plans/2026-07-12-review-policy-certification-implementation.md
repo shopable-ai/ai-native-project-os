@@ -43,7 +43,7 @@
 - Modify: `docs/governance/TERMINOLOGY.md`
 - Modify: `docs/workflows/STAGE_EXIT_GATES.md`
 - Modify: `project-os.yaml`
-- Modify: `AGENTS.md`, `README.zh-CN.md`
+- Modify: `AGENTS.md`, `README.md`
 - Test: `tests/test_review_policy_certification.py`
 
 **步骤：**
@@ -152,7 +152,7 @@
 - Modify: `docs/governance/RUN_EVIDENCE_ACCEPTANCE.md`
 - Create: `reviews/review-policy-certification-static-evidence.yaml`
 - Modify: `reviews/current-score-status.yaml`
-- Modify: `project-os.yaml`, `README.zh-CN.md`
+- Modify: `project-os.yaml`, `README.md`
 - Extend: `tests/test_review_policy_certification.py`
 
 **步骤：**

@@ -53,7 +53,7 @@ class ReviewPolicyCertificationAuthorityTests(unittest.TestCase):
         )
         self.assertIn(
             "审核策略认证",
-            (ROOT / "README.zh-CN.md").read_text(encoding="utf-8"),
+            (ROOT / "README.md").read_text(encoding="utf-8"),
         )
 
     def test_terms_are_unique_and_registered_without_new_state_axis(self):
@@ -424,7 +424,7 @@ class ReviewPolicyCertificationInvalidationAndScoreTests(unittest.TestCase):
         self.assertIn("general_95_plus", project["claim_limits"]["forbidden"])
 
     def test_readme_reports_static_certification_and_explicit_unproven_layers(self):
-        text = (ROOT / "README.zh-CN.md").read_text(encoding="utf-8")
+        text = (ROOT / "README.md").read_text(encoding="utf-8")
         for token in (
             "审核策略认证静态闭环",
             "三条正例",

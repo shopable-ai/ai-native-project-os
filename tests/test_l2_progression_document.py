@@ -29,7 +29,7 @@ class L2ProgressionDocumentTests(unittest.TestCase):
 
     def test_l2_progression_is_registered_as_an_authority_entry(self):
         project_os = yaml.safe_load((ROOT / "project-os.yaml").read_text(encoding="utf-8"))
-        readme = (ROOT / "README.zh-CN.md").read_text(encoding="utf-8")
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
         self.assertEqual(
             project_os["authority"]["l2_progression"],

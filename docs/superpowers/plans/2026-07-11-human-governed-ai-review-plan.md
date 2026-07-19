@@ -311,7 +311,7 @@ git commit -m "Separate rule governance from automated review and action authori
 - Modify: `policies/acceptance-verdict-claim-contract.yaml`
 - Modify: `policies/authorization-snapshot-contract.yaml`
 - Modify: `project-os.yaml`
-- Modify: `README.zh-CN.md`
+- Modify: `README.md`
 - Modify: `templates/standard-project/README.md`
 - Modify: `templates/brownfield-project/README.md`
 - Create: `templates/standard-project/governance/rules/审核规则集说明.md`
@@ -351,7 +351,7 @@ Expected: `yaml-ok`.
 - [ ] **Step 6: Commit policy and template alignment**
 
 ```bash
-git add -- policies/control-set-contract.yaml policies/project-governance-routing.yaml policies/acceptance-verdict-claim-contract.yaml policies/authorization-snapshot-contract.yaml project-os.yaml README.zh-CN.md templates/standard-project/README.md templates/brownfield-project/README.md templates/standard-project/governance/rules tests/test_ai_review_governance_contracts.py
+git add -- policies/control-set-contract.yaml policies/project-governance-routing.yaml policies/acceptance-verdict-claim-contract.yaml policies/authorization-snapshot-contract.yaml project-os.yaml README.md templates/standard-project/README.md templates/brownfield-project/README.md templates/standard-project/governance/rules tests/test_ai_review_governance_contracts.py
 git commit -m "Publish human-governed review rules as reusable project controls"
 ```
 

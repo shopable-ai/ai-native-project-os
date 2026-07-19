@@ -20,7 +20,7 @@ scope:
   - tests/test_operational_spine_checker.py
   - reviews/current-score-status.yaml
   - project-os.yaml
-  - README.zh-CN.md
+  - README.md
 commands:
   focused_authority_contract_template_and_score: python3 -m unittest tests.test_review_policy_certification
   focused_c14_and_template: python3 -m unittest tests.test_review_policy_certification.ReviewPolicyCertificationTemplateTests tests.test_operational_spine_checker

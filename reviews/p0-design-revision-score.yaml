@@ -98,7 +98,7 @@ dimensions:
     target_score: 93
     current_evidence_score: 92
     basis: 稳定英文标识配中文解释，README 提供分层阅读入口
-    files: [README.zh-CN.md, project-os.yaml]
+    files: [README.md, project-os.yaml]
     verification: placeholder and Markdown link validation
     open_items: [尚无从机器 Schema 自动生成的中文视图]
 

@@ -25,7 +25,7 @@
 
 ### 需要修正
 
-- `README.zh-CN.md`：历史 84 分、“预计 89/92”、Phase 0 已完成和具体 L2 当前位置均与 `not_evaluated`、通用 L1 边界冲突。
+- `README.md`：历史 84 分、“预计 89/92”、Phase 0 已完成和具体 L2 当前位置均与 `not_evaluated`、通用 L1 边界冲突。
 - `docs/workflows/IMPLEMENTATION_PLAN.md`：L1 实施计划位置错误、使用旧评分口径并绑定具体 L2；内容迁入本计划的审计记录后，旧草稿保存为明确标记 `superseded` 的历史计划，不再作为 workflow 权威。
 - `reviews/phase0-checker-evidence.yaml`：记录的 55 文件/EXIT=0 已被当前 74 文件扫描和 2 个 P1 推翻，只能保留为失效历史证据，不能作为当前评分入口。
 - `linters/check_controlled_objects.py` 的 C4 豁免：通过文件名豁免具体业务路径会隐藏 L1 污染；改为结构化占位符与 fixture 范围处理。
@@ -48,7 +48,7 @@
 - Create: `docs/workflows/PROJECT_DELIVERY_WORKFLOW.md`
 - Create: `docs/workflows/STAGE_EXIT_GATES.md`
 - Create: `docs/governance/TERMINOLOGY.md`
-- Modify: `README.zh-CN.md`
+- Modify: `README.md`
 - Modify: `project-os.yaml`
 - Modify: `docs/workflows/L2_ONBOARDING.md`
 - Modify: `docs/governance/DIAGRAM_CONVENTIONS.md`
@@ -275,7 +275,7 @@
 - Create: `fixtures/operational-spine/negative/missing-reopen-target/recovery.yaml`
 - Create: `tests/test_operational_spine_e2e.py`
 - Create: `reviews/operational-spine-static-and-fixture-evidence.yaml`
-- Modify: `README.zh-CN.md`
+- Modify: `README.md`
 - Modify: `project-os.yaml`
 
 - [ ] **Step 1: 写端到端追溯和恢复失败测试**
@@ -330,5 +330,5 @@
 - 不可声明：当前总体评分 95+、通用跨项目已证明、第二异构 L2 已验证、本地真实运行已证明、只读真实预检已通过或生产就绪。
 - 当前总体评分保持 `not_evaluated`；`95.93` 只写作批准方案 B 的目标设计分。
 - `cross_project_isolation` 与 `second_heterogeneous_l2` 保持未满足硬门禁，不得由匿名 fixture 推导为已完成。
-- 最终用户无需通过阅读测试或控制文件判断结果；主要验收入口是 `README.zh-CN.md`、`docs/architecture/AI_PROJECT_OS_OVERVIEW.md` 和 `docs/workflows/PROJECT_DELIVERY_WORKFLOW.md`。
+- 最终用户无需通过阅读测试或控制文件判断结果；主要验收入口是 `README.md`、`docs/architecture/AI_PROJECT_OS_OVERVIEW.md` 和 `docs/workflows/PROJECT_DELIVERY_WORKFLOW.md`。
 - 无关 `.shopme/*` 修改保持原状并明确未提交。

@@ -11,7 +11,7 @@ scope:
   - contracts/governance/run-evidence-contract.yaml
   - reviews/current-score-status.yaml
   - project-os.yaml
-  - README.zh-CN.md
+  - README.md
   - tests/test_operational_spine_docs.py
 commands:
   e2e: python3 -m unittest tests.test_operational_spine_e2e -v

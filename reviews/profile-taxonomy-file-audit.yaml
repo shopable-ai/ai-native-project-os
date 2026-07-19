@@ -23,7 +23,7 @@ files:
     role: 机器权威与当前状态
     result: corrected
     action: 拆分 framework edition、governance catalog 和 maturity，删除全局 selected_profile/enabled
-  - path: README.zh-CN.md
+  - path: README.md
     role: 阅读入口
     result: corrected
     action: 区分目标等级、治理配置和真实成熟度

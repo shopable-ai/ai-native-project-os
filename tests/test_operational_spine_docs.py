@@ -20,7 +20,7 @@ HUMAN_DOCS = (
 )
 
 LINK_CHECK_DOCS = HUMAN_DOCS + (
-    Path("README.zh-CN.md"),
+    Path("README.md"),
     Path("docs/workflows/L2_PROGRESSION.md"),
     Path("docs/superpowers/plans/2026-07-10-minimum-implementation-draft.superseded.md"),
 )
@@ -213,7 +213,7 @@ class OperationalSpineDocsTests(unittest.TestCase):
             "multi_instance_isolation_evidence",
         )
 
-        readme = read_text("README.zh-CN.md")
+        readme = read_text("README.md")
         self.assertIn("项目事实、Run、Evidence 和交付物默认保存在 L2", readme)
         self.assertIn("`projects/{project_id}/` 仅在多实例隔离有证据时启用", readme)
 
@@ -253,7 +253,7 @@ class OperationalSpineDocsTests(unittest.TestCase):
         )
         self.assertNotIn("phase2_l2_onboarding", self.project_os["scoring_evidence"])
 
-        readme = read_text("README.zh-CN.md")
+        readme = read_text("README.md")
         for forbidden in ("Phase 0 已完成", "当前评分 84", "当前评分 96", "预测 89", "预测 92"):
             self.assertNotIn(forbidden, readme)
         self.assertIn("当前总体评分：`not_evaluated`", readme)
@@ -291,13 +291,13 @@ class OperationalSpineDocsTests(unittest.TestCase):
         self.assertIn("complete_recomputable_dimensions", current["missing_numeric_inputs"])
         self.assertIn("penalties", current["missing_numeric_inputs"])
 
-        readme = read_text("README.zh-CN.md")
+        readme = read_text("README.md")
         self.assertIn("当前总体评分：`not_evaluated`", readme)
         self.assertIn("设计目标分：`95.93`", readme)
 
     def test_approved_design_status_is_consistent_across_project_readme_and_spec(self) -> None:
         self.assertEqual("approved", self.project_os["maturity"]["design_status"])
-        self.assertIn("设计已批准", read_text("README.zh-CN.md"))
+        self.assertIn("设计已批准", read_text("README.md"))
         spec_opening = "\n".join(
             read_text("docs/superpowers/specs/2026-07-11-项目推进骨架设计.md").splitlines()[:24]
         )

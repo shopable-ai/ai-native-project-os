@@ -41,7 +41,7 @@
 - Modify: `docs/governance/ARTIFACTS_AND_TRACEABILITY.md`
 - Modify: `docs/governance/TERMINOLOGY.md`
 - Modify: `docs/architecture/AI_PROJECT_OS_OVERVIEW.md`
-- Modify: `AGENTS.md`, `README.zh-CN.md`, `project-os.yaml`
+- Modify: `AGENTS.md`, `README.md`, `project-os.yaml`
 - Test: `tests/test_requirement_design_layer.py`
 
 1. 先写失败测试：新权威存在并注册；主追溯链包含 Functional Requirement；S2/S5 门禁包含意图、批准和 baseline；术语清单没有引入新状态轴。
@@ -98,7 +98,7 @@
 
 - Create: `reviews/human-ai-requirement-design-static-evidence.yaml`
 - Modify: `reviews/current-score-status.yaml`
-- Modify: `README.zh-CN.md`, `project-os.yaml`
+- Modify: `README.md`, `project-os.yaml`
 
 1. 记录新鲜 revision、命令、测试数、checker、YAML/JSON、Markdown 链接、diff check 和已知缺口。
 2. 分开报告：方案 B 旧目标 `95.93`、历史讨论估算 `86.4/96.4/97.6`、当前总体 `not_evaluated`。

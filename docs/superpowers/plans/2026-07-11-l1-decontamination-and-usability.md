@@ -27,7 +27,7 @@
 ### Task 2: 第一波文档去污染与 N3 修复
 
 **Files:**
-- Modify: `README.zh-CN.md`
+- Modify: `README.md`
 - Modify: `docs/workflows/L2_ONBOARDING.md`
 - Modify: `docs/workflows/IMPLEMENTATION_PLAN.md`
 - Modify: `docs/governance/DIAGRAM_CONVENTIONS.md`
@@ -84,7 +84,7 @@
 **Files:**
 - Create: `docs/workflows/L2_PROGRESSION.md`
 - Modify: `docs/workflows/L2_ONBOARDING.md`
-- Modify: `README.zh-CN.md`
+- Modify: `README.md`
 - Modify: `project-os.yaml`
 
 - [ ] 串联 L1 锁定、L2 接入、项目类型判断、R0 与 S0-S7。

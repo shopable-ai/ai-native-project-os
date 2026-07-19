@@ -204,7 +204,7 @@ decided_at: timestamp
 - `docs/governance/GATES_PROOF_SCORING.md`：增加规则引用、自动审核和有界改写门禁。
 - `docs/governance/STATE_TRANSITIONS_AND_INVALIDATION.md`：限定 `waiting_approval`。
 - `docs/workflows/ARCHITECT_WORKFLOWS.md`：把“人工审批”改为三类职责检查。
-- `project-os.yaml` 与 `README.zh-CN.md`：增加权威入口和准确成熟度说明。
+- `project-os.yaml` 与 `README.md`：增加权威入口和准确成熟度说明。
 
 策略层新增规则集与 AI 审核契约，并调整 control set、routing、acceptance 和 authorization 契约。模板层增加由中文文件名承载的通用 Markdown 规则包入口。历史 `reviews/` 只作为证据保留，不回写其结论。
 
